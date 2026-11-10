@@ -21,4 +21,18 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 3. Bảng projects: tên, mô tả, hạn chót, chủ dự án có khóa ngoại tới users(id)
+CREATE TABLE IF NOT EXISTS projects (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(200) NOT NULL COMMENT 'Tên dự án',
+    description TEXT NULL COMMENT 'Mô tả dự án',
+    deadline DATETIME NULL COMMENT 'Hạn chót dự án',
+    owner_id INT NOT NULL COMMENT 'Chủ dự án (khóa ngoại users.id)',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_projects_owner_id (owner_id),
+    CONSTRAINT fk_projects_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SHOW TABLES;

@@ -8,6 +8,12 @@ from app.schemas.common import (
     PaginatedResponse,
     ResponseModel,
 )
+from app.schemas.projects import (
+    ProjectBase,
+    ProjectCreate,
+    ProjectResponse,
+    ProjectUpdate,
+)
 from app.schemas.users import (
     UserBase,
     UserCreate,
@@ -30,4 +36,8 @@ __all__ = [
     "UserUpdate",
     "UserResponse",
     "UserInDB",
+    "ProjectBase",
+    "ProjectCreate",
+    "ProjectUpdate",
+    "ProjectResponse",
 ]
