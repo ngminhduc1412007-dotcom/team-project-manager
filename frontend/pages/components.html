@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thư viện UI Components | Student Project Hub</title>
+  <link rel="icon" href="../assets/images/logo.svg">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body data-root="../">
+  <!-- Header dùng chung -->
+  <header id="app-header"></header>
+
+  <main class="container">
+    <div class="card-header">
+      <div>
+        <h1 style="display: flex; align-items: center; gap: 10px; margin: 0 0 6px;">
+          <span class="icon text-primary" style="width: 28px; height: 28px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+              <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+              <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+              <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+              <path
+                d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+            </svg>
+          </span>
+          <span>Thư Viện UI Components Dùng Chung</span>
+        </h1>
+        <p class="muted" style="margin: 0;">Tài liệu trực quan cho nhóm tham khảo khi code các màn hình UI-01 đến UI-13
+          theo SRS.</p>
+      </div>
+      <div>
+        <a href="../index.html" class="btn btn-small">
+          <span class="icon" style="width: 14px; height: 14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+          </span>
+          <span>Quay lại Trang chủ</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 1. HỆ THỐNG NÚT BẤM (BUTTONS) -->
+    <section class="card">
+      <h2>1. Nút bấm (Buttons)</h2>
+      <p class="muted">Các kiểu nút được định dạng sẵn với class <code>.btn</code> và các biến thể màu sắc:</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button class="btn">Nút mặc định</button>
+        <button class="btn btn-primary">Primary (Chính)</button>
+        <button class="btn btn-secondary">Secondary (Phụ)</button>
+        <button class="btn btn-success">Success (Lưu/Duyệt)</button>
+        <button class="btn btn-danger">Danger (Xóa)</button>
+        <button class="btn btn-outline-danger">Outline Danger</button>
+        <button class="btn btn-warning">Warning (Cảnh báo)</button>
+        <button class="btn btn-small btn-primary">Small Button</button>
+        <button class="btn" disabled>Bị vô hiệu (Disabled)</button>
+        <button class="btn btn-primary is-loading" id="btn-demo-loading">Đang gửi...</button>
+      </div>
+    </section>
+
+    <!-- 2. HUY HIỆU TRẠNG THÁI (BADGES) -->
+    <section class="card">
+      <h2>2. Huy hiệu Trạng thái & Độ ưu tiên (Badges)</h2>
+      <p class="muted">Dùng để thể hiện trạng thái trên Kanban, bảng Task và Dashboard:</p>
+
+      <div style="margin-bottom: 16px;">
+        <h4 style="margin-bottom: 8px;">Trạng thái Task (Kanban 4 cột theo SRS):</h4>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span class="badge badge-todo">Chờ làm (TODO)</span>
+          <span class="badge badge-in-progress">Đang làm (IN_PROGRESS)</span>
+          <span class="badge badge-review">Chờ duyệt (REVIEW)</span>
+          <span class="badge badge-done">Hoàn thành (DONE)</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <h4 style="margin-bottom: 8px;">Độ ưu tiên Task (Priority):</h4>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span class="badge badge-low">Thấp (LOW)</span>
+          <span class="badge badge-medium">Trung bình (MEDIUM)</span>
+          <span class="badge badge-high">Cao (HIGH)</span>
+          <span class="badge badge-urgent">Khẩn cấp (URGENT)</span>
+          <span class="badge badge-overdue">Quá hạn (OVERDUE)</span>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 8px;">Vai trò dự án (Project Role):</h4>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span class="badge badge-owner">Trưởng nhóm (OWNER)</span>
+          <span class="badge badge-member">Thành viên (MEMBER)</span>
+          <span class="badge badge-viewer">Người xem (VIEWER)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. FORM NHẬP LIỆU (FORMS) -->
+    <section class="card">
+      <h2>3. Form nhập liệu chuẩn</h2>
+      <form id="demo-form" onsubmit="event.preventDefault();">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-title">Tiêu đề nhiệm vụ <span class="required">*</span></label>
+            <input type="text" id="task-title" placeholder="VD: Xây dựng REST API đăng nhập" required>
+            <div class="form-hint">Nhập tên nhiệm vụ ngắn gọn, rõ ràng theo nghiệp vụ đồ án.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="task-priority">Độ ưu tiên</label>
+            <select id="task-priority">
+              <option value="LOW">Thấp (LOW)</option>
+              <option value="MEDIUM" selected>Trung bình (MEDIUM)</option>
+              <option value="HIGH">Cao (HIGH)</option>
+              <option value="URGENT">Khẩn cấp (URGENT)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="task-due-date">Hạn chót (Deadline)</label>
+            <input type="date" id="task-due-date">
+            <div class="form-hint">Múi giờ tính toán: Asia/Ho_Chi_Minh (BR-19)</div>
+          </div>
+
+          <div class="form-group">
+            <label for="task-milestone">Thuộc Cột mốc (Milestone)</label>
+            <select id="task-milestone">
+              <option value="">-- Không gán cột mốc --</option>
+              <option value="1">Mốc 1: Phân tích & Thiết kế CSDL</option>
+              <option value="2">Mốc 2: Hoàn thiện API Core</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="task-desc">Mô tả chi tiết</label>
+          <textarea id="task-desc" placeholder="Chi tiết yêu cầu, các trường dữ liệu cần trả về..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Lưu Nhiệm Vụ</button>
+          <button type="reset" class="btn">Nhập lại</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 4. BẢNG DỮ LIỆU (TABLES) -->
+    <section class="card">
+      <div class="list-header"
+        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 style="margin: 0 0 4px;">4. Bảng dữ liệu chuẩn (Responsive Table)</h2>
+          <span class="muted">Tự động cuộn ngang trên điện thoại di động (NFR-004)</span>
+        </div>
+        <div>
+          <input type="search" placeholder="Tìm kiếm nhanh..." style="max-width: 240px;">
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Tên nhiệm vụ / Đồ án</th>
+              <th>Người phụ trách</th>
+              <th>Độ ưu tiên</th>
+              <th>Hạn chót</th>
+              <th>Trạng thái</th>
+              <th class="text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>
+                <strong>Thiết kế CSDL & Schema Prisma</strong>
+                <div class="muted">11 bảng, quan hệ 3NF theo SRS</div>
+              </td>
+              <td>Nguyễn Văn A</td>
+              <td><span class="badge badge-urgent">Khẩn cấp</span></td>
+              <td>12/11/2026</td>
+              <td><span class="badge badge-done">Hoàn thành</span></td>
+              <td class="actions">
+                <button class="btn btn-small">Sửa</button>
+                <button class="btn btn-small btn-outline-danger">Xóa</button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>
+                <strong>Dựng giao diện Kanban Board</strong>
+                <div class="muted">4 cột kéo thả hoặc chọn nút chuyển</div>
+              </td>
+              <td>Trần Thị B</td>
+              <td><span class="badge badge-high">Cao</span></td>
+              <td>14/11/2026</td>
+              <td><span class="badge badge-in-progress">Đang làm</span></td>
+              <td class="actions">
+                <button class="btn btn-small">Sửa</button>
+                <button class="btn btn-small btn-outline-danger">Xóa</button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>
+                <strong>Kiểm thử bảo mật JWT & Phân quyền</strong>
+                <div class="muted">Thu hồi session, kiểm tra RBAC Project</div>
+              </td>
+              <td>Lê Văn C</td>
+              <td><span class="badge badge-medium">Trung bình</span></td>
+              <td><span style="color: var(--color-danger); font-weight: 600;">08/11/2026 (Quá hạn)</span></td>
+              <td><span class="badge badge-todo">Chờ làm</span></td>
+              <td class="actions">
+                <button class="btn btn-small">Sửa</button>
+                <button class="btn btn-small btn-outline-danger">Xóa</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. TOAST & MODAL TEST -->
+    <section class="card">
+      <h2>5. Thông báo Toast & Hộp thoại Modal</h2>
+      <p class="muted">Bấm các nút dưới đây để thử nghiệm thông báo:</p>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+        <button class="btn btn-success" onclick="showToast('Thao tác hoàn thành xuất sắc!', 'success')">Bật Toast Thành
+          công</button>
+        <button class="btn btn-danger" onclick="showToast('Có lỗi xảy ra khi gọi API Backend!', 'error')">Bật Toast Báo
+          lỗi</button>
+        <button class="btn btn-warning" onclick="showToast('Cảnh báo: Bạn sắp tới hạn chót nhiệm vụ!', 'warning')">Bật
+          Toast Cảnh báo</button>
+        <button class="btn btn-secondary" onclick="showToast('Thông tin: Hệ thống vừa đồng bộ dữ liệu.', 'info')">Bật
+          Toast Thông tin</button>
+        <button class="btn btn-primary" id="btn-open-modal">Mở Popup Modal Mẫu</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Dialog mẫu -->
+  <div class="modal-backdrop" id="demo-modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <span class="icon text-primary" style="width: 18px; height: 18px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <line x1="12" x2="12" y1="17" y2="22" />
+              <path
+                d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+            </svg>
+          </span>
+          <span>Thêm Nhiệm Vụ Mới</span>
+        </h3>
+        <button class="modal-close" id="btn-close-modal" aria-label="Đóng">
+          <span class="icon" style="width: 18px; height: 18px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Đây là khung Modal chuẩn dùng cho việc tạo nhanh Task hoặc xác nhận xóa/lưu trữ dự án.</p>
+        <div class="form-group">
+          <label>Tên nhiệm vụ</label>
+          <input type="text" placeholder="Nhập tên nhiệm vụ...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-cancel-modal">Hủy bỏ</button>
+        <button class="btn btn-primary"
+          onclick="showToast('Đã lưu thành công!', 'success'); document.getElementById('demo-modal-backdrop').classList.remove('is-open');">Xác
+          nhận tạo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer dùng chung -->
+  <footer id="app-footer"></footer>
+
+  <!-- Thứ tự nạp script chuẩn -->
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/layout.js"></script>
+
+  <!-- Script điều khiển riêng cho trang demo -->
+  <script>
+    const modalBackdrop = document.getElementById("demo-modal-backdrop");
+    const btnOpenModal = document.getElementById("btn-open-modal");
+    const btnCloseModal = document.getElementById("btn-close-modal");
+    const btnCancelModal = document.getElementById("btn-cancel-modal");
+
+    btnOpenModal.addEventListener("click", () => {
+      modalBackdrop.classList.add("is-open");
+    });
+
+    [btnCloseModal, btnCancelModal].forEach(btn => {
+      btn.addEventListener("click", () => {
+        modalBackdrop.classList.remove("is-open");
+      });
+    });
+
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) {
+        modalBackdrop.classList.remove("is-open");
+      }
+    });
+  </script>
+</body>
+
+</html>
