@@ -1,0 +1,51 @@
+"""Điểm khởi động của backend.
+
+Chạy:  uvicorn app.main:app --reload
+Tài liệu API tự sinh: http://127.0.0.1:8000/docs
+"""
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import OperationalError
+
+from app import models  # noqa: F401 - import để SQLAlchemy biết các bảng
+from app.core.config import settings
+from app.core.exception_handlers import register_exception_handlers
+from app.db.session import Base, engine
+from app.routers import auth, health
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Tự tạo các bảng còn thiếu khi server khởi động (bảng đã có thì bỏ qua).
+    try:
+        Base.metadata.create_all(bind=engine)
+        print(f"[DB] Đã kết nối cơ sở dữ liệu ({settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME})")
+    except OperationalError as error:
+        print("[DB] KHÔNG kết nối được cơ sở dữ liệu! Kiểm tra cấu hình tại .env.")
+        print(f"[DB] Chi tiết: {error.orig}")
+    yield
+
+
+app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
+
+# CORS: cho phép trang FE (khác cổng/khác domain) gọi được API này
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Đăng ký xử lý lỗi chung (Validation, AppException, 500)
+register_exception_handlers(app)
+
+# Mọi API đều bắt đầu bằng /api. Thêm router mới thì include ở đây.
+app.include_router(health.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
+
+
+@app.get("/")
+def root():
+    return {"message": f"{settings.APP_NAME} đang chạy. Xem tài liệu API tại /docs"}

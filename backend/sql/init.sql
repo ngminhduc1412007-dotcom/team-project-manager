@@ -1,0 +1,1 @@
+SET NAMES utf8mb4; -- để tiếng Việt không bị lỗi font
