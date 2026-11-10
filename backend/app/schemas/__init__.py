@@ -1,3 +1,4 @@
+from app.schemas.auth import RegisterRequest
 from app.schemas.common import (
     BaseResponse,
     DataResponse,
@@ -40,4 +41,5 @@ __all__ = [
     "ProjectCreate",
     "ProjectUpdate",
     "ProjectResponse",
+    "RegisterRequest",
 ]
