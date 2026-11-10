@@ -1,7 +1,4 @@
 from app.db.session import Base
+from app.models.users import User, UserRole
 
-# Import your SQLAlchemy models here so Base.metadata knows about them
-# Example:
-# from app.models.users import User
-
-__all__ = ["Base"]
+__all__ = ["Base", "User", "UserRole"]

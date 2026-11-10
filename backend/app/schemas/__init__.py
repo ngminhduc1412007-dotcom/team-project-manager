@@ -1,9 +1,3 @@
-from app.schemas.auth import (
-    LoginRequest,
-    RegisterRequest,
-    Token,
-    TokenPayload,
-)
 from app.schemas.common import (
     BaseResponse,
     DataResponse,
@@ -12,9 +6,18 @@ from app.schemas.common import (
     PageMeta,
     PaginatedData,
     PaginatedResponse,
+    ResponseModel,
+)
+from app.schemas.users import (
+    UserBase,
+    UserCreate,
+    UserInDB,
+    UserResponse,
+    UserUpdate,
 )
 
 __all__ = [
+    "ResponseModel",
     "BaseResponse",
     "DataResponse",
     "PageMeta",
@@ -22,8 +25,9 @@ __all__ = [
     "PaginatedResponse",
     "ErrorDetail",
     "ErrorResponse",
-    "LoginRequest",
-    "RegisterRequest",
-    "Token",
-    "TokenPayload",
+    "UserBase",
+    "UserCreate",
+    "UserUpdate",
+    "UserResponse",
+    "UserInDB",
 ]

@@ -4,6 +4,16 @@ from pydantic import BaseModel, Field
 T = TypeVar("T")
 
 
+class ResponseModel(BaseModel, Generic[T]):
+    """Chuẩn khuôn mẫu phản hồi thống nhất cho toàn bộ hệ thống."""
+    status_code: int = Field(..., description="Mã HTTP status code")
+    message: str = Field(..., description="Thông điệp phản hồi")
+    data: Optional[Any] = Field(default=None, description="Dữ liệu trả về")
+    errors: Optional[Any] = Field(default=None, description="Chi tiết lỗi nếu có")
+    timestamp: str = Field(..., description="Thời gian phản hồi dạng ISO")
+    path: str = Field(..., description="Đường dẫn URL của request")
+
+
 class BaseResponse(BaseModel):
     """Schema cơ sở cho mọi response API."""
     success: bool = Field(default=True, description="Trạng thái thành công")
