@@ -1,3 +1,4 @@
+from app.schemas.auth import LoginRequest, RefreshTokenRequest, RegisterRequest, TokenResponse
 from app.schemas.common import (
     BaseResponse,
     DataResponse,
@@ -40,4 +41,8 @@ __all__ = [
     "ProjectCreate",
     "ProjectUpdate",
     "ProjectResponse",
+    "RegisterRequest",
+    "LoginRequest",
+    "RefreshTokenRequest",
+    "TokenResponse",
 ]

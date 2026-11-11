@@ -36,3 +36,8 @@ CREATE TABLE IF NOT EXISTS projects (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SHOW TABLES;
+
+DESCRIBE users;
+SELECT * FROM users;
+
+DESCRIBE projects;
