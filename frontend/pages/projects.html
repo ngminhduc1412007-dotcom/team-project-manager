@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dự án của tôi | Student Project Hub</title>
+  <link rel="icon" href="../assets/images/logo.png">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-root="../">
+  <header id="app-header"></header>
+
+  <main class="container">
+    <!-- Tiêu đề trang & Nút hành động -->
+    <div class="page-header">
+      <div>
+        <h1 style="margin: 0; font-size: 24px;">Dự án của tôi</h1>
+        <p style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
+          Quản lý tiến độ đồ án và phân công công việc các bài tập nhóm
+        </p>
+      </div>
+      <div>
+        <button id="btn-open-modal" class="btn btn-primary">+ Tạo dự án mới</button>
+      </div>
+    </div>
+
+    <!-- Thanh tìm kiếm & Bộ lọc trạng thái -->
+    <div class="toolbar card" style="padding: 14px 16px;">
+      <div class="toolbar-search">
+        <input type="search" id="search-input" placeholder="🔍 Tìm theo tên hoặc mô tả đồ án...">
+      </div>
+      <div class="filter-group" id="filter-group">
+        <button class="filter-btn active" data-status="ALL">Tất cả</button>
+        <button class="filter-btn" data-status="ACTIVE">Đang thực hiện</button>
+        <button class="filter-btn" data-status="PLANNING">Lập kế hoạch</button>
+        <button class="filter-btn" data-status="COMPLETED">Đã hoàn thành</button>
+      </div>
+    </div>
+
+    <!-- Lưới thẻ dự án (Project Cards) -->
+    <div id="project-grid" class="project-grid"></div>
+
+    <!-- Trạng thái rỗng (Empty State) -->
+    <div id="empty-state" class="empty-box" style="display: none;">
+      <div class="empty-icon">📁</div>
+      <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
+      <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
+      <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
+    </div>
+  </main>
+
+  <!-- Modal Tạo Dự Án Mới -->
+  <div class="modal-backdrop" id="create-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Tạo đồ án / dự án mới</h3>
+        <button type="button" class="modal-close" id="btn-close-modal" aria-label="Đóng">&times;</button>
+      </div>
+
+      <form id="create-project-form" novalidate>
+        <div class="form-group">
+          <label for="project-name">Tên dự án / đề tài *</label>
+          <input type="text" id="project-name" placeholder="VD: Website Quản lý Đồ án Sinh viên PTIT">
+          <div class="form-error" id="name-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="project-desc">Mô tả tóm tắt</label>
+          <textarea id="project-desc" rows="3" placeholder="Mục tiêu đồ án, công nghệ sử dụng..."></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="start-date">Ngày bắt đầu</label>
+            <input type="date" id="start-date">
+          </div>
+          <div class="form-group">
+            <label for="end-date">Hạn chót (Deadline)</label>
+            <input type="date" id="end-date">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="project-status">Trạng thái ban đầu</label>
+          <select id="project-status">
+            <option value="PLANNING">Lập kế hoạch (PLANNING)</option>
+            <option value="ACTIVE" selected>Đang thực hiện (ACTIVE)</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn" id="btn-cancel-modal">Hủy bỏ</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-project">Tạo dự án</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer id="app-footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/pages/projects.js"></script>
+</body>
+</html>
+

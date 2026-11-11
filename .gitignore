@@ -1,0 +1,23 @@
+# AI Agent & Workspace skills
+.agents/
+.gemini/
+.idea/
+.vscode/
+
+# Python & Virtualenv
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+ENV/
+*.env
+
+# Logs and databases
+*.log
+*.sqlite
+*.sqlite3
+
+# OS generated
+.DS_Store
+Thumbs.db
+
