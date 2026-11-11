@@ -9,9 +9,17 @@ from app.schemas.common import (
     PaginatedResponse,
     ResponseModel,
 )
+from app.schemas.project_members import (
+    ProjectMemberBase,
+    ProjectMemberCreate,
+    ProjectMemberResponse,
+    ProjectMemberRole,
+    ProjectMemberUpdate,
+)
 from app.schemas.projects import (
     ProjectBase,
     ProjectCreate,
+    ProjectDetailResponse,
     ProjectResponse,
     ProjectUpdate,
 )
@@ -41,6 +49,12 @@ __all__ = [
     "ProjectCreate",
     "ProjectUpdate",
     "ProjectResponse",
+    "ProjectDetailResponse",
+    "ProjectMemberRole",
+    "ProjectMemberBase",
+    "ProjectMemberCreate",
+    "ProjectMemberUpdate",
+    "ProjectMemberResponse",
     "RegisterRequest",
     "LoginRequest",
     "RefreshTokenRequest",

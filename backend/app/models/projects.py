@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.session import Base
 
 if TYPE_CHECKING:
+    from app.models.project_members import ProjectMember
     from app.models.users import User
 
 
@@ -30,6 +31,10 @@ class Project(Base):
 
     # Quan hệ nhiều - 1 tới người sở hữu dự án (User).
     owner: Mapped["User"] = relationship("User", back_populates="projects")
+    # Danh sách thành viên tham gia dự án.
+    members: Mapped[List["ProjectMember"]] = relationship(
+        "ProjectMember", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Project id={self.id} name='{self.name}' owner_id={self.owner_id}>"
