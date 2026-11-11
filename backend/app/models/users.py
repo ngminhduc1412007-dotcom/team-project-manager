@@ -8,6 +8,7 @@ from app.db.session import Base
 from app.schemas.users import UserRole
 
 if TYPE_CHECKING:
+    from app.models.project_members import ProjectMember
     from app.models.projects import Project
 
 
@@ -34,6 +35,10 @@ class User(Base):
     # Danh sách dự án do người dùng làm chủ sở hữu.
     projects: Mapped[List["Project"]] = relationship(
         "Project", back_populates="owner", cascade="all, delete-orphan"
+    )
+    # Danh sách dự án mà người dùng tham gia với tư cách thành viên.
+    project_memberships: Mapped[List["ProjectMember"]] = relationship(
+        "ProjectMember", back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.project_members import ProjectMemberResponse
 from app.schemas.users import UserResponse
 
 
@@ -31,6 +32,15 @@ class ProjectResponse(ProjectBase):
     created_at: datetime = Field(..., description="Thời gian tạo dự án")
     updated_at: datetime = Field(..., description="Thời gian cập nhật dự án gần nhất")
     owner: Optional[UserResponse] = Field(default=None, description="Thông tin chi tiết chủ dự án")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Schema trả về chi tiết dự án kèm danh sách thành viên.
+class ProjectDetailResponse(ProjectResponse):
+    members: List[ProjectMemberResponse] = Field(
+        default_factory=list, description="Danh sách thành viên tham gia dự án"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 

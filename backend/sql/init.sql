@@ -35,9 +35,42 @@ CREATE TABLE IF NOT EXISTS projects (
     CONSTRAINT fk_projects_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 4. Bảng tasks: công việc thuộc dự án, người được giao, độ ưu tiên, trạng thái
+CREATE TABLE IF NOT EXISTS tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    due_date DATE NULL,
+    priority ENUM('low', 'medium', 'high', 'urgent') NOT NULL DEFAULT 'medium',
+    status ENUM('todo', 'in_progress', 'done', 'cancelled') NOT NULL DEFAULT 'todo',
+    assignee_id INT NULL,
+    project_id INT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_tasks_assignee
+        FOREIGN KEY (assignee_id) REFERENCES users (id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_tasks_project
+        FOREIGN KEY (project_id) REFERENCES projects (id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. Bảng thành viên dự án: liên kết projects <-> users + vai trò
+CREATE TABLE IF NOT EXISTS project_members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role ENUM('owner', 'admin', 'member', 'viewer') NOT NULL DEFAULT 'member',
+    joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pm_project
+        FOREIGN KEY (project_id) REFERENCES projects (id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_pm_user
+        FOREIGN KEY (user_id) REFERENCES users (id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    -- Mỗi user chỉ có 1 vai trò trong 1 project
+    CONSTRAINT uq_pm_project_user
+        UNIQUE (project_id, user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SHOW TABLES;
-
-DESCRIBE users;
-SELECT * FROM users;
-
-DESCRIBE projects;
