@@ -10,22 +10,23 @@ function renderLayout() {
   const currentPath = window.location.pathname;
   const user = auth.getUser();
 
-    const links = MENU.map((item) => {
-      // Nếu đã đăng nhập thì không hiện nút Đăng nhập trên thanh menu
-      if (user && item.href === "pages/login.html") {
-        return "";
-      }
-      const isActive = currentPath.endsWith("/" + item.href) ||
-        (item.href === "index.html" && (currentPath.endsWith("/") || currentPath.endsWith("index.html")));
-      return `<a href="${root}${item.href}" class="${isActive ? "active" : ""}">${item.label}</a>`;
-    }).join("");
+  const links = MENU.map((item) => {
+    // Nếu đã đăng nhập thì ẩn nút Đăng nhập trên thanh menu
+    if (user && item.href === "pages/login.html") {
+      return "";
+    }
+    const isActive = currentPath.endsWith("/" + item.href) ||
+      (item.href === "index.html" && (currentPath.endsWith("/") || currentPath.endsWith("index.html")));
+    return `<a href="${root}${item.href}" class="${isActive ? "active" : ""}">${item.label}</a>`;
+  }).join("");
 
-    let userSection = "";
-    if (user) {
+  let userSection = "";
+  if (user) {
     userSection = `
-        < span style = "font-size: 13px; color: var(--color-muted); margin-left: 8px;" > Xin chào, <strong>${escapeHtml(user.full_name || user.email)}</strong></span >
-          <button class="btn btn-small btn-danger" onclick="auth.logout()">Đăng xuất</button>
-      `;
+      <div class="user-nav">
+        <span>Xin chào, <strong>${escapeHtml(user.full_name || user.email)}</strong></span>
+        <button type="button" class="btn btn-small btn-danger" onclick="auth.logout()">Đăng xuất</button>
+      </div>`;
   }
 
   const header = document.getElementById("app-header");
@@ -39,15 +40,15 @@ function renderLayout() {
           ${links}
           ${userSection}
         </nav>
-      </div > `;
+      </div>`;
   }
 
-    const footer = document.getElementById("app-footer");
-    if (footer) {
-      footer.innerHTML = `
+  const footer = document.getElementById("app-footer");
+  if (footer) {
+    footer.innerHTML = `
       <div class="container">
-        © ${ new Date().getFullYear() } ${ CONFIG.APP_NAME } · Nhóm thực tập sinh viên CNTT PTIT
-      </div > `;
+        © ${new Date().getFullYear()} ${CONFIG.APP_NAME} · Nhóm thực tập sinh viên CNTT PTIT
+      </div>`;
   }
 }
 

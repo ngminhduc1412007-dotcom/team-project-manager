@@ -133,6 +133,17 @@ main.container {
   font-weight: 600;
 }
 
+.user-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
 #app-footer {
   padding: 18px 0;
   text-align: center;
