@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
+from app.core.deps import get_current_user
 from app.core.response import create_response
 from app.crud.auth import (
     login_user_service,
@@ -8,6 +9,8 @@ from app.crud.auth import (
     register_user_service,
 )
 from app.db.session import get_db
+from app.models.users import User
+from app.routers.users import get_current_user_profile
 from app.schemas.auth import LoginRequest, RefreshTokenRequest, RegisterRequest
 from app.schemas.common import ResponseModel
 from app.schemas.users import UserResponse
@@ -63,3 +66,12 @@ def refresh_token(
         message="Làm mới token thành công",
         data=token_data,
     )
+
+
+# API trả về thông tin tài khoản đang đăng nhập (alias dưới /auth/me).
+@routers.get("/me", response_model=ResponseModel, status_code=status.HTTP_200_OK)
+def get_me(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    return get_current_user_profile(request=request, current_user=current_user)
