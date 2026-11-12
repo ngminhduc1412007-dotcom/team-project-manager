@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thành viên dự án | Student Project Hub</title>
+  <link rel="icon" href="../assets/images/logo.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    :root {
+      --color-primary: #163b65;
+      --color-primary-dark: #0f2947;
+      --color-accent: #2fa84f;
+      --color-danger: #dc2626;
+      --color-success: #16a34a;
+      --color-warning: #d97706;
+      --color-text: #1f2937;
+      --color-muted: #6b7280;
+      --color-border: #e5e7eb;
+      --color-bg: #f8fafc;
+      --color-card: #ffffff;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--color-text);
+      background: var(--color-bg);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    main.container {
+      flex: 1;
+      padding-top: 24px;
+      padding-bottom: 24px;
+    }
+
+    #app-header {
+      background: var(--color-card);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 72px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav a {
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      color: var(--color-muted);
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .nav a:hover {
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    .nav a.active {
+      background: #e8f0f8;
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    .user-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 12px;
+      padding-left: 12px;
+      border-left: 1px solid var(--color-border);
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    #app-footer {
+      padding: 18px 0;
+      text-align: center;
+      color: var(--color-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--color-border);
+      background: var(--color-card);
+    }
+
+    .card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font: inherit;
+      font-size: 14px;
+      background: #ffffff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(22, 59, 101, 0.12);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      background: var(--color-card);
+      color: var(--color-text);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--color-bg);
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-dark);
+      color: #fff;
+    }
+
+    .btn-danger {
+      color: var(--color-danger);
+      border-color: #fca5a5;
+    }
+
+    .btn-small {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-owner {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .badge-member {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .badge-viewer {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .badge-pending {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .project-stats-bar {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .project-stats-bar strong {
+      color: var(--color-text);
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .table th,
+    .table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+    }
+
+    .table th {
+      background: var(--color-bg);
+      color: var(--color-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .table tbody tr:hover {
+      background: var(--color-bg);
+    }
+  </style>
+</head>
+<body data-root="../">
+  <header id="app-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand">Student Project Management System</a>
+      <nav class="nav">
+        <a href="../index.html">Trang chủ</a>
+        <a href="projects.html">Dự án của tôi</a>
+        <a href="members.html" class="active">Thành viên</a>
+        <div class="user-nav">
+          <span>Xin chào, <strong>Lê Quang Huy ( Owner )</strong></span>
+          <button type="button" class="btn btn-small btn-danger">Đăng xuất</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h1 style="margin: 0; font-size: 24px;">Dự án: Website quản lý thư viện</h1>
+          <span class="badge badge-active">ACTIVE</span>
+        </div>
+        <p style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
+          Quản lý danh sách thành viên, phân quyền vai trò và lời mời tham gia dự án
+        </p>
+      </div>
+
+      <div class="project-stats-bar">
+        <span>Người đăng nhập: <strong>Lê Quang Huy ( Owner )</strong></span>
+        <span>Progress: <strong>65%</strong></span>
+        <span>Tổng số: <strong>20 Task</strong></span>
+        <span>Thành viên: <strong>5</strong></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size: 16px; margin-bottom: 6px;">Mời thành viên mới vào dự án</h3>
+      <p style="font-size: 13px; color: var(--color-muted); margin: 0 0 14px;">
+        Nhập email tài khoản sinh viên đã đăng ký trên hệ thống để gửi lời mời tham gia.
+      </p>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <input
+          type="email"
+          placeholder="Nhập email sinh viên..."
+          style="max-width: 320px;"
+        >
+        <select style="width: 180px;">
+          <option value="MEMBER">Vai trò: MEMBER</option>
+          <option value="VIEWER">Vai trò: VIEWER</option>
+        </select>
+        <button type="button" class="btn btn-primary">Gửi lời mời</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h3 style="font-size: 16px; margin: 0;">Danh sách thành viên dự án (5)</h3>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <input
+            type="text"
+            placeholder="Tìm kiếm thành viên..."
+            style="width: 220px;"
+          >
+          <select style="width: 160px;">
+            <option value="">Tất cả vai trò</option>
+            <option value="OWNER">OWNER</option>
+            <option value="MEMBER">MEMBER</option>
+            <option value="VIEWER">VIEWER</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Họ và tên</th>
+              <th>Email</th>
+              <th>Vai trò</th>
+              <th>Số Task đảm nhận</th>
+              <th>Ngày tham gia</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><strong>Lê Quang Huy</strong></td>
+              <td>huy.lq@ptit.edu.vn</td>
+              <td><span class="badge badge-owner">OWNER</span></td>
+              <td>5 Task</td>
+              <td>01/09/2026</td>
+              <td>
+                <span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><strong>Nguyễn Minh Đức</strong></td>
+              <td>duc.nm@ptit.edu.vn</td>
+              <td><span class="badge badge-member">MEMBER</span></td>
+              <td>4 Task</td>
+              <td>02/09/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Đổi vai trò</button>
+                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><strong>Lưu Đức Anh</strong></td>
+              <td>anh.ld@ptit.edu.vn</td>
+              <td><span class="badge badge-member">MEMBER</span></td>
+              <td>4 Task</td>
+              <td>02/09/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Đổi vai trò</button>
+                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><strong>Trần Nhật Long</strong></td>
+              <td>long.tn@ptit.edu.vn</td>
+              <td><span class="badge badge-member">MEMBER</span></td>
+              <td>4 Task</td>
+              <td>03/09/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Đổi vai trò</button>
+                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><strong>Hoàng Đức Duy Anh</strong></td>
+              <td>duyanh.hd@ptit.edu.vn</td>
+              <td><span class="badge badge-member">MEMBER</span></td>
+              <td>3 Task</td>
+              <td>03/09/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Đổi vai trò</button>
+                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size: 16px; margin-bottom: 12px;">Lời mời đang chờ xác nhận</h3>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Email người nhận</th>
+              <th>Vai trò đề xuất</th>
+              <th>Người gửi</th>
+              <th>Trạng thái</th>
+              <th>Hạn lời mời</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>gv.huongdan@ptit.edu.vn</td>
+              <td><span class="badge badge-viewer">VIEWER</span></td>
+              <td>Lê Quang Huy</td>
+              <td><span class="badge badge-pending">PENDING</span></td>
+              <td>16/11/2026</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer id="app-footer">
+    <div class="container">
+      © 2026 Student Project Management System · Nhóm thực tập sinh viên CNTT PTIT
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/layout.js"></script>
+</body>
+</html>
