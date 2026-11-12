@@ -6,6 +6,16 @@
   <title>Dự án của tôi | Student Project Hub</title>
   <link rel="icon" href="../assets/images/logo.png">
   <link rel="stylesheet" href="../css/style.css">
+  <script>
+    // Chặn trang khi chưa đăng nhập (Auth Guard)
+    (function () {
+      var token = localStorage.getItem("token");
+      if (!token) {
+        var current = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.replace("login.html?redirect=" + current + "&reason=auth_required");
+      }
+    })();
+  </script>
 </head>
 <body data-root="../">
   <header id="app-header"></header>

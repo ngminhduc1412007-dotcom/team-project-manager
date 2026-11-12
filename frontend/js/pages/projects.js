@@ -3,6 +3,11 @@
 // Quản lý hiển thị thẻ dự án, tìm kiếm/lọc, modal tạo mới, empty state
 // ==========================================================
 
+// 0. CHẶN TRANG KHI CHƯA ĐĂNG NHẬP (AUTH GUARD)
+if (!auth.requireAuth()) {
+  // Dừng lại nếu chưa đăng nhập (auth.requireAuth đã tự chuyển hướng về login.html)
+}
+
 // 1. Dữ liệu giả lập ban đầu (Mock data theo đề tài sinh viên PTIT)
 let mockProjects = [
   {
@@ -225,6 +230,8 @@ createForm.addEventListener("submit", (e) => {
   renderProjects();
 });
 
-// Khởi chạy render lần đầu
-renderProjects();
+// Khởi chạy render lần đầu nếu đã xác thực
+if (auth.isAuthenticated()) {
+  renderProjects();
+}
 
