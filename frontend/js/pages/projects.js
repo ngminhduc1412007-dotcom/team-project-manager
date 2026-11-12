@@ -92,7 +92,7 @@ function getBadge(status) {
 function renderProjects() {
   const filtered = mockProjects.filter((p) => {
     const matchStatus = currentFilter === "ALL" || p.status === currentFilter;
-    const matchKeyword = !searchKeyword || 
+    const matchKeyword = !searchKeyword ||
       p.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
       (p.description && p.description.toLowerCase().includes(searchKeyword.toLowerCase()));
     return matchStatus && matchKeyword;
