@@ -13,7 +13,7 @@ from app import models  # noqa: F401 - import để SQLAlchemy biết các bản
 from app.core.config import settings
 from app.core.exception_handlers import register_exception_handlers
 from app.db.session import Base, engine
-from app.routers import auth, health, projects
+from app.routers import auth, health, projects, users
 
 
 @asynccontextmanager
@@ -45,6 +45,7 @@ register_exception_handlers(app)
 app.include_router(health.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(projects.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
 
 
 @app.get("/")
