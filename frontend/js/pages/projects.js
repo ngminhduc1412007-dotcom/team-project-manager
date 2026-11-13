@@ -328,394 +328,394 @@ function getBadge(status) {
   return '<span class="badge badge-completed">Đã hoàn thành</span>';
 }
 
-// 4. Mock Engine: Xử lý tìm kiếm, lọc, sắp xếp và phân trang chuẩn đặc tả khi backend chưa chạy
-function runMockEngine(params) {
-  const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
-  const currentUserId = currentUser ? (currentUser.id || 1) : 1;
+    // 4. Mock Engine: Xử lý tìm kiếm, lọc, sắp xếp và phân trang chuẩn đặc tả khi backend chưa chạy
+    function runMockEngine(params) {
+      const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
+      const currentUserId = currentUser ? (currentUser.id || 1) : 1;
 
-  // 4.1. Lọc dữ liệu
-  let filtered = localProjects.filter((p) => {
-    // name / search: Tìm kiếm theo tên dự án (chứa chuỗi, không phân biệt hoa thường)
-    const kw = (params.search || params.name || "").trim().toLowerCase();
-    const matchSearch = !kw ||
-      p.name.toLowerCase().includes(kw) ||
-      (p.description && p.description.toLowerCase().includes(kw));
+      // 4.1. Lọc dữ liệu
+      let filtered = localProjects.filter((p) => {
+        // name / search: Tìm kiếm theo tên dự án (chứa chuỗi, không phân biệt hoa thường)
+        const kw = (params.search || params.name || "").trim().toLowerCase();
+        const matchSearch = !kw ||
+          p.name.toLowerCase().includes(kw) ||
+          (p.description && p.description.toLowerCase().includes(kw));
 
-    // my=true: Chỉ lấy dự án của người đang đăng nhập
-    const matchMy = !params.my || (p.owner_id === currentUserId);
+        // my=true: Chỉ lấy dự án của người đang đăng nhập
+        const matchMy = !params.my || (p.owner_id === currentUserId);
 
-    // owner_id: Lọc theo ID chủ dự án
-    const matchOwner = !params.owner_id || (p.owner_id === Number(params.owner_id));
+        // owner_id: Lọc theo ID chủ dự án
+        const matchOwner = !params.owner_id || (p.owner_id === Number(params.owner_id));
 
-    // status: Lọc trạng thái
-    const matchStatus = !params.status || params.status === "ALL" || p.status === params.status;
+        // status: Lọc trạng thái
+        const matchStatus = !params.status || params.status === "ALL" || p.status === params.status;
 
-    return matchSearch && matchMy && matchOwner && matchStatus;
-  });
+        return matchSearch && matchMy && matchOwner && matchStatus;
+      });
 
-  // 4.2. Sắp xếp (sort_by: id, name, created_at, updated_at, deadline) & (sort_order: asc, desc)
-  const sortBy = params.sort_by || "created_at";
-  const isAsc = (params.sort_order || "desc").toLowerCase() === "asc";
+        // 4.2. Sắp xếp (sort_by: id, name, created_at, updated_at, deadline) & (sort_order: asc, desc)
+        const sortBy = params.sort_by || "created_at";
+        const isAsc = (params.sort_order || "desc").toLowerCase() === "asc";
 
-  filtered.sort((a, b) => {
-    let comparison = 0;
-    if (sortBy === "id") {
-      comparison = a.id - b.id;
-    } else if (sortBy === "name") {
-      comparison = a.name.localeCompare(b.name, "vi");
-    } else if (sortBy === "deadline") {
-      const dA = new Date(a.deadline || a.end_date || 0).getTime();
-      const dB = new Date(b.deadline || b.end_date || 0).getTime();
-      comparison = dA - dB;
-    } else if (sortBy === "updated_at") {
-      const dA = new Date(a.updated_at || a.created_at || 0).getTime();
-      const dB = new Date(b.updated_at || b.created_at || 0).getTime();
-      comparison = dA - dB;
-    } else {
-      // Mặc định: created_at
-      const dA = new Date(a.created_at || 0).getTime();
-      const dB = new Date(b.created_at || 0).getTime();
-      comparison = dA - dB;
-    }
-    return isAsc ? comparison : -comparison;
-  });
+        filtered.sort((a, b) => {
+          let comparison = 0;
+          if (sortBy === "id") {
+            comparison = a.id - b.id;
+          } else if (sortBy === "name") {
+            comparison = a.name.localeCompare(b.name, "vi");
+          } else if (sortBy === "deadline") {
+            const dA = new Date(a.deadline || a.end_date || 0).getTime();
+            const dB = new Date(b.deadline || b.end_date || 0).getTime();
+            comparison = dA - dB;
+          } else if (sortBy === "updated_at") {
+            const dA = new Date(a.updated_at || a.created_at || 0).getTime();
+            const dB = new Date(b.updated_at || b.created_at || 0).getTime();
+            comparison = dA - dB;
+          } else {
+            // Mặc định: created_at
+            const dA = new Date(a.created_at || 0).getTime();
+            const dB = new Date(b.created_at || 0).getTime();
+            comparison = dA - dB;
+          }
+          return isAsc ? comparison : -comparison;
+        });
 
-  // 4.3. Phân trang (page >= 1, page_size 1-100)
-  const totalRecords = filtered.length;
-  const pageSize = Math.max(1, Math.min(100, Number(params.page_size) || 10));
-  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
-  const currentPage = Math.max(1, Math.min(Number(params.page) || 1, totalPages));
+        // 4.3. Phân trang (page >= 1, page_size 1-100)
+        const totalRecords = filtered.length;
+        const pageSize = Math.max(1, Math.min(100, Number(params.page_size) || 10));
+        const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+        const currentPage = Math.max(1, Math.min(Number(params.page) || 1, totalPages));
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, totalRecords);
-  const items = filtered.slice(startIndex, endIndex);
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = Math.min(startIndex + pageSize, totalRecords);
+        const items = filtered.slice(startIndex, endIndex);
 
-  return {
-    items,
-    meta: {
-      page: currentPage,
-      page_size: pageSize,
-      total_records: totalRecords,
-      total_pages: totalPages,
-      has_prev: currentPage > 1,
-      has_next: currentPage < totalPages
-    }
-  };
-}
-
-// 5. Tải danh sách dự án (Gọi API backend hoặc fallback Mock Engine)
-async function loadProjects() {
-  const params = {
-    search: queryState.search || undefined,
-    name: queryState.search || undefined,
-    page: queryState.page,
-    page_size: queryState.page_size,
-    sort_by: queryState.sort_by,
-    sort_order: queryState.sort_order,
-    my: queryState.my ? true : undefined,
-    owner_id: queryState.owner_id || undefined,
-    status: queryState.status !== "ALL" ? queryState.status : undefined
-  };
-
-  try {
-    if (typeof api !== "undefined" && api.get) {
-      const res = await api.get("/projects", params);
-      if (res && res.data && Array.isArray(res.data.items) && res.data.meta) {
-        renderProjectList(res.data.items);
-        renderPagination(res.data.meta);
-        return;
+        return {
+          items,
+          meta: {
+            page: currentPage,
+            page_size: pageSize,
+            total_records: totalRecords,
+            total_pages: totalPages,
+            has_prev: currentPage > 1,
+            has_next: currentPage < totalPages
+          }
+        };
       }
-    }
-  } catch (err) {
-    // Backend chưa chạy hoặc lỗi -> fallback sang Mock Engine
-  }
 
-  // Chạy Mock Engine
-  const result = runMockEngine(params);
-  renderProjectList(result.items);
-  renderPagination(result.meta);
-}
+      // 5. Tải danh sách dự án (Gọi API backend hoặc fallback Mock Engine)
+      async function loadProjects() {
+        const params = {
+          search: queryState.search || undefined,
+          name: queryState.search || undefined,
+          page: queryState.page,
+          page_size: queryState.page_size,
+          sort_by: queryState.sort_by,
+          sort_order: queryState.sort_order,
+          my: queryState.my ? true : undefined,
+          owner_id: queryState.owner_id || undefined,
+          status: queryState.status !== "ALL" ? queryState.status : undefined
+        };
 
-// 6. Render danh sách thẻ dự án
-function renderProjectList(items) {
-  if (!items || items.length === 0) {
-    grid.innerHTML = "";
-    emptyState.style.display = "block";
-    paginationWrapper.style.display = "none";
+        try {
+          if (typeof api !== "undefined" && api.get) {
+            const res = await api.get("/projects", params);
+            if (res && res.data && Array.isArray(res.data.items) && res.data.meta) {
+              renderProjectList(res.data.items);
+              renderPagination(res.data.meta);
+              return;
+            }
+          }
+        } catch (err) {
+          // Backend chưa chạy hoặc lỗi -> fallback sang Mock Engine
+        }
 
-    if (queryState.search) {
-      emptyTitle.textContent = 'Không tìm thấy dự án phù hợp với "' + escapeHtml(queryState.search) + '"';
-      emptyDesc.textContent = "Vui lòng thử tìm với từ khóa khác hoặc bấm nút Tạo dự án mới.";
-    } else if (queryState.my) {
-      emptyTitle.textContent = "Bạn chưa có dự án nào";
-      emptyDesc.textContent = "Bấm nút 'Tất cả dự án' để xem các dự án khác hoặc bấm Tạo dự án mới bên dưới.";
-    } else {
-      emptyTitle.textContent = "Chưa có dự án nào";
-      emptyDesc.textContent = "Hiện chưa có dự án nào trong danh mục này.";
-    }
-    return;
-  }
+        // Chạy Mock Engine
+        const result = runMockEngine(params);
+        renderProjectList(result.items);
+        renderPagination(result.meta);
+      }
 
-  emptyState.style.display = "none";
-  paginationWrapper.style.display = "flex";
+      // 6. Render danh sách thẻ dự án
+      function renderProjectList(items) {
+        if (!items || items.length === 0) {
+          grid.innerHTML = "";
+          emptyState.style.display = "block";
+            paginationWrapper.style.display = "none";
 
-  grid.innerHTML = items.map((p) => {
-    const percent = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
-    const deadlineText = p.deadline || p.end_date ? formatDate(p.deadline || p.end_date) : "Chưa đặt";
-    const createdText = p.created_at ? formatDate(p.created_at) : "—";
-    const ownerName = (p.owner && (p.owner.full_name || p.owner.email)) ? p.owner.full_name || p.owner.email : "Sinh viên PTIT";
+            if (queryState.search) {
+              emptyTitle.textContent = 'Không tìm thấy dự án phù hợp với "' + escapeHtml(queryState.search) + '"';
+              emptyDesc.textContent = "Vui lòng thử tìm với từ khóa khác hoặc bấm nút Tạo dự án mới.";
+            } else if (queryState.my) {
+              emptyTitle.textContent = "Bạn chưa có dự án nào";
+              emptyDesc.textContent = "Bấm nút 'Tất cả dự án' để xem các dự án khác hoặc bấm Tạo dự án mới bên dưới.";
+            } else {
+              emptyTitle.textContent = "Chưa có dự án nào";
+              emptyDesc.textContent = "Hiện chưa có dự án nào trong danh mục này.";
+            }
+            return;
+          }
 
-    return (
-      '<article class="project-card">' +
-        '<div class="project-card-header">' +
-          '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
-          getBadge(p.status) +
-        '</div>' +
-        '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
-        '<div class="project-meta">' +
-          '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
-          '<span>👥 ' + (p.members || 1) + ' thành viên</span>' +
-        '</div>' +
-        '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
-          '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
-          '<span>📅 Tạo: ' + createdText + '</span>' +
-        '</div>' +
-        '<div class="progress-wrap">' +
-          '<div class="progress-info">' +
-            '<span>Tiến độ hoàn thành</span>' +
-            '<strong>' + percent + '% (' + (p.done_tasks || 0) + '/' + (p.total_tasks || 0) + ' việc)</strong>' +
-          '</div>' +
-          '<div class="progress-track">' +
-            '<div class="progress-fill" style="width: ' + percent + '%;"></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="project-card-actions">' +
-          '<button type="button" class="btn btn-small btn-primary" onclick="showToast(\'Xem chi tiết: ' + escapeHtml(p.name).replace(/'/g, "\\'") + '\', \'info\')" style="flex: 1;">' +
-            'Xem chi tiết' +
-          '</button>' +
-        '</div>' +
-      '</article>'
-    );
-  }).join("");
-}
+          emptyState.style.display = "none";
+            paginationWrapper.style.display = "flex";
+
+            grid.innerHTML = items.map((p) => {
+              const percent = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
+              const deadlineText = p.deadline || p.end_date ? formatDate(p.deadline || p.end_date) : "Chưa đặt";
+              const createdText = p.created_at ? formatDate(p.created_at) : "—";
+              const ownerName = (p.owner && (p.owner.full_name || p.owner.email)) ? p.owner.full_name || p.owner.email : "Sinh viên PTIT";
+
+              return (
+                '<article class="project-card">' +
+                '<div class="project-card-header">' +
+                '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
+                getBadge(p.status) +
+                '</div>' +
+                '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
+                '<div class="project-meta">' +
+                '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
+                '<span>👥 ' + (p.members || 1) + ' thành viên</span>' +
+                '</div>' +
+                '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
+                '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
+                '<span>📅 Tạo: ' + createdText + '</span>' +
+                '</div>' +
+                '<div class="progress-wrap">' +
+                '<div class="progress-info">' +
+                '<span>Tiến độ hoàn thành</span>' +
+                '<strong>' + percent + '% (' + (p.done_tasks || 0) + '/' + (p.total_tasks || 0) + ' việc)</strong>' +
+                '</div>' +
+                '<div class="progress-track">' +
+                '<div class="progress-fill" style="width: ' + percent + '%;"></div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="project-card-actions">' +
+                '<button type="button" class="btn btn-small btn-primary" onclick="showToast(\'Xem chi tiết: ' + escapeHtml(p.name).replace(/'/g, "\\'") + '\', \'info\')" style="flex: 1;">' +
+                'Xem chi tiết' +
+                '</button>' +
+                '</div>' +
+                '</article>'
+              );
+            }).join("");
+          }
 
 // 7. Render thanh phân trang
 function renderPagination(meta) {
-  if (!meta || meta.total_records === 0) {
-    paginationWrapper.style.display = "none";
-    return;
-  }
+              if (!meta || meta.total_records === 0) {
+                paginationWrapper.style.display = "none";
+                return;
+              }
 
-  paginationWrapper.style.display = "flex";
+              paginationWrapper.style.display = "flex";
 
-  const startRecord = (meta.page - 1) * meta.page_size + 1;
-  const endRecord = Math.min(meta.page * meta.page_size, meta.total_records);
+              const startRecord = (meta.page - 1) * meta.page_size + 1;
+              const endRecord = Math.min(meta.page * meta.page_size, meta.total_records);
 
-  paginationInfo.innerHTML =
-    'Hiển thị <strong>' + startRecord + ' - ' + endRecord + '</strong> trên tổng số <strong>' + meta.total_records + '</strong> dự án (Trang ' + meta.page + '/' + meta.total_pages + ')';
+              paginationInfo.innerHTML =
+                'Hiển thị <strong>' + startRecord + ' - ' + endRecord + '</strong> trên tổng số <strong>' + meta.total_records + '</strong> dự án (Trang ' + meta.page + '/' + meta.total_pages + ')';
 
-  let buttonsHtml = "";
+              let buttonsHtml = "";
 
-  // Nút « Trước
-  buttonsHtml +=
-    '<button type="button" class="pagination-btn" data-page="' + (meta.page - 1) + '" ' +
-    (!meta.has_prev ? 'disabled title="Đang ở trang đầu"' : 'title="Trang trước"') +
-    '>« Trước</button>';
+              // Nút « Trước
+              buttonsHtml +=
+                '<button type="button" class="pagination-btn" data-page="' + (meta.page - 1) + '" ' +
+                (!meta.has_prev ? 'disabled title="Đang ở trang đầu"' : 'title="Trang trước"') +
+                '>« Trước</button>';
 
-  // Các nút số trang
-  for (let i = 1; i <= meta.total_pages; i++) {
-    // Nếu tổng số trang > 7, hiển thị thông minh các trang gần trang hiện tại
-    if (meta.total_pages > 7) {
-      if (i === 1 || i === meta.total_pages || (i >= meta.page - 1 && i <= meta.page + 1)) {
-        const activeClass = i === meta.page ? "active" : "";
-        buttonsHtml += '<button type="button" class="pagination-btn ' + activeClass + '" data-page="' + i + '">' + i + '</button>';
-      } else if (i === meta.page - 2 || i === meta.page + 2) {
-        buttonsHtml += '<span class="pagination-ellipsis">…</span>';
-      }
-    } else {
-      const activeClass = i === meta.page ? "active" : "";
-      buttonsHtml += '<button type="button" class="pagination-btn ' + activeClass + '" data-page="' + i + '">' + i + '</button>';
-    }
-  }
+              // Các nút số trang
+              for (let i = 1; i <= meta.total_pages; i++) {
+                // Nếu tổng số trang > 7, hiển thị thông minh các trang gần trang hiện tại
+                if (meta.total_pages > 7) {
+                  if (i === 1 || i === meta.total_pages || (i >= meta.page - 1 && i <= meta.page + 1)) {
+                    const activeClass = i === meta.page ? "active" : "";
+                    buttonsHtml += '<button type="button" class="pagination-btn ' + activeClass + '" data-page="' + i + '">' + i + '</button>';
+                  } else if (i === meta.page - 2 || i === meta.page + 2) {
+                    buttonsHtml += '<span class="pagination-ellipsis">…</span>';
+                  }
+                } else {
+                  const activeClass = i === meta.page ? "active" : "";
+                  buttonsHtml += '<button type="button" class="pagination-btn ' + activeClass + '" data-page="' + i + '">' + i + '</button>';
+                }
+              }
 
-  // Nút Tiếp »
-  buttonsHtml +=
-    '<button type="button" class="pagination-btn" data-page="' + (meta.page + 1) + '" ' +
-    (!meta.has_next ? 'disabled title="Đang ở trang cuối"' : 'title="Trang tiếp"') +
-    '>Tiếp »</button>';
+              // Nút Tiếp »
+              buttonsHtml +=
+                '<button type="button" class="pagination-btn" data-page="' + (meta.page + 1) + '" ' +
+                (!meta.has_next ? 'disabled title="Đang ở trang cuối"' : 'title="Trang tiếp"') +
+                '>Tiếp »</button>';
 
-  paginationControls.innerHTML = buttonsHtml;
-}
+              paginationControls.innerHTML = buttonsHtml;
+            }
 
 // 8. Chuyển trang
 function goToPage(targetPage) {
-  queryState.page = Number(targetPage);
-  loadProjects();
+              queryState.page = Number(targetPage);
+              loadProjects();
 
-  // Cuộn nhẹ lên đầu lưới dự án
-  if (grid) {
-    grid.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-}
+              // Cuộn nhẹ lên đầu lưới dự án
+              if (grid) {
+                grid.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }
 
 // 9. Lắng nghe sự kiện tương tác
 
 // 9.1. Tìm kiếm theo tên (name / search)
 let searchDebounceTimer = null;
-if (searchInput) {
-  searchInput.addEventListener("input", (e) => {
-    clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => {
-      queryState.search = e.target.value.trim();
-      queryState.page = 1; // Tìm kiếm tự động về trang 1
-      loadProjects();
-    }, 250);
-  });
-}
+          if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+              clearTimeout(searchDebounceTimer);
+              searchDebounceTimer = setTimeout(() => {
+                queryState.search = e.target.value.trim();
+                queryState.page = 1; // Tìm kiếm tự động về trang 1
+                loadProjects();
+              }, 250);
+            });
+          }
 
-// 9.2. Lọc Dự án của tôi (my=true)
-if (myFilterGroup) {
-  myFilterGroup.addEventListener("click", (e) => {
-    const btn = e.target.closest(".filter-btn");
-    if (!btn) return;
-    myFilterGroup.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
+          // 9.2. Lọc Dự án của tôi (my=true)
+          if (myFilterGroup) {
+            myFilterGroup.addEventListener("click", (e) => {
+              const btn = e.target.closest(".filter-btn");
+              if (!btn) return;
+              myFilterGroup.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
 
-    queryState.my = btn.dataset.my === "true";
-    queryState.page = 1;
-    loadProjects();
-  });
-}
+              queryState.my = btn.dataset.my === "true";
+              queryState.page = 1;
+              loadProjects();
+            });
+          }
 
-// 9.3. Lọc theo trạng thái
-if (filterGroup) {
-  filterGroup.addEventListener("click", (e) => {
-    const btn = e.target.closest(".filter-btn");
-    if (!btn) return;
-    filterGroup.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
+          // 9.3. Lọc theo trạng thái
+          if (filterGroup) {
+            filterGroup.addEventListener("click", (e) => {
+              const btn = e.target.closest(".filter-btn");
+              if (!btn) return;
+              filterGroup.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
 
-    queryState.status = btn.dataset.status;
-    queryState.page = 1;
-    loadProjects();
-  });
-}
+              queryState.status = btn.dataset.status;
+              queryState.page = 1;
+              loadProjects();
+            });
+          }
 
-// 9.4. Sắp xếp trường (sort_by)
-if (sortBySelect) {
-  sortBySelect.addEventListener("change", (e) => {
-    queryState.sort_by = e.target.value;
-    queryState.page = 1;
-    loadProjects();
-  });
-}
+          // 9.4. Sắp xếp trường (sort_by)
+          if (sortBySelect) {
+            sortBySelect.addEventListener("change", (e) => {
+              queryState.sort_by = e.target.value;
+              queryState.page = 1;
+              loadProjects();
+            });
+          }
 
-// 9.5. Sắp xếp thứ tự (sort_order)
-if (sortOrderSelect) {
-  sortOrderSelect.addEventListener("change", (e) => {
-    queryState.sort_order = e.target.value;
-    queryState.page = 1;
-    loadProjects();
-  });
-}
+          // 9.5. Sắp xếp thứ tự (sort_order)
+          if (sortOrderSelect) {
+            sortOrderSelect.addEventListener("change", (e) => {
+              queryState.sort_order = e.target.value;
+              queryState.page = 1;
+              loadProjects();
+            });
+          }
 
-// 9.6. Kích thước trang (page_size)
-if (pageSizeSelect) {
-  pageSizeSelect.addEventListener("change", (e) => {
-    queryState.page_size = Number(e.target.value);
-    queryState.page = 1;
-    loadProjects();
-  });
-}
+          // 9.6. Kích thước trang (page_size)
+          if (pageSizeSelect) {
+            pageSizeSelect.addEventListener("change", (e) => {
+              queryState.page_size = Number(e.target.value);
+              queryState.page = 1;
+              loadProjects();
+            });
+          }
 
-// 9.7. Click các nút trên thanh phân trang (Pagination Controls)
-if (paginationControls) {
-  paginationControls.addEventListener("click", (e) => {
-    const btn = e.target.closest(".pagination-btn");
-    if (!btn || btn.disabled) return;
-    const targetPage = Number(btn.dataset.page);
-    if (targetPage && targetPage !== queryState.page) {
-      goToPage(targetPage);
-    }
-  });
-}
+          // 9.7. Click các nút trên thanh phân trang (Pagination Controls)
+          if (paginationControls) {
+            paginationControls.addEventListener("click", (e) => {
+              const btn = e.target.closest(".pagination-btn");
+              if (!btn || btn.disabled) return;
+              const targetPage = Number(btn.dataset.page);
+              if (targetPage && targetPage !== queryState.page) {
+                goToPage(targetPage);
+              }
+            });
+          }
 
-// 10. Quản lý Popup Modal Tạo dự án mới
-function openModal() {
-  modal.classList.add("is-open");
-  nameInput.value = "";
-  descInput.value = "";
-  nameInput.classList.remove("is-invalid");
-  nameError.classList.remove("is-visible");
-  nameInput.focus();
-}
+          // 10. Quản lý Popup Modal Tạo dự án mới
+          function openModal() {
+            modal.classList.add("is-open");
+            nameInput.value = "";
+            descInput.value = "";
+            nameInput.classList.remove("is-invalid");
+            nameError.classList.remove("is-visible");
+            nameInput.focus();
+          }
 
-function closeModal() {
-  modal.classList.remove("is-open");
-  createForm.reset();
-  nameInput.classList.remove("is-invalid");
-  nameError.classList.remove("is-visible");
-}
+          function closeModal() {
+            modal.classList.remove("is-open");
+            createForm.reset();
+            nameInput.classList.remove("is-invalid");
+            nameError.classList.remove("is-visible");
+          }
 
-if (btnOpenModal) btnOpenModal.addEventListener("click", openModal);
-if (btnEmptyCreate) btnEmptyCreate.addEventListener("click", openModal);
-if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
-if (btnCancelModal) btnCancelModal.addEventListener("click", closeModal);
+          if (btnOpenModal) btnOpenModal.addEventListener("click", openModal);
+          if (btnEmptyCreate) btnEmptyCreate.addEventListener("click", openModal);
+          if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
+          if (btnCancelModal) btnCancelModal.addEventListener("click", closeModal);
 
-modal.addEventListener("click", (e) => {
-  if (e.target === modal) closeModal();
-});
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeModal();
+          });
 
-nameInput.addEventListener("input", () => {
-  nameInput.classList.remove("is-invalid");
-  nameError.classList.remove("is-visible");
-});
+          nameInput.addEventListener("input", () => {
+            nameInput.classList.remove("is-invalid");
+            nameError.classList.remove("is-visible");
+          });
 
-// 11. Gửi form tạo dự án mới
-createForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const name = nameInput.value.trim();
-  const desc = descInput.value.trim();
-  const startDate = startDateInput.value || new Date().toISOString().slice(0, 10);
-  const deadline = endDateInput.value || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-  const status = statusInput.value;
+          // 11. Gửi form tạo dự án mới
+          createForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const name = nameInput.value.trim();
+            const desc = descInput.value.trim();
+            const startDate = startDateInput.value || new Date().toISOString().slice(0, 10);
+            const deadline = endDateInput.value || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+            const status = statusInput.value;
 
-  if (!name) {
-    nameInput.classList.add("is-invalid");
-    nameError.textContent = "Vui lòng nhập tên đề tài / dự án";
-    nameError.classList.add("is-visible");
-    nameInput.focus();
-    return;
-  }
+            if (!name) {
+              nameInput.classList.add("is-invalid");
+              nameError.textContent = "Vui lòng nhập tên đề tài / dự án";
+              nameError.classList.add("is-visible");
+              nameInput.focus();
+              return;
+            }
 
-  const nowIso = new Date().toISOString();
-  const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
+            const nowIso = new Date().toISOString();
+            const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
 
-  const newProject = {
-    id: Date.now(),
-    name,
-    description: desc,
-    start_date: startDate,
-    deadline: deadline,
-    end_date: deadline,
-    created_at: nowIso,
-    updated_at: nowIso,
-    status,
-    owner_id: currentUser ? (currentUser.id || 1) : 1,
-    owner: currentUser || { id: 1, full_name: "Nguyễn Văn Đức", email: "truongnhom@ptit.edu.vn" },
-    total_tasks: 0,
-    done_tasks: 0,
-    members: 1
-  };
+            const newProject = {
+              id: Date.now(),
+              name,
+              description: desc,
+              start_date: startDate,
+              deadline: deadline,
+              end_date: deadline,
+              created_at: nowIso,
+              updated_at: nowIso,
+              status,
+              owner_id: currentUser ? (currentUser.id || 1) : 1,
+              owner: currentUser || { id: 1, full_name: "Nguyễn Văn Đức", email: "truongnhom@ptit.edu.vn" },
+              total_tasks: 0,
+              done_tasks: 0,
+              members: 1
+            };
 
-  localProjects.unshift(newProject);
-  closeModal();
-  showToast("Tạo dự án mới thành công!", "success");
+            localProjects.unshift(newProject);
+            closeModal();
+            showToast("Tạo dự án mới thành công!", "success");
 
-  // Về trang 1 và tải lại danh sách
-  queryState.page = 1;
-  loadProjects();
-});
+            // Về trang 1 và tải lại danh sách
+            queryState.page = 1;
+            loadProjects();
+          });
 
-// 12. Khởi chạy tải dữ liệu ban đầu
-loadProjects();
+          // 12. Khởi chạy tải dữ liệu ban đầu
+          loadProjects();
