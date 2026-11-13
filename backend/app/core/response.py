@@ -35,6 +35,7 @@ def success_response(
     content = {
         "success": True,
         "code": code,
+        "status_code": code,
         "message": message,
         "data": jsonable_encoder(data) if data is not None else None,
     }
@@ -54,6 +55,7 @@ def paginated_response(
     content = {
         "success": True,
         "code": code,
+        "status_code": code,
         "message": message,
         "data": {
             "items": jsonable_encoder(items),

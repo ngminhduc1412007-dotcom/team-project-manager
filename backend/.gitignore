@@ -14,3 +14,7 @@ env/
 
 # Ignore AGENT
 GEMINI.md
+
+# Tests
+tests/
+.pytest_cache/
