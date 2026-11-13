@@ -21,17 +21,31 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import UnauthorizedException
 from app.core.response import create_response, paginated_response
 from app.core.security import decode_access_token
+from app.crud.project_members import (
+    add_project_member_by_email,
+    get_project_members,
+)
 from app.crud.projects import (
     create_project,
     delete_project,
     get_project_by_id,
     get_projects,
     update_project,
+    update_project_status,
 )
 from app.db.session import get_db
 from app.models.users import User
 from app.schemas.common import ResponseModel
-from app.schemas.projects import ProjectCreate, ProjectDetailResponse, ProjectUpdate
+from app.schemas.project_members import (
+    AddMemberByEmailRequest,
+    ProjectMemberResponse,
+)
+from app.schemas.projects import (
+    ProjectCreate,
+    ProjectDetailResponse,
+    ProjectStatusUpdate,
+    ProjectUpdate,
+)
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -197,13 +211,46 @@ def update_project_endpoint(
         db=db,
         project_id=project_id,
         data=data,
-        current_user_id=current_user.id,
+        current_user=current_user,
     )
     project_data = ProjectDetailResponse.model_validate(project).model_dump()
     return create_response(
         request=request,
         status_code=status.HTTP_200_OK,
         message="Cập nhật dự án thành công.",
+        data=project_data,
+    )
+
+
+@router.patch(
+    "/{project_id}/status",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    summary="Cập nhật trạng thái dự án (chỉ chủ dự án và admin)",
+    description=(
+        "Cập nhật riêng trạng thái của dự án (planning, in_progress, completed).\n"
+        "Chỉ chủ dự án (owner) và quản trị viên (admin) mới có quyền thực hiện; "
+        "người khác trả 403, không tìm thấy trả 404."
+    ),
+)
+def update_project_status_endpoint(
+    request: Request,
+    project_id: int,
+    data: ProjectStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    project = update_project_status(
+        db=db,
+        project_id=project_id,
+        new_status=data.status,
+        current_user=current_user,
+    )
+    project_data = ProjectDetailResponse.model_validate(project).model_dump()
+    return create_response(
+        request=request,
+        status_code=status.HTTP_200_OK,
+        message="Cập nhật trạng thái dự án thành công.",
         data=project_data,
     )
 
@@ -229,5 +276,64 @@ def delete_project_endpoint(
         request=request,
         status_code=status.HTTP_200_OK,
         message=f"Dự án id={project_id} đã được xoá thành công.",
+    )
+
+
+@router.post(
+    "/{project_id}/members",
+    response_model=ResponseModel,
+    status_code=status.HTTP_201_CREATED,
+    summary="Thêm thành viên vào dự án theo email (chỉ chủ dự án)",
+    description=(
+        "Thêm thành viên vào dự án bằng email.\n"
+        "- Chỉ chủ dự án mới có quyền thêm thành viên (người khác trả 403).\n"
+        "- Chặn người dùng không tồn tại (trả 404).\n"
+        "- Chặn thêm trùng nếu người dùng đã là chủ sở hữu hoặc thành viên của dự án (trả 409).\n"
+        "- Dự án không tồn tại trả 404."
+    ),
+)
+def add_project_member_endpoint(
+    request: Request,
+    project_id: int,
+    data: AddMemberByEmailRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    member = add_project_member_by_email(
+        db=db,
+        project_id=project_id,
+        email=data.email,
+        role=data.role,
+        current_user_id=current_user.id,
+    )
+    member_data = ProjectMemberResponse.model_validate(member).model_dump()
+    return create_response(
+        request=request,
+        status_code=status.HTTP_201_CREATED,
+        message="Thêm thành viên vào dự án thành công.",
+        data=member_data,
+    )
+
+
+@router.get(
+    "/{project_id}/members",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    summary="Danh sách thành viên của dự án",
+    description="Lấy danh sách tất cả thành viên trong một dự án.",
+)
+def list_project_members_endpoint(
+    request: Request,
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    members = get_project_members(db=db, project_id=project_id)
+    serialized = [ProjectMemberResponse.model_validate(m).model_dump() for m in members]
+    return create_response(
+        request=request,
+        status_code=status.HTTP_200_OK,
+        message="Lấy danh sách thành viên dự án thành công.",
+        data=serialized,
     )
 

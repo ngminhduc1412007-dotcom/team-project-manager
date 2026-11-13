@@ -10,8 +10,10 @@ from app.schemas.common import (
     ResponseModel,
 )
 from app.schemas.project_members import (
+    AddMemberByEmailRequest,
     ProjectMemberBase,
     ProjectMemberCreate,
+    ProjectMemberCreateByEmail,
     ProjectMemberResponse,
     ProjectMemberRole,
     ProjectMemberUpdate,
@@ -57,6 +59,8 @@ __all__ = [
     "ProjectMemberRole",
     "ProjectMemberBase",
     "ProjectMemberCreate",
+    "ProjectMemberCreateByEmail",
+    "AddMemberByEmailRequest",
     "ProjectMemberUpdate",
     "ProjectMemberResponse",
     "RegisterRequest",

@@ -1,7 +1,7 @@
 from datetime import datetime
 import enum
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.schemas.users import UserResponse
 
@@ -26,6 +26,27 @@ class ProjectMemberBase(BaseModel):
 # Schema nhận dữ liệu khi thêm thành viên mới vào dự án.
 class ProjectMemberCreate(ProjectMemberBase):
     pass
+
+
+# Schema nhận dữ liệu khi thêm thành viên vào dự án theo Email.
+class AddMemberByEmailRequest(BaseModel):
+    email: EmailStr = Field(..., description="Email của người dùng cần thêm vào dự án")
+    role: ProjectMemberRole = Field(
+        default=ProjectMemberRole.MEMBER,
+        description="Vai trò trong dự án (admin, member, viewer). Mặc định là member.",
+    )
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_role(cls, v):
+        if v is None:
+            return ProjectMemberRole.MEMBER
+        if isinstance(v, str):
+            v = v.strip().lower()
+        return v
+
+
+ProjectMemberCreateByEmail = AddMemberByEmailRequest
 
 
 # Schema nhận dữ liệu khi cập nhật vai trò của thành viên trong dự án.
