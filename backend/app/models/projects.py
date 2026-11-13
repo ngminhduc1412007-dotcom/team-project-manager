@@ -8,6 +8,7 @@ from app.db.session import Base
 
 if TYPE_CHECKING:
     from app.models.project_members import ProjectMember
+    from app.models.tasks import Task
     from app.models.users import User
 
 
@@ -34,6 +35,10 @@ class Project(Base):
     # Danh sách thành viên tham gia dự án.
     members: Mapped[List["ProjectMember"]] = relationship(
         "ProjectMember", back_populates="project", cascade="all, delete-orphan"
+    )
+    # Danh sách task thuộc dự án (xóa cascade theo project).
+    tasks: Mapped[List["Task"]] = relationship(
+        "Task", back_populates="project", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

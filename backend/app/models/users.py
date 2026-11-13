@@ -10,6 +10,7 @@ from app.schemas.users import UserRole
 if TYPE_CHECKING:
     from app.models.project_members import ProjectMember
     from app.models.projects import Project
+    from app.models.tasks import Task
 
 
 # Model bảng users: email duy nhất, chỉ lưu mật khẩu đã hash, có vai trò.
@@ -39,6 +40,10 @@ class User(Base):
     # Danh sách dự án mà người dùng tham gia với tư cách thành viên.
     project_memberships: Mapped[List["ProjectMember"]] = relationship(
         "ProjectMember", back_populates="user", cascade="all, delete-orphan"
+    )
+    # Danh sách task được giao cho người dùng (SET NULL khi user bị xóa).
+    assigned_tasks: Mapped[List["Task"]] = relationship(
+        "Task", foreign_keys="Task.assignee_id", back_populates="assignee"
     )
 
     def __repr__(self) -> str:
