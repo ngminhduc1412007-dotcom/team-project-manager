@@ -14,9 +14,11 @@ from app.schemas.projects import ProjectCreate, ProjectUpdate
 SORT_FIELDS = {
     "id": Project.id,
     "name": Project.name,
+    "start_date": Project.start_date,
+    "deadline": Project.deadline,
+    "status": Project.status,
     "created_at": Project.created_at,
     "updated_at": Project.updated_at,
-    "deadline": Project.deadline,
 }
 
 
@@ -49,10 +51,13 @@ def _require_owner(project: Project, current_user_id: int) -> None:
 
 def create_project(db: Session, data: ProjectCreate, owner_id: int) -> Project:
     """Tạo dự án mới; người dùng hiện tại trở thành chủ sở hữu."""
+    status_val = data.status.value if hasattr(data.status, "value") else str(data.status)
     project = Project(
         name=data.name,
         description=data.description,
+        start_date=data.start_date,
         deadline=data.deadline,
+        status=status_val,
         owner_id=owner_id,
     )
     try:
@@ -148,6 +153,9 @@ def update_project(
 
     # Chỉ cập nhật các trường được gửi lên (exclude_unset)
     update_data = data.model_dump(exclude_unset=True)
+    if "status" in update_data and update_data["status"] is not None:
+        val = update_data["status"]
+        update_data["status"] = val.value if hasattr(val, "value") else str(val)
     for field, value in update_data.items():
         setattr(project, field, value)
 
