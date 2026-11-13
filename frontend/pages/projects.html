@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <link rel="icon" href="../assets/images/logo.png">
   <link rel="stylesheet" href="../css/style.css">
 </head>
+
 <body data-root="../">
   <header id="app-header"></header>
 
@@ -24,75 +26,80 @@
       </div>
     </div>
 
-    <!-- Thanh tìm kiếm, lọc, sắp xếp và phân trang -->
-    <div class="card" style="padding: 16px; margin-bottom: 20px;">
-      <!-- Hàng 1: Tìm kiếm theo tên & Lọc Dự án của tôi (my=true) -->
-      <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px;">
-        <div class="toolbar-search" style="flex: 1; min-width: 260px;">
-          <input type="search" id="search-input" placeholder="🔍 Tìm theo tên dự án (name / search)...">
-        </div>
-        
-        <!-- Toggle my=true -->
-        <div class="filter-group" id="my-filter-group">
-          <button type="button" class="filter-btn active" data-my="false">🌐 Tất cả dự án</button>
-          <button type="button" class="filter-btn" data-my="true" id="btn-filter-my">👤 Dự án của tôi (my=true)</button>
-        </div>
-      </div>
+        <!-- Thanh tìm kiếm, lọc, sắp xếp và phân trang -->
+        <div class="card" style="padding: 16px; margin-bottom: 20px;">
+          <!-- Hàng 1: Tìm kiếm theo tên & Lọc Dự án của tôi -->
+          <div
+            style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px;">
+            <div class="toolbar-search" style="flex: 1; min-width: 260px;">
+              <input type="search" id="search-input" placeholder="🔍 Tìm theo tên hoặc mô tả đồ án...">
+            </div>
 
-      <!-- Hàng 2: Lọc trạng thái, Sắp xếp (sort_by, sort_order) & Chọn page_size -->
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--color-border); padding-top: 12px;">
-        <!-- Lọc trạng thái -->
-        <div class="filter-group" id="filter-group">
-          <button type="button" class="filter-btn active" data-status="ALL">Tất cả</button>
-          <button type="button" class="filter-btn" data-status="ACTIVE">Đang thực hiện</button>
-          <button type="button" class="filter-btn" data-status="PLANNING">Lập kế hoạch</button>
-          <button type="button" class="filter-btn" data-status="COMPLETED">Đã hoàn thành</button>
-        </div>
+            <!-- Toggle lọc dự án -->
+            <div class="filter-group" id="my-filter-group">
+              <button type="button" class="filter-btn active" data-my="false">🌐 Tất cả dự án</button>
+              <button type="button" class="filter-btn" data-my="true" id="btn-filter-my">👤 Dự án của tôi</button>
+            </div>
+          </div>
 
-        <!-- Nhóm sắp xếp (sort_by, sort_order) & kích thước trang (page_size) -->
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <label for="sort-by" style="font-size: 13px; color: var(--color-muted); white-space: nowrap;">Sắp xếp:</label>
-          <select id="sort-by" style="width: auto; padding: 6px 10px; font-size: 13px;">
-            <option value="created_at" selected>Ngày tạo (created_at)</option>
-            <option value="name">Tên dự án (name)</option>
-            <option value="deadline">Hạn chót (deadline)</option>
-            <option value="updated_at">Ngày cập nhật (updated_at)</option>
-            <option value="id">Mã ID (id)</option>
-          </select>
+            <!-- Hàng 2: Lọc trạng thái, Sắp xếp & Chọn số bản ghi mỗi trang -->
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--color-border); padding-top: 12px;">
+              <!-- Lọc trạng thái -->
+              <div class="filter-group" id="filter-group">
+                <button type="button" class="filter-btn active" data-status="ALL">Tất cả</button>
+                <button type="button" class="filter-btn" data-status="ACTIVE">Đang thực hiện</button>
+                <button type="button" class="filter-btn" data-status="PLANNING">Lập kế hoạch</button>
+                <button type="button" class="filter-btn" data-status="COMPLETED">Đã hoàn thành</button>
+              </div>
 
-          <select id="sort-order" style="width: auto; padding: 6px 10px; font-size: 13px;">
-            <option value="desc" selected>Giảm dần (desc)</option>
-            <option value="asc">Tăng dần (asc)</option>
-          </select>
+              <!-- Nhóm sắp xếp & kích thước trang -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <label for="sort-by" style="font-size: 13px; color: var(--color-muted); white-space: nowrap;">Sắp
+                  xếp:</label>
+                <select id="sort-by" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                  <option value="created_at" selected>Ngày tạo</option>
+                  <option value="name">Tên dự án</option>
+                  <option value="deadline">Hạn chót</option>
+                  <option value="updated_at">Ngày cập nhật</option>
+                  <option value="id">Mã dự án</option>
+                </select>
 
-          <label for="page-size" style="font-size: 13px; color: var(--color-muted); margin-left: 6px; white-space: nowrap;">Hiển thị:</label>
-          <select id="page-size" style="width: auto; padding: 6px 10px; font-size: 13px;">
-            <option value="6">6 / trang</option>
-            <option value="10" selected>10 / trang</option>
-            <option value="20">20 / trang</option>
-          </select>
-        </div>
-      </div>
-    </div>
+                <select id="sort-order" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                  <option value="desc" selected>Giảm dần</option>
+                  <option value="asc">Tăng dần</option>
+                </select>
 
-    <!-- Lưới thẻ dự án (Project Cards) -->
-    <div id="project-grid" class="project-grid"></div>
+                <label for="page-size"
+                  style="font-size: 13px; color: var(--color-muted); margin-left: 6px; white-space: nowrap;">Hiển
+                  thị:</label>
+                <select id="page-size" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                  <option value="6">6 / trang</option>
+                  <option value="10" selected>10 / trang</option>
+                  <option value="20">20 / trang</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-    <!-- Trạng thái rỗng (Empty State) -->
-    <div id="empty-state" class="empty-box" style="display: none;">
-      <div class="empty-icon">📁</div>
-      <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
-      <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
-      <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
-    </div>
+          <!-- Lưới thẻ dự án (Project Cards) -->
+          <div id="project-grid" class="project-grid"></div>
 
-    <!-- Thanh phân trang (Pagination) -->
-    <div class="pagination-wrapper" id="pagination-wrapper" style="display: none;">
-      <div class="pagination-info" id="pagination-info">
-        Hiển thị 0 trên tổng số 0 dự án
-      </div>
-      <div class="pagination-controls" id="pagination-controls"></div>
-    </div>
+          <!-- Trạng thái rỗng (Empty State) -->
+          <div id="empty-state" class="empty-box" style="display: none;">
+            <div class="empty-icon">📁</div>
+            <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
+            <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
+            <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
+          </div>
+
+          <!-- Thanh phân trang (Pagination) -->
+          <div class="pagination-wrapper" id="pagination-wrapper" style="display: none;">
+            <div class="pagination-info" id="pagination-info">
+              Hiển thị 0 trên tổng số 0 dự án
+            </div>
+            <div class="pagination-controls" id="pagination-controls"></div>
+          </div>
   </main>
 
   <!-- Modal Tạo Dự Án Mới -->
@@ -151,5 +158,5 @@
   <script src="../js/layout.js"></script>
   <script src="../js/pages/projects.js"></script>
 </body>
-</html>
 
+</html>
