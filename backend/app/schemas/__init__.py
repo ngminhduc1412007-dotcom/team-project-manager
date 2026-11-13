@@ -17,10 +17,12 @@ from app.schemas.project_members import (
     ProjectMemberUpdate,
 )
 from app.schemas.projects import (
+    PROJECT_STATUS_LABEL,
     ProjectBase,
     ProjectCreate,
     ProjectDetailResponse,
     ProjectResponse,
+    ProjectStatus,
     ProjectUpdate,
 )
 from app.schemas.users import (
@@ -50,6 +52,8 @@ __all__ = [
     "ProjectUpdate",
     "ProjectResponse",
     "ProjectDetailResponse",
+    "ProjectStatus",
+    "PROJECT_STATUS_LABEL",
     "ProjectMemberRole",
     "ProjectMemberBase",
     "ProjectMemberCreate",
