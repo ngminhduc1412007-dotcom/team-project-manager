@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from sqlalchemy.orm import Session, joinedload
 
@@ -6,9 +6,13 @@ from app.core.exceptions import (
     BadRequestException,
     ForbiddenException,
     NotFoundException,
+    UnauthorizedException,
 )
+from app.crud.project_members import get_user_project_role
 from app.models.projects import Project
-from app.schemas.projects import ProjectCreate, ProjectUpdate
+from app.models.users import User
+from app.schemas.projects import ProjectCreate, ProjectStatus, ProjectUpdate
+from app.schemas.users import UserRole
 
 # Các trường hợp lệ cho phép sắp xếp danh sách dự án
 SORT_FIELDS = {
@@ -37,6 +41,37 @@ def _get_project_or_404(db: Session, project_id: int) -> Project:
             message=f"Không tìm thấy dự án với id={project_id}."
         )
     return project
+
+
+def _is_owner_or_admin(db: Session, project: Project, user: User) -> bool:
+    """Kiểm tra người dùng có phải chủ dự án (owner) hoặc quản trị viên (admin) không."""
+    # 1. Admin hệ thống (role == 'ADMIN')
+    if getattr(user, "role", None) in (UserRole.ADMIN, "ADMIN"):
+        return True
+
+    # 2. Chủ sở hữu dự án (owner_id)
+    if project.owner_id == user.id:
+        return True
+
+    # 3. Vai trò trong dự án (owner hoặc admin trong bảng project_members)
+    role = get_user_project_role(db=db, project_id=project.id, user_id=user.id)
+    if role in ("owner", "admin"):
+        return True
+
+    return False
+
+
+def _require_owner_or_admin(
+    db: Session,
+    project: Project,
+    user: User,
+    action_description: str = "thực hiện thao tác này",
+) -> None:
+    """Kiểm tra quyền owner hoặc admin; ném 403 nếu không đủ quyền."""
+    if not _is_owner_or_admin(db=db, project=project, user=user):
+        raise ForbiddenException(
+            message=f"Chỉ chủ dự án (owner) và quản trị viên (admin) mới có quyền {action_description}."
+        )
 
 
 def _require_owner(project: Project, current_user_id: int) -> None:
@@ -141,21 +176,49 @@ def get_projects(
 
 
 def update_project(
-    db: Session, project_id: int, data: ProjectUpdate, current_user_id: int
+    db: Session,
+    project_id: int,
+    data: ProjectUpdate,
+    current_user_id: Optional[int] = None,
+    current_user: Optional[User] = None,
 ) -> Project:
     """
     Cập nhật thông tin dự án.
+    - Status chỉ cho phép chủ dự án (owner) và admin chỉnh sửa.
+    - Cập nhật thông tin dự án cho phép chủ dự án (owner) và admin.
     - Ném 404 nếu không tìm thấy dự án.
-    - Ném 403 nếu người dùng không phải chủ dự án.
+    - Ném 403 nếu không có quyền.
     """
     project = _get_project_or_404(db, project_id)
-    _require_owner(project, current_user_id)
 
-    # Chỉ cập nhật các trường được gửi lên (exclude_unset)
+    user = current_user
+    if user is None and current_user_id is not None:
+        user = db.query(User).filter(User.id == current_user_id).first()
+
+    if user is None:
+        raise UnauthorizedException(message="Không tìm thấy người dùng thực hiện thao tác.")
+
     update_data = data.model_dump(exclude_unset=True)
-    if "status" in update_data and update_data["status"] is not None:
+
+    # Nếu có cập nhật trạng thái (status): chỉ owner dự án và admin được phép
+    if "status" in update_data:
+        _require_owner_or_admin(
+            db=db,
+            project=project,
+            user=user,
+            action_description="chỉnh sửa trạng thái dự án",
+        )
         val = update_data["status"]
         update_data["status"] = val.value if hasattr(val, "value") else str(val)
+
+    # Quyền chung để chỉnh sửa dự án: chỉ owner hoặc admin
+    _require_owner_or_admin(
+        db=db,
+        project=project,
+        user=user,
+        action_description="chỉnh sửa dự án",
+    )
+
     for field, value in update_data.items():
         setattr(project, field, value)
 
@@ -169,14 +232,63 @@ def update_project(
     return _get_project_or_404(db, project_id)
 
 
-def delete_project(db: Session, project_id: int, current_user_id: int) -> None:
+def update_project_status(
+    db: Session,
+    project_id: int,
+    new_status: Union[ProjectStatus, str],
+    current_user: User,
+) -> Project:
+    """
+    Cập nhật riêng trạng thái dự án (chỉ cho phép chủ dự án và admin).
+    """
+    project = _get_project_or_404(db, project_id)
+
+    _require_owner_or_admin(
+        db=db,
+        project=project,
+        user=current_user,
+        action_description="chỉnh sửa trạng thái dự án",
+    )
+
+    status_val = new_status.value if hasattr(new_status, "value") else str(new_status)
+    project.status = status_val
+
+    try:
+        db.commit()
+        db.refresh(project)
+    except Exception:
+        db.rollback()
+        raise
+
+    return _get_project_or_404(db, project_id)
+
+
+def delete_project(
+    db: Session,
+    project_id: int,
+    current_user_id: Optional[int] = None,
+    current_user: Optional[User] = None,
+) -> None:
     """
     Xoá dự án.
     - Ném 404 nếu không tìm thấy dự án.
-    - Ném 403 nếu người dùng không phải chủ dự án.
+    - Ném 403 nếu người dùng không phải chủ dự án hoặc admin.
     """
     project = _get_project_or_404(db, project_id)
-    _require_owner(project, current_user_id)
+
+    user = current_user
+    if user is None and current_user_id is not None:
+        user = db.query(User).filter(User.id == current_user_id).first()
+
+    if user is None:
+        raise UnauthorizedException(message="Không tìm thấy người dùng thực hiện thao tác.")
+
+    _require_owner_or_admin(
+        db=db,
+        project=project,
+        user=user,
+        action_description="xoá dự án",
+    )
 
     try:
         db.delete(project)

@@ -87,6 +87,25 @@ class ProjectUpdate(BaseModel):
         return v
 
 
+# Schema nhận dữ liệu khi chỉ cập nhật trạng thái dự án.
+class ProjectStatusUpdate(BaseModel):
+    status: ProjectStatus = Field(
+        ...,
+        description="Trạng thái mới của dự án: planning, in_progress, completed",
+    )
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def normalize_status(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            key = v.strip().lower()
+            if key in _STATUS_NORMALIZATION_MAP:
+                return _STATUS_NORMALIZATION_MAP[key]
+        return v
+
+
 # Schema trả về thông tin dự án ra API.
 class ProjectResponse(ProjectBase):
     id: int = Field(..., description="ID định danh duy nhất của dự án")
@@ -105,4 +124,3 @@ class ProjectDetailResponse(ProjectResponse):
     )
 
     model_config = ConfigDict(from_attributes=True)
-
