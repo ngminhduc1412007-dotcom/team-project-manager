@@ -100,17 +100,32 @@ def create_project_endpoint(
     "",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
-    summary="Danh sách dự án (có phân trang)",
+    summary="Danh sách dự án (tìm kiếm, phân trang, sắp xếp)",
     description=(
-        "Lấy danh sách dự án. "
-        "Truyền `owner_id` để lọc theo chủ dự án. "
-        "Truyền `my=true` để chỉ lấy dự án của người đang đăng nhập."
+        "Lấy danh sách dự án có hỗ trợ tìm kiếm theo tên, phân trang và sắp xếp.\n"
+        "- `name` / `search`: Tìm kiếm theo tên dự án (chứa chuỗi, không phân biệt hoa thường).\n"
+        "- `page`: Trang hiện tại (>= 1, mặc định 1).\n"
+        "- `page_size`: Số bản ghi mỗi trang (1-100, mặc định 10).\n"
+        "- `sort_by`: Trường sắp xếp (`id`, `name`, `created_at`, `updated_at`, `deadline`; mặc định `created_at`).\n"
+        "- `sort_order`: Thứ tự sắp xếp (`asc` hoặc `desc`; mặc định `desc`).\n"
+        "- `owner_id`: Lọc theo ID chủ dự án.\n"
+        "- `my=true`: Chỉ lấy dự án của người đang đăng nhập."
     ),
 )
 def list_projects_endpoint(
     request: Request,
+    name: Optional[str] = Query(default=None, description="Tìm kiếm theo tên dự án"),
+    search: Optional[str] = Query(default=None, description="Từ khoá tìm kiếm theo tên dự án"),
     page: int = Query(default=1, ge=1, description="Trang hiện tại"),
     page_size: int = Query(default=10, ge=1, le=100, description="Số bản ghi mỗi trang"),
+    sort_by: str = Query(
+        default="created_at",
+        description="Trường cần sắp xếp: id, name, created_at, updated_at, deadline",
+    ),
+    sort_order: str = Query(
+        default="desc",
+        description="Thứ tự sắp xếp: asc hoặc desc",
+    ),
     owner_id: Optional[int] = Query(default=None, description="Lọc theo ID chủ dự án"),
     my: bool = Query(default=False, description="Chỉ lấy dự án của tôi"),
     db: Session = Depends(get_db),
@@ -118,7 +133,16 @@ def list_projects_endpoint(
 ):
     # Nếu my=true thì override owner_id bằng id người dùng hiện tại
     effective_owner_id = current_user.id if my else owner_id
-    items, total = get_projects(db=db, page=page, page_size=page_size, owner_id=effective_owner_id)
+    items, total = get_projects(
+        db=db,
+        page=page,
+        page_size=page_size,
+        owner_id=effective_owner_id,
+        name=name,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
     serialized = [ProjectDetailResponse.model_validate(p).model_dump() for p in items]
     return paginated_response(
         items=serialized,
