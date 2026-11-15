@@ -18,7 +18,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import UnauthorizedException
+from app.core.exceptions import NotFoundException, UnauthorizedException
 from app.core.response import create_response, paginated_response
 from app.core.security import decode_access_token
 from app.crud.project_members import (
@@ -157,6 +157,9 @@ def list_projects_endpoint(
         sort_by=sort_by,
         sort_order=sort_order,
     )
+    if total == 0 or not items:
+        raise NotFoundException(message="Không tìm thấy dự án.")
+
     serialized = [ProjectDetailResponse.model_validate(p).model_dump() for p in items]
     return paginated_response(
         items=serialized,

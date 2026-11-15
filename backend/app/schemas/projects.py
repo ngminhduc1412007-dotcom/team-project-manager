@@ -45,7 +45,7 @@ class ProjectBase(BaseModel):
     description: Optional[str] = Field(default=None, description="Mô tả chi tiết dự án")
     start_date: Optional[datetime] = Field(default=None, description="Ngày bắt đầu dự án")
     deadline: Optional[datetime] = Field(default=None, description="Hạn chót hoàn thành dự án")
-    status: ProjectStatus = Field(
+    status: Optional[ProjectStatus] = Field(
         default=ProjectStatus.PLANNING,
         description="Trạng thái dự án: planning (lập kế hoạch), in_progress (đang thực hiện), completed (đã hoàn thành)",
     )
@@ -53,8 +53,8 @@ class ProjectBase(BaseModel):
     @field_validator("status", mode="before")
     @classmethod
     def normalize_status(cls, v):
-        if v is None:
-            return v
+        if v is None or v == "":
+            return ProjectStatus.PLANNING
         if isinstance(v, str):
             key = v.strip().lower()
             if key in _STATUS_NORMALIZATION_MAP:
