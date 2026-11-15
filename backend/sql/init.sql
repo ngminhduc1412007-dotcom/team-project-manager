@@ -76,3 +76,6 @@ CREATE TABLE IF NOT EXISTS project_members (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SHOW TABLES;
+
+SELECT * FROM users;
+SELECT * FROM projects;
