@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang chủ | Student Project Hub</title>
+  <link rel="icon" href="assets/images/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-root="./">
+  <header id="app-header"></header>
+
+  <main class="container">
+    <section class="card">
+      <h1>Student Project Management System</h1>
+      <p>Nền tảng quản lý đồ án và bài tập nhóm dành cho sinh viên CNTT PTIT.</p>
+      <p>Địa chỉ API Backend: <code id="api-url"></code> <span class="muted">(cấu hình trong <code>js/config.js</code>)</span></p>
+      
+      <div id="health-status" class="status status-loading">Đang kiểm tra kết nối Backend...</div>
+      
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button id="btn-recheck" class="btn">Kiểm tra lại kết nối</button>
+        <a href="pages/projects.html" class="btn btn-primary">Xem Dự án của tôi</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Các chức năng chính của hệ thống</h2>
+      <ul>
+        <li><a href="pages/projects.html"><strong>Dự án của tôi:</strong> Xem danh sách đồ án nhóm, theo dõi tiến độ %, tạo dự án mới</a></li>
+        <li><a href="pages/login.html"><strong>Đăng nhập / Đăng ký:</strong> Xác thực và tạo tài khoản thành viên nhóm</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer id="app-footer"></footer>
+
+  <!-- Thứ tự script chuẩn: Axios CDN -> Config -> Api -> Utils -> Layout -> Script trang -->
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/pages/home.js"></script>
+</body>
+</html>
+
