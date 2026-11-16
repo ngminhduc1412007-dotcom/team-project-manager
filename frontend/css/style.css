@@ -262,6 +262,13 @@ select.is-invalid {
 .btn-danger {
   color: var(--color-danger);
   border-color: #fca5a5;
+  background: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #fef2f2;
+  border-color: var(--color-danger);
+  color: #b91c1c;
 }
 
 .btn-small {
