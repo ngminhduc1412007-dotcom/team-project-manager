@@ -3,43 +3,234 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trang chủ | Student Project Hub</title>
+  <title>Dashboard | Student Project Hub</title>
   <link rel="icon" href="assets/images/logo.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-root="./">
   <header id="app-header"></header>
 
-  <main class="container">
-    <section class="card">
-      <h1>Student Project Management System</h1>
-      <p>Nền tảng quản lý đồ án và bài tập nhóm dành cho sinh viên CNTT PTIT.</p>
-      <p>Địa chỉ API Backend: <code id="api-url"></code> <span class="muted">(cấu hình trong <code>js/config.js</code>)</span></p>
-      
-      <div id="health-status" class="status status-loading">Đang kiểm tra kết nối Backend...</div>
-      
-      <div style="display: flex; gap: 8px; margin-top: 14px;">
-        <button id="btn-recheck" class="btn">Kiểm tra lại kết nối</button>
-        <a href="pages/projects.html" class="btn btn-primary">Xem Dự án của tôi</a>
+  <main class="container dashboard">
+    <section class="dashboard-header">
+      <div>
+        <p class="dashboard-eyebrow">TỔNG QUAN</p>
+        <h1>Dashboard</h1>
+        <p class="dashboard-subtitle">Theo dõi tiến độ học tập và các công việc nhóm của bạn.</p>
       </div>
+      <a href="pages/projects.html" class="btn btn-primary">Xem dự án <span aria-hidden="true">→</span></a>
     </section>
-    <section class="card">
-      <h2>Các chức năng chính của hệ thống</h2>
-      <ul>
-        <li><a href="pages/projects.html"><strong>Dự án của tôi:</strong> Xem danh sách đồ án nhóm, theo dõi tiến độ %, tạo dự án mới</a></li>
-        <li><a href="pages/login.html"><strong>Đăng nhập / Đăng ký:</strong> Xác thực và tạo tài khoản thành viên nhóm</a></li>
-      </ul>
+
+    <section class="stats-grid" aria-label="Thống kê tổng quan">
+      <article class="stat-card stat-card-blue">
+        <div class="stat-card-top">
+          <span class="stat-label">Tổng dự án</span>
+          <span class="stat-icon" aria-hidden="true">▤</span>
+        </div>
+        <p class="stat-value">08</p>
+        <p class="stat-note">2 dự án đang thực hiện</p>
+      </article>
+      <article class="stat-card stat-card-violet">
+        <div class="stat-card-top">
+          <span class="stat-label">Công việc</span>
+          <span class="stat-icon" aria-hidden="true">☷</span>
+        </div>
+        <p class="stat-value">24</p>
+        <p class="stat-note">Được giao cho bạn</p>
+      </article>
+      <article class="stat-card stat-card-green">
+        <div class="stat-card-top">
+          <span class="stat-label">Đã hoàn thành</span>
+          <span class="stat-icon" aria-hidden="true">✓</span>
+        </div>
+        <p class="stat-value">16</p>
+        <p class="stat-note">Trong tổng số 24 công việc</p>
+      </article>
+      <article class="stat-card stat-card-orange">
+        <div class="stat-card-top">
+          <span class="stat-label">Sắp đến hạn</span>
+          <span class="stat-icon" aria-hidden="true">◷</span>
+        </div>
+        <p class="stat-value">04</p>
+        <p class="stat-note">Trong 7 ngày tới</p>
+      </article>
+    </section>
+
+    <section class="dashboard-panel kanban-panel" aria-labelledby="kanban-title">
+      <div class="panel-heading">
+        <div>
+          <h2 id="kanban-title">Bảng công việc</h2>
+          <p>Kéo thẻ giữa các cột để cập nhật tiến độ. Dữ liệu minh họa, chưa kết nối API.</p>
+        </div>
+        <span class="task-count" id="kanban-task-count">0 công việc</span>
+      </div>
+      <div class="kanban-board" id="kanban-board" aria-label="Bảng Kanban">
+        <section class="kanban-column" aria-labelledby="kanban-todo-title">
+          <div class="kanban-column-heading">
+            <h3 id="kanban-todo-title">Cần làm</h3>
+            <span class="kanban-column-count" data-count-for="todo">0</span>
+          </div>
+          <div class="kanban-column-cards" data-dropzone="todo"></div>
+        </section>
+        <section class="kanban-column" aria-labelledby="kanban-doing-title">
+          <div class="kanban-column-heading">
+            <h3 id="kanban-doing-title">Đang làm</h3>
+            <span class="kanban-column-count" data-count-for="doing">0</span>
+          </div>
+          <div class="kanban-column-cards" data-dropzone="doing"></div>
+        </section>
+        <section class="kanban-column" aria-labelledby="kanban-done-title">
+          <div class="kanban-column-heading">
+            <h3 id="kanban-done-title">Hoàn thành</h3>
+            <span class="kanban-column-count" data-count-for="done">0</span>
+          </div>
+          <div class="kanban-column-cards" data-dropzone="done"></div>
+        </section>
+      </div>
+      <p class="kanban-live-region" id="kanban-status" aria-live="polite"></p>
+    </section>
+
+    <section class="dashboard-content">
+      <div class="dashboard-panel task-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Công việc sắp đến hạn</h2>
+            <p>Đừng quên hoàn thành các công việc này đúng thời hạn.</p>
+          </div>
+          <span class="task-count">5 công việc</span>
+        </div>
+
+        <div class="task-list">
+          <article class="task-item">
+            <div class="task-date task-date-urgent">
+              <span>THÁNG 11</span>
+              <strong>12</strong>
+            </div>
+            <div class="task-details">
+              <h3>Hoàn thiện giao diện đăng nhập</h3>
+              <p>Website quản lý đồ án sinh viên</p>
+              <div class="task-meta">
+                <span class="task-project"><span aria-hidden="true">●</span> Đồ án Web</span>
+                <span class="task-priority priority-high">Ưu tiên cao</span>
+              </div>
+            </div>
+            <span class="task-due due-today">Hôm nay</span>
+          </article>
+
+          <article class="task-item">
+            <div class="task-date">
+              <span>THÁNG 11</span>
+              <strong>14</strong>
+            </div>
+            <div class="task-details">
+              <h3>Viết tài liệu đặc tả API</h3>
+              <p>Ứng dụng quản lý công việc nhóm</p>
+              <div class="task-meta">
+                <span class="task-project"><span aria-hidden="true">●</span> Quản lý nhóm</span>
+                <span class="task-priority priority-medium">Ưu tiên vừa</span>
+              </div>
+            </div>
+            <span class="task-due">Còn 2 ngày</span>
+          </article>
+
+          <article class="task-item">
+            <div class="task-date">
+              <span>THÁNG 11</span>
+              <strong>16</strong>
+            </div>
+            <div class="task-details">
+              <h3>Kiểm thử chức năng tạo dự án</h3>
+              <p>Website quản lý đồ án sinh viên</p>
+              <div class="task-meta">
+                <span class="task-project"><span aria-hidden="true">●</span> Đồ án Web</span>
+                <span class="task-priority priority-low">Ưu tiên thấp</span>
+              </div>
+            </div>
+            <span class="task-due">Còn 4 ngày</span>
+          </article>
+
+          <article class="task-item">
+            <div class="task-date">
+              <span>THÁNG 11</span>
+              <strong>18</strong>
+            </div>
+            <div class="task-details">
+              <h3>Chuẩn bị nội dung thuyết trình</h3>
+              <p>Phân tích và thiết kế hệ thống</p>
+              <div class="task-meta">
+                <span class="task-project"><span aria-hidden="true">●</span> Phân tích HT</span>
+                <span class="task-priority priority-medium">Ưu tiên vừa</span>
+              </div>
+            </div>
+            <span class="task-due">Còn 6 ngày</span>
+          </article>
+
+          <article class="task-item">
+            <div class="task-date">
+              <span>THÁNG 11</span>
+              <strong>21</strong>
+            </div>
+            <div class="task-details">
+              <h3>Rà soát báo cáo tiến độ</h3>
+              <p>Ứng dụng quản lý công việc nhóm</p>
+              <div class="task-meta">
+                <span class="task-project"><span aria-hidden="true">●</span> Quản lý nhóm</span>
+                <span class="task-priority priority-low">Ưu tiên thấp</span>
+              </div>
+            </div>
+            <span class="task-due">Còn 9 ngày</span>
+          </article>
+        </div>
+      </div>
+
+      <aside class="dashboard-sidebar">
+        <section class="dashboard-panel progress-panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Tiến độ dự án</h2>
+              <p>Tổng quan các dự án đang làm</p>
+            </div>
+          </div>
+          <div class="project-progress">
+            <div class="project-progress-heading">
+              <strong>Đồ án Web</strong>
+              <span>72%</span>
+            </div>
+            <div class="dashboard-progress-track"><span style="width: 72%"></span></div>
+          </div>
+          <div class="project-progress">
+            <div class="project-progress-heading">
+              <strong>Quản lý nhóm</strong>
+              <span>48%</span>
+            </div>
+            <div class="dashboard-progress-track progress-violet"><span style="width: 48%"></span></div>
+          </div>
+          <a class="panel-link" href="pages/projects.html">Xem tất cả dự án <span aria-hidden="true">→</span></a>
+        </section>
+
+        <section class="dashboard-panel connection-panel">
+          <div class="connection-heading">
+            <span class="connection-icon" aria-hidden="true">⌁</span>
+            <div>
+              <h2>Kết nối hệ thống</h2>
+              <p>Trạng thái dịch vụ backend</p>
+            </div>
+          </div>
+          <div id="health-status" class="status status-loading">Đang kiểm tra kết nối Backend...</div>
+          <p class="connection-api">API: <code id="api-url"></code></p>
+          <button id="btn-recheck" class="btn connection-button">Kiểm tra lại</button>
+        </section>
+      </aside>
     </section>
   </main>
 
   <footer id="app-footer"></footer>
 
-  <!-- Thứ tự script chuẩn: Axios CDN -> Config -> Api -> Utils -> Layout -> Script trang -->
   <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/layout.js"></script>
+  <script src="js/pages/kanban.js"></script>
   <script src="js/pages/home.js"></script>
 </body>
 </html>
