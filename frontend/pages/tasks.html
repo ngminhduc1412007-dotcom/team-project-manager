@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết dự án - Danh sách Task | Student Project Hub</title>
+  <link rel="icon" href="../assets/images/logo.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    :root {
+      --color-primary: #163b65;
+      --color-primary-dark: #0f2947;
+      --color-accent: #2fa84f;
+      --color-danger: #dc2626;
+      --color-success: #16a34a;
+      --color-warning: #d97706;
+      --color-text: #1f2937;
+      --color-muted: #6b7280;
+      --color-border: #e5e7eb;
+      --color-bg: #f8fafc;
+      --color-card: #ffffff;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--color-text);
+      background: var(--color-bg);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    main.container {
+      flex: 1;
+      padding-top: 24px;
+      padding-bottom: 24px;
+    }
+
+    #app-header {
+      background: var(--color-card);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 72px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav a {
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      color: var(--color-muted);
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .nav a:hover {
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    .nav a.active {
+      background: #e8f0f8;
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    .user-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 12px;
+      padding-left: 12px;
+      border-left: 1px solid var(--color-border);
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    #app-footer {
+      padding: 18px 0;
+      text-align: center;
+      color: var(--color-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--color-border);
+      background: var(--color-card);
+    }
+
+    .card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font: inherit;
+      font-size: 14px;
+      background: #ffffff;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(22, 59, 101, 0.12);
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      background: var(--color-card);
+      color: var(--color-text);
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--color-bg);
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-dark);
+      color: #fff;
+    }
+
+    .btn-danger {
+      color: var(--color-danger);
+      border-color: #fca5a5;
+    }
+
+    .btn-small {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-todo {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .badge-in-progress {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .badge-review {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .badge-done {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .priority-low {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .priority-medium {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .priority-high {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    .priority-urgent {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .project-subnav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+    }
+
+    .subnav-link {
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-muted);
+      text-decoration: none;
+    }
+
+    .subnav-link:hover {
+      background: var(--color-card);
+      color: var(--color-text);
+    }
+
+    .subnav-link.active {
+      background: var(--color-primary);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .project-stats-bar {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .project-stats-bar strong {
+      color: var(--color-text);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .table th,
+    .table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+    }
+
+    .table th {
+      background: var(--color-bg);
+      color: var(--color-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .table tbody tr:hover {
+      background: var(--color-bg);
+    }
+
+    .text-overdue {
+      color: var(--color-danger);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid-2,
+      .form-grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-root="../">
+  <header id="app-header">
+    <div class="container header-inner">
+      <a href="../index.html" class="brand">Student Project Management System</a>
+      <nav class="nav">
+        <a href="../index.html">Trang chủ</a>
+        <a href="projects.html" class="active">Dự án của tôi</a>
+        <a href="members.html">Thành viên</a>
+        <div class="user-nav">
+          <span>Xin chào, <strong>Lê Quang Huy ( Owner )</strong></span>
+          <button type="button" class="btn btn-small btn-danger">Đăng xuất</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h1 style="margin: 0; font-size: 24px;">Dự án: Student Project Hub</h1>
+          <span class="badge badge-active">ACTIVE</span>
+        </div>
+        <p style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
+          Nền tảng quản lý tiến độ đồ án và bài tập nhóm dành cho sinh viên ngành CNTT
+        </p>
+      </div>
+
+      <div class="project-stats-bar">
+        <span>Người đăng nhập: <strong>Lê Quang Huy ( Owner )</strong></span>
+        <span>Tiến độ: <strong>65% (13/20)</strong></span>
+        <span>Quá hạn: <strong style="color: var(--color-danger);">1 Task</strong></span>
+        <span>Thành viên: <strong>5</strong></span>
+      </div>
+    </div>
+
+    <div class="project-subnav">
+      <a href="tasks.html" class="subnav-link active">Danh sách Task</a>
+      <a href="members.html" class="subnav-link">Thành viên dự án</a>
+      <a href="projects.html" class="subnav-link">Quay lại Danh sách dự án</a>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size: 17px; margin: 0 0 6px;">Tạo Task mới</h3>
+      <p style="font-size: 13px; color: var(--color-muted); margin: 0 0 16px;">
+        Nhập thông tin công việc, chọn mức độ ưu tiên, hạn hoàn thành và phân công cho thành viên trong dự án.
+      </p>
+
+      <form>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="task-title">Tên nhiệm vụ (Task Title) *</label>
+            <input type="text" id="task-title" placeholder="VD: Xây dựng giao diện danh sách Task">
+          </div>
+
+          <div class="form-group">
+            <label for="task-assignee">Người phụ trách (Assignee)</label>
+            <select id="task-assignee">
+              <option value="">-- Chưa phân công --</option>
+              <option value="1">Lê Quang Huy (Owner)</option>
+              <option value="2">Nguyễn Minh Đức (Member)</option>
+              <option value="3">Lưu Đức Anh (Member)</option>
+              <option value="4">Trần Nhật Long (Member)</option>
+              <option value="5">Hoàng Đức Duy Anh (Member)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="task-priority">Mức độ ưu tiên (Priority)</label>
+            <select id="task-priority">
+              <option value="LOW">LOW (Thấp)</option>
+              <option value="MEDIUM" selected>MEDIUM (Trung bình)</option>
+              <option value="HIGH">HIGH (Cao)</option>
+              <option value="URGENT">URGENT (Khẩn cấp)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="task-status">Trạng thái ban đầu</label>
+            <select id="task-status" disabled>
+              <option value="TODO" selected>TODO (Cần làm)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="task-due-date">Hạn hoàn thành (Deadline)</label>
+            <input type="date" id="task-due-date" value="2026-11-20">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="task-desc">Mô tả chi tiết công việc</label>
+          <textarea id="task-desc" rows="3" placeholder="Mô tả yêu cầu đầu ra, tài liệu tham khảo hoặc tiêu chí nghiệm thu..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="reset" class="btn">Làm mới</button>
+          <button type="button" class="btn btn-primary">Tạo Task</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h3 style="font-size: 17px; margin: 0;">Danh sách Task của dự án (6)</h3>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <input
+            type="text"
+            placeholder="Tìm theo tên nhiệm vụ..."
+            style="width: 210px;"
+          >
+          <select style="width: 155px;">
+            <option value="">Tất cả trạng thái</option>
+            <option value="TODO">TODO</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="REVIEW">REVIEW</option>
+            <option value="DONE">DONE</option>
+          </select>
+          <select style="width: 155px;">
+            <option value="">Tất cả độ ưu tiên</option>
+            <option value="URGENT">URGENT</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+          <select style="width: 175px;">
+            <option value="">Tất cả thành viên</option>
+            <option value="1">Lê Quang Huy</option>
+            <option value="2">Nguyễn Minh Đức</option>
+            <option value="3">Lưu Đức Anh</option>
+            <option value="4">Trần Nhật Long</option>
+            <option value="5">Hoàng Đức Duy Anh</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tên nhiệm vụ</th>
+              <th>Người phụ trách</th>
+              <th>Độ ưu tiên</th>
+              <th>Trạng thái</th>
+              <th>Hạn chót</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#T-01</td>
+              <td>
+                <strong>Phân tích SRS và thiết kế CSDL PostgreSQL</strong>
+                <div style="font-size: 12px; color: var(--color-muted);">Chuẩn hóa 9 bảng dữ liệu và sơ đồ ERD</div>
+              </td>
+              <td>Hoàng Đức Duy Anh</td>
+              <td><span class="badge priority-high">HIGH</span></td>
+              <td><span class="badge badge-done">DONE</span></td>
+              <td>05/11/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Chi tiết</button>
+              </td>
+            </tr>
+            <tr>
+              <td>#T-02</td>
+              <td>
+                <strong>Xây dựng khung cơ sở Frontend HTML/CSS/JS</strong>
+                <div style="font-size: 12px; color: var(--color-muted);">Thiết lập style.css, layout.js và cấu hình Axios</div>
+              </td>
+              <td>Nguyễn Minh Đức</td>
+              <td><span class="badge priority-high">HIGH</span></td>
+              <td><span class="badge badge-done">DONE</span></td>
+              <td>08/11/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Chi tiết</button>
+              </td>
+            </tr>
+            <tr>
+              <td>#T-03</td>
+              <td>
+                <strong>Xây dựng API xác thực JWT và phân quyền dự án</strong>
+                <div style="font-size: 12px; color: var(--color-muted);">Đăng nhập, đăng ký và kiểm tra vai trò Owner/Member</div>
+              </td>
+              <td>Lê Quang Huy</td>
+              <td><span class="badge priority-urgent">URGENT</span></td>
+              <td><span class="badge badge-review">REVIEW</span></td>
+              <td>12/11/2026</td>
+              <td>
+                <button type="button" class="btn btn-small btn-primary">Duyệt DONE</button>
+                <button type="button" class="btn btn-small">Trả lại</button>
+              </td>
+            </tr>
+            <tr>
+              <td>#T-04</td>
+              <td>
+                <strong>Lập trình giao diện trang Danh sách dự án và Thành viên</strong>
+                <div style="font-size: 12px; color: var(--color-muted);">Hiển thị danh sách thành viên, form mời và bộ lọc</div>
+              </td>
+              <td>Lưu Đức Anh</td>
+              <td><span class="badge priority-medium">MEDIUM</span></td>
+              <td><span class="badge badge-in-progress">IN_PROGRESS</span></td>
+              <td>15/11/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Gửi REVIEW</button>
+                <button type="button" class="btn btn-small">Sửa</button>
+              </td>
+            </tr>
+            <tr>
+              <td>#T-05</td>
+              <td>
+                <strong>Xây dựng API CRUD Task và kiểm tra State Machine</strong>
+                <div style="font-size: 12px; color: var(--color-muted);">Ràng buộc chuyển trạng thái TODO sang IN_PROGRESS, REVIEW, DONE</div>
+              </td>
+              <td>Trần Nhật Long</td>
+              <td><span class="badge priority-high">HIGH</span></td>
+              <td><span class="badge badge-in-progress">IN_PROGRESS</span></td>
+              <td>16/11/2026</td>
+              <td>
+                <button type="button" class="btn btn-small">Gửi REVIEW</button>
+                <button type="button" class="btn btn-small">Sửa</button>
+              </td>
+            </tr>
+            <tr>
+              <td>#T-06</td>
+              <td>
+                <strong>Viết kịch bản kiểm thử tích hợp API & phân quyền</strong>
+                <div style="font-size: 12px; color: var(--color-muted);">Kiểm thử 25 test case P0 trong tài liệu SRS</div>
+              </td>
+              <td>Hoàng Đức Duy Anh</td>
+              <td><span class="badge priority-urgent">URGENT</span></td>
+              <td><span class="badge badge-todo">TODO</span></td>
+              <td>
+                <div>09/11/2026</div>
+                <div class="text-overdue">Quá hạn</div>
+              </td>
+              <td>
+                <button type="button" class="btn btn-small">Bắt đầu</button>
+                <button type="button" class="btn btn-small btn-danger">Xóa</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer id="app-footer">
+    <div class="container">
+      © 2026 Student Project Management System · Nhóm thực tập sinh viên CNTT PTIT
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/layout.js"></script>
+</body>
+</html>
