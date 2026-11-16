@@ -53,3 +53,15 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
    - **Quản lý danh sách dự án:** `frontend/pages/projects.html` (gọi `/api/projects` hỗ trợ tìm kiếm, sắp xếp, phân trang và tạo dự án mới).
 
 *Lưu ý: Nếu Backend chưa bật, Frontend sẽ tự động chuyển sang chế độ Demo để xem trước giao diện và chức năng.*
+
+## Báo cáo Task bằng MySQL Workbench 8.0
+
+1. Kết nối Workbench tới cùng MySQL server và database mà backend dùng (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_NAME` trong `backend/.env`).
+2. Nếu database chưa có bảng và dữ liệu mẫu, chạy `backend/sql/init.sql` một lần. Không chạy lại nếu đã có dữ liệu, vì các Task mẫu có thể bị thêm trùng.
+3. Mở và chạy `backend/sql/task_reports.sql`. Script tạo ba view:
+   - `vw_task_count_by_status`
+   - `vw_task_count_by_member`
+   - `vw_tasks_due_soon`
+4. Các câu `SELECT` ở cuối script dùng để xem và đối chiếu kết quả mẫu.
+
+Các view được tạo trực tiếp trong `team_project_manager`, database mà backend cấu hình mặc định. Chúng sẵn sàng cho backend truy vấn; muốn hiển thị báo cáo trên giao diện thì cần thêm endpoint API gọi các view đó.

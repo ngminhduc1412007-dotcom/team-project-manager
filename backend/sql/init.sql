@@ -137,3 +137,5 @@ EXPLAIN SELECT * FROM projects WHERE owner_id = 2 AND name LIKE 'Ứng dụng%';
 -- 7.4. Lọc theo chủ sở hữu và sắp xếp theo tên (ORDER BY name)
 -- Tận dụng composite index `idx_projects_owner_name` để lấy dữ liệu đã được index sắp xếp sẵn, loại bỏ hoàn toàn chi phí 'Using filesort'
 EXPLAIN SELECT * FROM projects WHERE owner_id = 2 ORDER BY name ASC;
+
+select * from users;

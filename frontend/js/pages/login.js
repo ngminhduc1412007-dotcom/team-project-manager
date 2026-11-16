@@ -149,6 +149,12 @@ loginForm.addEventListener("submit", async (e) => {
 
     if (!token) {
       token = "jwt_token_ptit_" + Date.now();
+    const res = await api.post("/auth/login", { email, password });
+    const token = res.data?.access_token || res.access_token || res.data?.token || res.token;
+    const user = res.data?.user || res.user || { email, full_name: email.split("@")[0] };
+
+    if (!token) {
+      throw new Error("Không nhận được token xác thực từ máy chủ.");
     }
     if (!user) {
       const namePart = email.split("@")[0];
@@ -161,6 +167,9 @@ loginForm.addEventListener("submit", async (e) => {
     }
 
     // 1. LƯU TOKEN VÀ USER VÀO LOCALSTORAGE
+    auth.setToken(token);
+    auth.setUser(user);
+
     auth.setToken(token);
     auth.setUser(user);
 
@@ -177,6 +186,8 @@ loginForm.addEventListener("submit", async (e) => {
         window.location.href = "projects.html";
       }
     }, 700);
+      window.location.href = "projects.html";
+    }, 800);
   } catch (err) {
     showToast(err.message, "error");
   } finally {
@@ -188,8 +199,8 @@ loginForm.addEventListener("submit", async (e) => {
 // Điền nhanh tài khoản mẫu
 if (btnQuickFill) {
   btnQuickFill.addEventListener("click", () => {
-    loginEmailInput.value = "truongnhom@ptit.edu.vn";
-    loginPasswordInput.value = "12345678";
+    loginEmailInput.value = "truongnhom1@example.com";
+    loginPasswordInput.value = "password123";
     loginEmailInput.classList.remove("is-invalid");
     loginEmailError.classList.remove("is-visible");
     loginPasswordInput.classList.remove("is-invalid");
@@ -268,16 +279,12 @@ regForm.addEventListener("submit", async (e) => {
     full_name: regFullnameInput.value.trim(),
     email: regEmailInput.value.trim(),
     password: regPasswordInput.value,
+    role: "STUDENT",
   };
 
   try {
-    try {
-      await api.post("/auth/register", data);
-    } catch {
-      // Backend chưa chạy thì mô phỏng thành công
-    }
-
-    showToast("Đăng ký thành công! Hãy đăng nhập.", "success");
+    await api.post("/auth/register", data);
+    showToast("Đăng ký tài khoản thành công! Hãy đăng nhập.", "success");
 
     // Điền sẵn email vừa đăng ký vào form đăng nhập và chuyển sang form đăng nhập
     loginEmailInput.value = data.email;

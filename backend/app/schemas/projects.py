@@ -29,6 +29,7 @@ _STATUS_NORMALIZATION_MAP = {
     "lập kế hoạch": ProjectStatus.PLANNING,
     "lap ke hoach": ProjectStatus.PLANNING,
     "in_progress": ProjectStatus.IN_PROGRESS,
+    "active": ProjectStatus.IN_PROGRESS,
     "đang thực hiện": ProjectStatus.IN_PROGRESS,
     "dang thuc hien": ProjectStatus.IN_PROGRESS,
     "completed": ProjectStatus.COMPLETED,

@@ -1,71 +1,53 @@
-"""
-API CRUD Task trong dự án.
+"""API Quản lý Công việc (Tasks).
 
 Endpoints:
-  POST   /api/projects/{project_id}/tasks          – Tạo công việc mới trong dự án
-  GET    /api/projects/{project_id}/tasks          – Lấy danh sách công việc (phân trang, lọc, tìm kiếm)
-  GET    /api/projects/{project_id}/tasks/{task_id} – Lấy thông tin chi tiết một công việc
-  PATCH  /api/projects/{project_id}/tasks/{task_id} – Cập nhật công việc
-  DELETE /api/projects/{project_id}/tasks/{task_id} – Xóa công việc
-
-Xử lý lỗi:
-  - 401: Chưa đăng nhập hoặc token không hợp lệ
-  - 403: Không phải thành viên dự án hoặc không có quyền thao tác
-  - 404: Không tìm thấy dự án hoặc công việc trong dự án
+  POST   /api/tasks             – Tạo công việc mới trong dự án
+  GET    /api/tasks             – Danh sách công việc (lọc theo project, assignee, status, priority, phân trang)
+  GET    /api/tasks/{task_id}   – Chi tiết một công việc
+  PATCH  /api/tasks/{task_id}   – Cập nhật công việc (tiêu đề, mô tả, deadline, priority, status, assignee)
+  DELETE /api/tasks/{task_id}   – Xoá công việc (chỉ chủ dự án)
 """
 from typing import Optional
-
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
+from app.core.exceptions import NotFoundException
 from app.core.response import create_response, paginated_response
 from app.crud.tasks import (
-    create_task,
-    delete_task,
-    get_task_by_id,
-    get_tasks,
-    update_task,
+    create_task_service,
+    delete_task_service,
+    get_task_by_id_service,
+    get_tasks_service,
+    update_task_service,
 )
 from app.db.session import get_db
 from app.models.users import User
 from app.schemas.common import ResponseModel
-from app.schemas.tasks import TaskCreate, TaskResponse, TaskUpdate
-
-router = APIRouter(
-    prefix="/projects/{project_id}/tasks",
-    tags=["Tasks"],
+from app.schemas.tasks import (
+    TaskCreate,
+    TaskResponse,
+    TaskUpdate,
 )
 
+routers = APIRouter(prefix="/tasks", tags=["Tasks"])
+router = routers  # Hỗ trợ cả 2 quy ước đặt tên router/routers
 
-# ──────────────────────────────── Endpoints ──────────────────────────────────
 
-@router.post(
+@routers.post(
     "",
     response_model=ResponseModel,
     status_code=status.HTTP_201_CREATED,
-    summary="Tạo công việc mới trong dự án",
-    description=(
-        "Tạo một công việc mới gắn vào dự án tương ứng.\n\n"
-        "- Yêu cầu người dùng phải đăng nhập và là thành viên có quyền trong dự án.\n"
-        "- Trả về `401` nếu chưa đăng nhập hoặc token không hợp lệ.\n"
-        "- Trả về `403` nếu không thuộc dự án hoặc có vai trò người xem (viewer).\n"
-        "- Trả về `404` nếu không tìm thấy dự án hoặc người được giao."
-    ),
+    summary="Tạo công việc mới",
+    description="Tạo một công việc mới thuộc dự án. Người tạo phải là thành viên hoặc chủ dự án.",
 )
-def create_task_endpoint(
+def create_task(
     request: Request,
-    project_id: int,
     data: TaskCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    task = create_task(
-        db=db,
-        project_id=project_id,
-        data=data,
-        current_user=current_user,
-    )
+    task = create_task_service(db=db, data=data, current_user_id=current_user.id)
     task_data = TaskResponse.model_validate(task).model_dump()
     return create_response(
         request=request,
@@ -75,47 +57,46 @@ def create_task_endpoint(
     )
 
 
-@router.get(
+@routers.get(
     "",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
-    summary="Danh sách công việc của dự án",
+    summary="Danh sách công việc (tìm kiếm, phân trang, lọc)",
     description=(
-        "Lấy danh sách các công việc thuộc dự án có hỗ trợ lọc, tìm kiếm và phân trang.\n\n"
-        "- `status`: Lọc theo trạng thái (`todo`, `in_progress`, `done`, `cancelled`).\n"
-        "- `priority`: Lọc theo độ ưu tiên (`low`, `medium`, `high`, `urgent`).\n"
-        "- `assignee_id`: Lọc theo người thực hiện.\n"
+        "Lấy danh sách các công việc hỗ trợ tìm kiếm, lọc theo dự án, người thực hiện, trạng thái và độ ưu tiên.\n"
+        "- `project_id`: Lọc theo ID dự án.\n"
+        "- `assignee_id`: Lọc theo ID người được giao.\n"
+        "- `status`: Lọc trạng thái (`todo`, `in_progress`, `done`, `cancelled`).\n"
+        "- `priority`: Lọc độ ưu tiên (`low`, `medium`, `high`, `urgent`).\n"
         "- `search`: Tìm kiếm theo tiêu đề hoặc mô tả công việc.\n"
-        "- `page`, `page_size`: Phân trang kết quả.\n\n"
-        "- Trả về `403` nếu người dùng không phải thành viên của dự án.\n"
-        "- Trả về `404` nếu dự án không tồn tại."
+        "- `page`: Trang hiện tại (mặc định 1).\n"
+        "- `page_size`: Số bản ghi mỗi trang (mặc định 10)."
     ),
 )
-def list_tasks_endpoint(
+def list_tasks(
     request: Request,
-    project_id: int,
+    project_id: Optional[int] = Query(default=None, description="Lọc theo ID dự án"),
+    assignee_id: Optional[int] = Query(default=None, description="Lọc theo ID người được giao"),
+    task_status: Optional[str] = Query(default=None, alias="status", description="Trạng thái công việc: todo, in_progress, done, cancelled"),
+    priority: Optional[str] = Query(default=None, description="Độ ưu tiên: low, medium, high, urgent"),
+    search: Optional[str] = Query(default=None, description="Tìm theo tiêu đề hoặc mô tả"),
     page: int = Query(default=1, ge=1, description="Trang hiện tại"),
-    page_size: int = Query(default=10, ge=1, le=100, description="Số bản ghi mỗi trang"),
-    task_status: Optional[str] = Query(
-        default=None, alias="status", description="Lọc theo trạng thái"
-    ),
-    priority: Optional[str] = Query(default=None, description="Lọc theo độ ưu tiên"),
-    assignee_id: Optional[int] = Query(default=None, description="Lọc theo ID người thực hiện"),
-    search: Optional[str] = Query(default=None, description="Từ khóa tìm kiếm"),
+    page_size: int = Query(default=10, ge=1, le=100, description="Số lượng mỗi trang"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    items, total = get_tasks(
+    items, total = get_tasks_service(
         db=db,
         project_id=project_id,
-        current_user=current_user,
+        assignee_id=assignee_id,
+        task_status=task_status,
+        priority=priority,
+        search=search,
         page=page,
         page_size=page_size,
-        status=task_status,
-        priority=priority,
-        assignee_id=assignee_id,
-        search=search,
     )
+    if total == 0 or not items:
+        raise NotFoundException(message="Không tìm thấy công việc phù hợp.")
 
     serialized = [TaskResponse.model_validate(t).model_dump() for t in items]
     return paginated_response(
@@ -127,30 +108,20 @@ def list_tasks_endpoint(
     )
 
 
-@router.get(
+@routers.get(
     "/{task_id}",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
-    summary="Chi tiết một công việc",
-    description=(
-        "Xem thông tin chi tiết của một công việc trong dự án.\n\n"
-        "- Trả về `403` nếu không phải thành viên dự án.\n"
-        "- Trả về `404` nếu không tìm thấy dự án hoặc công việc không tồn tại trong dự án."
-    ),
+    summary="Chi tiết công việc",
+    description="Lấy thông tin chi tiết một công việc theo ID.",
 )
-def get_task_endpoint(
+def get_task(
     request: Request,
-    project_id: int,
     task_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    task = get_task_by_id(
-        db=db,
-        project_id=project_id,
-        task_id=task_id,
-        current_user=current_user,
-    )
+    task = get_task_by_id_service(db=db, task_id=task_id)
     task_data = TaskResponse.model_validate(task).model_dump()
     return create_response(
         request=request,
@@ -160,33 +131,27 @@ def get_task_endpoint(
     )
 
 
-@router.patch(
+@routers.patch(
     "/{task_id}",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
-    summary="Cập nhật công việc (PATCH)",
-    description=(
-        "Cập nhật một hoặc nhiều thông tin của công việc trong dự án.\n\n"
-        "- Trả về `403` nếu không thuộc dự án hoặc là người xem (viewer).\n"
-        "- Trả về `404` nếu không tìm thấy dự án, công việc hoặc người thực hiện mới."
-    ),
+    summary="Cập nhật công việc",
+    description="Cập nhật thông tin công việc (tiêu đề, mô tả, hạn chót, độ ưu tiên, trạng thái, người được giao).",
 )
-def update_task_endpoint(
+def update_task(
     request: Request,
-    project_id: int,
     task_id: int,
     data: TaskUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    task = update_task(
+    updated_task = update_task_service(
         db=db,
-        project_id=project_id,
         task_id=task_id,
         data=data,
-        current_user=current_user,
+        current_user_id=current_user.id,
     )
-    task_data = TaskResponse.model_validate(task).model_dump()
+    task_data = TaskResponse.model_validate(updated_task).model_dump()
     return create_response(
         request=request,
         status_code=status.HTTP_200_OK,
@@ -195,31 +160,20 @@ def update_task_endpoint(
     )
 
 
-@router.delete(
+@routers.delete(
     "/{task_id}",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     summary="Xóa công việc",
-    description=(
-        "Xóa vĩnh viễn một công việc thuộc dự án.\n\n"
-        "- Chỉ chủ sở hữu (owner) và quản trị viên (admin) dự án mới có quyền xóa.\n"
-        "- Trả về `403` nếu người dùng không đủ quyền xóa.\n"
-        "- Trả về `404` nếu không tìm thấy dự án hoặc công việc."
-    ),
+    description="Xóa một công việc khỏi dự án. Chỉ chủ sở hữu dự án mới có quyền thực hiện.",
 )
-def delete_task_endpoint(
+def delete_task(
     request: Request,
-    project_id: int,
     task_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    delete_task(
-        db=db,
-        project_id=project_id,
-        task_id=task_id,
-        current_user=current_user,
-    )
+    delete_task_service(db=db, task_id=task_id, current_user_id=current_user.id)
     return create_response(
         request=request,
         status_code=status.HTTP_200_OK,
