@@ -9,7 +9,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 # ─────────────────────────── Enums ───────────────────────────────
@@ -83,10 +83,14 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     """
     Payload tạo task mới.
-    - project_id bắt buộc, lấy từ URL hoặc body tuỳ router.
+    - project_id có thể truyền trong body hoặc lấy từ URL path /{project_id}/tasks.
     - status mặc định là 'todo' (Cần làm).
     """
-    project_id: int = Field(..., description="ID dự án chứa task", gt=0)
+    project_id: Optional[int] = Field(
+        default=None,
+        description="ID dự án chứa task (tùy chọn trong body nếu đã có trên URL)",
+        gt=0,
+    )
     status: TaskStatus = Field(
         default=TaskStatus.TODO,
         description=(
@@ -144,8 +148,6 @@ class TaskResponse(TaskBase):
     id: int = Field(..., description="ID định danh duy nhất của task")
     project_id: int = Field(..., description="ID dự án chứa task")
     status: TaskStatus = Field(..., description="Trạng thái hiện tại")
-    status_label: str = Field(..., description="Nhãn tiếng Việt của trạng thái")
-    priority_label: str = Field(..., description="Nhãn tiếng Việt của độ ưu tiên")
     assignee: Optional[AssigneeInfo] = Field(
         default=None,
         description="Thông tin người được giao (null nếu chưa giao)",
@@ -155,10 +157,12 @@ class TaskResponse(TaskBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-    @classmethod
-    def model_validate(cls, obj, **kwargs):  # type: ignore[override]
-        instance = super().model_validate(obj, **kwargs)
-        instance.status_label = TASK_STATUS_LABEL.get(instance.status, instance.status)
-        instance.priority_label = TASK_PRIORITY_LABEL.get(instance.priority, instance.priority)
-        return instance
+    @computed_field
+    @property
+    def status_label(self) -> str:
+        return TASK_STATUS_LABEL[self.status]
 
+    @computed_field
+    @property
+    def priority_label(self) -> str:
+        return TASK_PRIORITY_LABEL[self.priority]
