@@ -11,7 +11,6 @@ Xử lý quyền và ngoại lệ rõ ràng:
   - 404: Không tìm thấy dự án, công việc hoặc người dùng
   - 403: Không có quyền truy cập dự án hoặc không đủ quyền thực hiện thao tác
 """
-from datetime import date
 from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session, joinedload
@@ -94,39 +93,6 @@ def _verify_can_delete(db: Session, project_id: int, user: User) -> None:
         )
 
 
-def _validate_assignee(
-    db: Session,
-    project_id: int,
-    assignee_id: Optional[int],
-) -> None:
-    """Đảm bảo người được giao tồn tại và thuộc dự án."""
-    if assignee_id is None:
-        return
-
-    assignee = db.query(User).filter(User.id == assignee_id).first()
-    if not assignee:
-        raise NotFoundException(
-            message=f"Không tìm thấy người dùng với id={assignee_id}."
-        )
-
-    if get_user_project_role(
-        db=db,
-        project_id=project_id,
-        user_id=assignee_id,
-    ) is None:
-        raise BadRequestException(
-            message="Người được giao phải là thành viên của dự án."
-        )
-
-
-def _validate_due_date(due_date: Optional[date]) -> None:
-    """Không cho phép tạo hoặc cập nhật task có hạn đã qua."""
-    if due_date is not None and due_date < date.today():
-        raise BadRequestException(
-            message="Hạn hoàn thành không được ở trong quá khứ."
-        )
-
-
 # ────────────────────────────────── CRUD ─────────────────────────────────────
 
 def create_task(
@@ -148,12 +114,13 @@ def create_task(
     _get_project_or_404(db, project_id)
     _verify_can_edit(db=db, project_id=project_id, user=current_user)
 
-    _validate_due_date(data.due_date)
-    _validate_assignee(
-        db=db,
-        project_id=project_id,
-        assignee_id=data.assignee_id,
-    )
+    # Nếu có gán người thực hiện, kiểm tra người dùng đó có tồn tại không
+    if data.assignee_id is not None:
+        assignee = db.query(User).filter(User.id == data.assignee_id).first()
+        if not assignee:
+            raise NotFoundException(
+                message=f"Không tìm thấy người dùng với id={data.assignee_id}."
+            )
 
     task = Task(
         title=data.title,
@@ -263,14 +230,14 @@ def update_task(
 
     update_data = data.model_dump(exclude_unset=True)
 
-    if "due_date" in update_data:
-        _validate_due_date(update_data["due_date"])
-    if "assignee_id" in update_data:
-        _validate_assignee(
-            db=db,
-            project_id=project_id,
-            assignee_id=update_data["assignee_id"],
-        )
+    # Nếu có cập nhật người thực hiện mới, kiểm tra user có tồn tại không
+    if "assignee_id" in update_data and update_data["assignee_id"] is not None:
+        new_assignee_id = update_data["assignee_id"]
+        assignee = db.query(User).filter(User.id == new_assignee_id).first()
+        if not assignee:
+            raise NotFoundException(
+                message=f"Không tìm thấy người dùng với id={new_assignee_id}."
+            )
 
     for field, value in update_data.items():
         setattr(task, field, value)
