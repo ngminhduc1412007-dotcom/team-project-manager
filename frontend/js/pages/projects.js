@@ -323,8 +323,9 @@ const nameError = document.getElementById("name-error");
 
 // Helper: Hiển thị badge trạng thái
 function getBadge(status) {
-  if (status === "ACTIVE") return '<span class="badge badge-active">Đang thực hiện</span>';
-  if (status === "PLANNING") return '<span class="badge badge-planning">Lập kế hoạch</span>';
+  const s = String(status || "").toLowerCase();
+  if (s === "active" || s === "in_progress") return '<span class="badge badge-active">Đang thực hiện</span>';
+  if (s === "planning") return '<span class="badge badge-planning">Lập kế hoạch</span>';
   return '<span class="badge badge-completed">Đã hoàn thành</span>';
 }
 
@@ -405,6 +406,12 @@ function getBadge(status) {
 
       // 5. Tải danh sách dự án (Gọi API backend hoặc fallback Mock Engine)
       async function loadProjects() {
+        let statusParam = undefined;
+        if (queryState.status && queryState.status !== "ALL") {
+          statusParam = queryState.status.toLowerCase();
+          if (statusParam === "active") statusParam = "in_progress";
+        }
+
         const params = {
           search: queryState.search || undefined,
           name: queryState.search || undefined,
@@ -414,7 +421,7 @@ function getBadge(status) {
           sort_order: queryState.sort_order,
           my: queryState.my ? true : undefined,
           owner_id: queryState.owner_id || undefined,
-          status: queryState.status !== "ALL" ? queryState.status : undefined
+          status: statusParam,
         };
 
         try {
@@ -427,10 +434,26 @@ function getBadge(status) {
             }
           }
         } catch (err) {
-          // Backend chưa chạy hoặc lỗi -> fallback sang Mock Engine
+          // Nếu backend trả về 404: Không tìm thấy dự án phù hợp với từ khóa
+          if (err && err.status === 404) {
+            renderProjectList([]);
+            return;
+          }
+          // Nếu backend trả về 401: Yêu cầu đăng nhập
+          if (err && err.status === 401) {
+            console.warn("[Projects] Yêu cầu đăng nhập để truy cập dữ liệu thật:", err.message);
+            if (!auth.getToken()) {
+              grid.innerHTML = "";
+              emptyState.style.display = "block";
+              paginationWrapper.style.display = "none";
+              emptyTitle.textContent = "Yêu cầu đăng nhập";
+              emptyDesc.innerHTML = 'Vui lòng <a href="login.html" style="color: var(--color-primary); font-weight: bold; text-decoration: underline;">đăng nhập</a> để xem danh sách dự án của bạn.';
+              return;
+            }
+          }
         }
 
-        // Chạy Mock Engine
+        // Chạy Mock Engine nếu backend chưa kết nối hoặc chưa có dữ liệu
         const result = runMockEngine(params);
         renderProjectList(result.items);
         renderPagination(result.meta);
@@ -672,13 +695,14 @@ let searchDebounceTimer = null;
           });
 
           // 11. Gửi form tạo dự án mới
-          createForm.addEventListener("submit", (e) => {
+          createForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = nameInput.value.trim();
             const desc = descInput.value.trim();
-            const startDate = startDateInput.value || new Date().toISOString().slice(0, 10);
-            const deadline = endDateInput.value || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-            const status = statusInput.value;
+            const startDate = startDateInput.value || null;
+            const deadline = endDateInput.value || null;
+            let statusVal = statusInput.value.toLowerCase();
+            if (statusVal === "active") statusVal = "in_progress";
 
             if (!name) {
               nameInput.classList.add("is-invalid");
@@ -688,33 +712,46 @@ let searchDebounceTimer = null;
               return;
             }
 
-            const nowIso = new Date().toISOString();
-            const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
+            const token = typeof auth !== "undefined" && auth.getToken ? auth.getToken() : null;
+            if (!token) {
+              showToast("Vui lòng đăng nhập trước khi tạo dự án mới!", "error");
+              setTimeout(() => {
+                window.location.href = "login.html";
+              }, 1200);
+              return;
+            }
 
-            const newProject = {
-              id: Date.now(),
-              name,
-              description: desc,
-              start_date: startDate,
-              deadline: deadline,
-              end_date: deadline,
-              created_at: nowIso,
-              updated_at: nowIso,
-              status,
-              owner_id: currentUser ? (currentUser.id || 1) : 1,
-              owner: currentUser || { id: 1, full_name: "Nguyễn Văn Đức", email: "truongnhom@ptit.edu.vn" },
-              total_tasks: 0,
-              done_tasks: 0,
-              members: 1
-            };
+            const btnSubmit = document.getElementById("btn-submit-project");
+            if (btnSubmit) {
+              btnSubmit.disabled = true;
+              btnSubmit.textContent = "Đang tạo dự án...";
+            }
 
-            localProjects.unshift(newProject);
-            closeModal();
-            showToast("Tạo dự án mới thành công!", "success");
+            try {
+              // Gọi API backend tạo dự án
+              const payload = {
+                name: name,
+                description: desc || null,
+                start_date: startDate ? `${startDate}T00:00:00` : null,
+                deadline: deadline ? `${deadline}T23:59:59` : null,
+                status: statusVal,
+              };
 
-            // Về trang 1 và tải lại danh sách
-            queryState.page = 1;
-            loadProjects();
+              await api.post("/projects", payload);
+              closeModal();
+              showToast("Tạo dự án mới thành công!", "success");
+
+              // Về trang 1 và tải lại danh sách dự án
+              queryState.page = 1;
+              await loadProjects();
+            } catch (err) {
+              showToast(err.message || "Tạo dự án thất bại", "error");
+            } finally {
+              if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = "Tạo dự án";
+              }
+            }
           });
 
           // 12. Khởi chạy tải dữ liệu ban đầu

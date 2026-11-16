@@ -5,16 +5,27 @@ async function checkHealth() {
   box.className = "status status-loading";
   box.textContent = "Đang kiểm tra kết nối Backend...";
 
-    try {
-      const res = await api.get("/health");
-      box.className = "status status-ok";
-      box.textContent = `✅ Backend kết nối thành công · Database: ${res.database || "OK"}`;
-    } catch (err) {
-      box.className = "status status-error";
-      box.textContent = `❌ Chưa kết nối được Backend: ${err.message}`;
-    }
+  try {
+    const res = await api.get("/health");
+    box.className = "status status-ok";
+    const appName = res.data?.app_name || CONFIG.APP_NAME;
+    const env = res.data?.environment || "development";
+    const statusText = res.data?.status || "healthy";
+    box.textContent = `✅ Backend kết nối thành công (${statusText}) · Môi trường: ${env} · Dịch vụ: ${appName}`;
+  } catch (err) {
+    box.className = "status status-error";
+    box.textContent = `❌ Chưa kết nối được Backend: ${err.message}`;
   }
+}
 
-  document.getElementById("api-url").textContent = CONFIG.API_BASE_URL;
-  document.getElementById("btn-recheck").addEventListener("click", checkHealth);
-  checkHealth();
+const apiUrlEl = document.getElementById("api-url");
+if (apiUrlEl) {
+  apiUrlEl.textContent = CONFIG.API_BASE_URL;
+}
+
+const btnRecheck = document.getElementById("btn-recheck");
+if (btnRecheck) {
+  btnRecheck.addEventListener("click", checkHealth);
+}
+
+checkHealth();
