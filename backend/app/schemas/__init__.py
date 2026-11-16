@@ -27,15 +27,6 @@ from app.schemas.projects import (
     ProjectStatus,
     ProjectUpdate,
 )
-from app.schemas.tasks import (
-    TASK_PRIORITY_LABEL,
-    TASK_STATUS_LABEL,
-    TaskCreate,
-    TaskPriority,
-    TaskResponse,
-    TaskStatus,
-    TaskUpdate,
-)
 from app.schemas.users import (
     UserBase,
     UserCreate,
@@ -72,13 +63,6 @@ __all__ = [
     "AddMemberByEmailRequest",
     "ProjectMemberUpdate",
     "ProjectMemberResponse",
-    "TaskCreate",
-    "TaskUpdate",
-    "TaskResponse",
-    "TaskStatus",
-    "TaskPriority",
-    "TASK_STATUS_LABEL",
-    "TASK_PRIORITY_LABEL",
     "RegisterRequest",
     "LoginRequest",
     "RefreshTokenRequest",
