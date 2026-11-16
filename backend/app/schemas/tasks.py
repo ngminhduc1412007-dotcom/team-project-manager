@@ -76,6 +76,7 @@ class TaskBase(BaseModel):
     assignee_id: Optional[int] = Field(
         default=None,
         description="ID người được giao task (để trống nếu chưa giao)",
+        ge=1,
     )
 
 
