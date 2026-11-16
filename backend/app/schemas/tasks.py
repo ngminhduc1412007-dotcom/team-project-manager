@@ -143,8 +143,8 @@ class TaskResponse(TaskBase):
     id: int = Field(..., description="ID định danh duy nhất của task")
     project_id: int = Field(..., description="ID dự án chứa task")
     status: TaskStatus = Field(..., description="Trạng thái hiện tại")
-    status_label: str = Field(..., description="Nhãn tiếng Việt của trạng thái")
-    priority_label: str = Field(..., description="Nhãn tiếng Việt của độ ưu tiên")
+    status_label: str = Field(default="", description="Nhãn tiếng Việt của trạng thái")
+    priority_label: str = Field(default="", description="Nhãn tiếng Việt của độ ưu tiên")
     assignee: Optional[AssigneeInfo] = Field(
         default=None,
         description="Thông tin người được giao (null nếu chưa giao)",
