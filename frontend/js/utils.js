@@ -1,8 +1,12 @@
 // Các hàm tiện ích dùng chung
 function escapeHtml(value) {
-  const div = document.createElement("div");
-  div.textContent = value ?? "";
-  return div.innerHTML;
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function formatDate(value) {
@@ -21,15 +25,15 @@ function showToast(message, type = "success") {
 }
 
 const auth = {
-    getToken: () => localStorage.getItem("token"),
-      setToken: (t) => localStorage.setItem("token", t),
-        getUser: () => {
-          try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
-        },
-    setUser: (u) => localStorage.setItem("user", JSON.stringify(u)),
-      logout: () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.reload();
-      }
-  };
+  getToken: () => localStorage.getItem("token"),
+  setToken: (t) => localStorage.setItem("token", t),
+  getUser: () => {
+    try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
+  },
+  setUser: (u) => localStorage.setItem("user", JSON.stringify(u)),
+  logout: () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.reload();
+  }
+};
