@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """Trả về URL kết nối cơ sở dữ liệu SQLAlchemy."""
-        if self.DATABASE_URL and "${" not in self.DATABASE_URL and "%" in self.DATABASE_URL:
+        if self.DATABASE_URL and "${" not in self.DATABASE_URL:
             return self.DATABASE_URL
         # mysql+pymysql://user:password@host:port/database
         # quote_plus: để mật khẩu có ký tự đặc biệt (@, #, /...) không làm hỏng URL

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý công việc (Tasks) - Student Project Hub PTIT</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-root="../">
+  <header id="app-header"></header>
+
+  <main class="container main-content">
+    <!-- Tiêu đề trang và nút Tạo Task -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;">
+      <div>
+        <h1 class="page-title" style="margin-bottom: 4px;">Quản lý công việc (Tasks)</h1>
+        <p class="page-subtitle" style="color: #64748b; font-size: 14px; margin: 0;">
+          Theo dõi tiến độ, phân công nhiệm vụ và cập nhật trạng thái đồ án sinh viên.
+        </p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="projects.html" class="btn btn-outline">⬅️ Về danh sách dự án</a>
+        <button id="btn-open-task-modal" class="btn btn-primary">+ Tạo công việc mới</button>
+      </div>
+    </div>
+
+    <!-- Thanh lọc & tìm kiếm task -->
+    <div class="filter-bar" style="background: #ffffff; padding: 16px; border-radius: var(--radius); border: 1px solid var(--color-border); box-shadow: var(--shadow); margin-bottom: 20px;">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label for="task-search-input" style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Tìm kiếm công việc</label>
+          <input type="text" id="task-search-input" placeholder="🔍 Nhập tiêu đề công việc cần tìm..." style="width: 100%;">
+        </div>
+        <div>
+          <label for="filter-task-project" style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Dự án</label>
+          <select id="filter-task-project" style="width: 100%;">
+            <option value="">Tất cả dự án</option>
+          </select>
+        </div>
+        <div>
+          <label for="filter-task-priority" style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Độ ưu tiên</label>
+          <select id="filter-task-priority" style="width: 100%;">
+            <option value="">Tất cả độ ưu tiên</option>
+            <option value="urgent">Khẩn cấp (Urgent)</option>
+            <option value="high">Cao (High)</option>
+            <option value="medium">Trung bình (Medium)</option>
+            <option value="low">Thấp (Low)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Trạng thái Task tabs -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+        <div class="filter-group" id="task-status-filters" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="filter-btn active" data-status="">Tất cả (<span id="count-all">0</span>)</button>
+          <button type="button" class="filter-btn" data-status="todo">Cần làm (<span id="count-todo">0</span>)</button>
+          <button type="button" class="filter-btn" data-status="in_progress">Đang làm (<span id="count-in_progress">0</span>)</button>
+          <button type="button" class="filter-btn" data-status="done">Hoàn thành (<span id="count-done">0</span>)</button>
+          <button type="button" class="filter-btn" data-status="cancelled">Đã hủy (<span id="count-cancelled">0</span>)</button>
+        </div>
+        <div id="task-stats-summary" style="font-size: 13px; color: #64748b;">
+          Đang hiển thị: <strong id="visible-task-count">0</strong> công việc
+        </div>
+      </div>
+    </div>
+
+    <!-- Danh sách Tasks -->
+    <div id="tasks-loading" style="display: none; text-align: center; padding: 40px; color: #64748b;">
+      <div class="spinner"></div>
+      <p style="margin-top: 12px;">Đang tải danh sách công việc...</p>
+    </div>
+
+    <div id="tasks-grid" class="task-grid"></div>
+
+    <!-- Empty State khi không có task -->
+    <div id="tasks-empty-state" class="empty-state" style="display: none; background: #fff; padding: 48px 24px; border-radius: var(--radius); border: 1px dashed var(--color-border); text-align: center; margin-top: 16px;">
+      <div style="font-size: 48px; margin-bottom: 12px;">📋</div>
+      <h3 id="tasks-empty-title" style="margin: 0 0 8px 0; color: #0f172a;">Chưa có công việc nào</h3>
+      <p id="tasks-empty-desc" style="color: #64748b; font-size: 14px; margin: 0 0 16px 0;">
+        Không tìm thấy công việc phù hợp với bộ lọc hiện tại. Hãy tạo công việc mới!
+      </p>
+      <button id="btn-empty-create-task" class="btn btn-primary">+ Tạo công việc đầu tiên</button>
+    </div>
+  </main>
+
+  <!-- Modal Tạo / Chỉnh sửa Công việc (Task Modal) -->
+  <div class="modal-backdrop" id="task-modal">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 id="modal-task-title">Tạo công việc mới</h3>
+        <button type="button" class="modal-close" id="btn-close-task-modal" aria-label="Đóng">&times;</button>
+      </div>
+
+      <form id="task-form" novalidate>
+        <input type="hidden" id="task-edit-id" value="">
+
+        <div class="form-group">
+          <label for="task-title-input">Tiêu đề công việc *</label>
+          <input type="text" id="task-title-input" placeholder="VD: Thiết kế cơ sở dữ liệu MySQL cho phân hệ điểm" required>
+          <div class="form-error" id="task-title-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="task-desc-input">Mô tả công việc</label>
+          <textarea id="task-desc-input" rows="3" placeholder="Chi tiết yêu cầu, hướng dẫn thực hiện hoặc tài liệu tham khảo..."></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="task-project-select">Thuộc dự án *</label>
+            <select id="task-project-select" required>
+              <option value="">-- Chọn dự án --</option>
+            </select>
+            <div class="form-error" id="task-project-error"></div>
+          </div>
+          <div class="form-group">
+            <label for="task-assignee-input">Người phụ trách</label>
+            <input type="text" id="task-assignee-input" placeholder="Tên hoặc email sinh viên">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="task-priority-select">Độ ưu tiên</label>
+            <select id="task-priority-select">
+              <option value="low">Thấp</option>
+              <option value="medium" selected>Trung bình</option>
+              <option value="high">Cao</option>
+              <option value="urgent">Khẩn cấp</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-status-select">Trạng thái</label>
+            <select id="task-status-select">
+              <option value="todo" selected>Cần làm</option>
+              <option value="in_progress">Đang làm</option>
+              <option value="done">Hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-due-date-input">Hạn chót</label>
+            <input type="date" id="task-due-date-input">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn" id="btn-cancel-task-modal">Hủy bỏ</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-task">Lưu công việc</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Xác nhận xóa Công việc -->
+  <div class="modal-backdrop" id="delete-task-modal">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="color: #ef4444; display: flex; align-items: center; gap: 8px;">
+          <span>⚠️</span> Xác nhận xóa công việc
+        </h3>
+        <button type="button" class="modal-close" id="btn-close-delete-task-modal" aria-label="Đóng">&times;</button>
+      </div>
+      <div style="padding: 16px 0;">
+        <p>Bạn có chắc chắn muốn xóa công việc <strong id="delete-task-title-display" style="color: #0f172a;"></strong> không?</p>
+        <p style="color: #64748b; font-size: 13px; margin-top: 8px;">
+          Hành động này không thể hoàn tác. Công việc sẽ bị xóa vĩnh viễn khỏi dự án.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="btn-cancel-delete-task-modal">Hủy bỏ</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-task-action">Xác nhận xóa</button>
+      </div>
+    </div>
+  </div>
+
+  <footer id="app-footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/pages/tasks.js"></script>
+</body>
+</html>
