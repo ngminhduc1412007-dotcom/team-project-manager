@@ -260,8 +260,26 @@ select.is-invalid {
 }
 
 .btn-danger {
-  color: var(--color-danger);
-  border-color: #fca5a5;
+  color: #fff;
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-outline:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
 }
 
 .btn-small {
@@ -283,315 +301,477 @@ select.is-invalid {
   font-weight: 600;
 }
 
-.badge-active {
-  background: #dcfce7;
-  color: #166534;
-}
 
-.badge-planning {
-  background: #e0f2fe;
-  color: #075985;
-}
+  .badge-active,
+  .badge-in_progress {
+    background: #dcfce7;
+    color: #166534;
+  }
 
-.badge-completed {
-  background: #f3f4f6;
-  color: #374151;
-}
+  .badge-planning,
+  .badge-todo {
+    background: #e0f2fe;
+    color: #075985;
+  }
 
+  .badge-completed,
+  .badge-done {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
 
-/* ---------- Auth Form (Login / Register gộp chung) ---------- */
-.auth-card {
-  max-width: 440px;
-  margin: 30px auto;
-}
+  .badge-cancelled {
+    background: #fef2f2;
+    color: #991b1b;
+  }
 
-.auth-subtitle {
-  color: var(--color-muted);
-  font-size: 14px;
-  margin-bottom: 20px;
-}
+  /* Task Priorities */
+  .badge-priority-low {
+    background: #f1f5f9;
+    color: #475569;
+  }
 
-.auth-footer {
-  text-align: center;
-  margin-top: 18px;
-  font-size: 13px;
-  color: var(--color-muted);
-}
+  .badge-priority-medium {
+    background: #fef9c3;
+    color: #854d0e;
+  }
 
-.quick-fill-box {
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid var(--color-border);
-  text-align: center;
-}
+  .badge-priority-high {
+    background: #ffedd5;
+    color: #9a3412;
+  }
 
-/* ---------- Projects Page (Danh sách dự án) ---------- */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
+  .badge-priority-urgent {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 700;
+  }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
+  /* Task cards & board */
+  .task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
 
-.toolbar-search {
-  flex: 1;
-  min-width: 240px;
-  max-width: 380px;
-}
+  .task-card {
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
 
-.filter-group {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+  .task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
 
-.filter-btn {
-  padding: 6px 14px;
-  font-size: 13px;
-  border-radius: 20px;
-  border: 1px solid var(--color-border);
-  background: var(--color-card);
-  color: var(--color-muted);
-  cursor: pointer;
-}
+  .task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
 
-.filter-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
+  .task-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.4;
+  }
 
-.filter-btn.active {
-  background: var(--color-primary);
-  color: #fff;
-  border-color: var(--color-primary);
-  font-weight: 600;
-}
+  .task-card-desc {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+    margin: 6px 0 12px 0;
+  }
 
-.project-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-}
-
-.project-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-}
-
-.project-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.project-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.project-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-  line-height: 1.3;
-}
-
-.project-desc {
-  font-size: 13px;
-  color: var(--color-muted);
-  margin: 8px 0 14px;
-  flex: 1;
-}
-
-.project-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--color-muted);
-  margin-bottom: 10px;
-}
-
-.progress-wrap {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-border);
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--color-muted);
-  margin-bottom: 4px;
-}
-
-.progress-track {
-  width: 100%;
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--color-accent);
-  border-radius: 4px;
-}
-
-.project-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
+  .task-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+    color: #64748b;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    margin-bottom: 12px;
+  }
 
 
-/* Trạng thái rỗng (Empty State) */
-.empty-box {
-  text-align: center;
-  padding: 48px 20px;
-  background: var(--color-card);
-  border: 2px dashed var(--color-border);
-  border-radius: var(--radius);
-  margin: 20px 0;
-}
+  /* ---------- Auth Form (Login / Register gộp chung) ---------- */
+  .auth-card {
+    max-width: 440px;
+    margin: 30px auto;
+  }
 
-.empty-icon {
-  font-size: 40px;
-  margin-bottom: 10px;
-}
+  .auth-subtitle {
+    color: var(--color-muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
 
-.empty-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
+  .auth-footer {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--color-muted);
+  }
 
-.empty-desc {
-  font-size: 14px;
-  color: var(--color-muted);
-  margin-bottom: 16px;
-}
+  .quick-fill-box {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+  }
 
-/* ---------- Modal Popup ---------- */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 16px;
-}
+  /* ---------- Projects Page (Danh sách dự án) ---------- */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
 
-.modal-backdrop.is-open {
-  display: flex;
-}
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
 
-.modal {
-  background: var(--color-card);
-  width: 100%;
-  max-width: 480px;
-  border-radius: var(--radius);
-  padding: 22px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
+  .toolbar-search {
+    flex: 1;
+    min-width: 240px;
+    max-width: 380px;
+  }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
-}
+  .filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
 
-.modal-header h3 {
-  margin: 0;
-  font-size: 17px;
-}
+  .filter-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 20px;
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-muted);
+    cursor: pointer;
+  }
 
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--color-muted);
-}
+  .filter-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
 
-.modal-close:hover {
-  color: var(--color-text);
-}
+  .filter-btn.active {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+    font-weight: 600;
+  }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
-}
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .project-card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .project-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .project-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .project-desc {
+    font-size: 13px;
+    color: var(--color-muted);
+    margin: 8px 0 14px;
+    flex: 1;
+  }
+
+  .project-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--color-muted);
+    margin-bottom: 10px;
+  }
+
+  .progress-wrap {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--color-muted);
+    margin-bottom: 4px;
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 4px;
+  }
+
+  .project-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
 
 
-/* ---------- Trạng thái / Toast ---------- */
-.status {
-  padding: 10px 14px;
-  border-radius: var(--radius);
-  margin: 12px 0;
-  font-size: 14px;
-}
+  /* Trạng thái rỗng (Empty State) */
+  .empty-box {
+    text-align: center;
+    padding: 48px 20px;
+    background: var(--color-card);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius);
+    margin: 20px 0;
+  }
 
-.status-loading {
-  background: #f3f4f6;
-}
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+  }
 
-.status-ok {
-  background: #dcfce7;
-  color: #166534;
-}
+  .empty-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
 
-.status-error {
-  background: #fee2e2;
-  color: #991b1b;
-}
+  .empty-desc {
+    font-size: 14px;
+    color: var(--color-muted);
+    margin-bottom: 16px;
+  }
 
-.toast {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  padding: 10px 16px;
-  border-radius: var(--radius);
-  color: #fff;
-  font-size: 14px;
-  z-index: 200;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
+  /* ---------- Modal Popup ---------- */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
 
-.toast-success {
-  background: var(--color-success);
-}
+  .modal-backdrop.is-open {
+    display: flex;
+  }
 
-.toast-error {
-  background: var(--color-danger);
-}
+  .modal {
+    background: var(--color-card);
+    width: 100%;
+    max-width: 480px;
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
 
-.toast-info {
-  background: #0284c7;
-}
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 17px;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-muted);
+  }
+
+  .modal-close:hover {
+    color: var(--color-text);
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+
+  /* ---------- Trạng thái / Toast ---------- */
+  .status {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    margin: 12px 0;
+    font-size: 14px;
+  }
+
+  .status-loading {
+    background: #f3f4f6;
+  }
+
+  .status-ok {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .toast {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    color: #fff;
+    font-size: 14px;
+    z-index: 200;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .toast-success {
+    background: var(--color-success);
+  }
+
+  .toast-error {
+    background: var(--color-danger);
+  }
+
+  .toast-info {
+    background: #0284c7;
+  }
+
+  /* ---------- Thanh phân trang (Pagination) ---------- */
+  .pagination-wrapper {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-top: 24px;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pagination-info {
+    font-size: 13px;
+    color: var(--color-muted);
+  }
+
+  .pagination-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    color: var(--color-text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: #f8fafc;
+  }
+
+  .pagination-btn.active {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .pagination-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: #f1f5f9;
+  }
+
+  .pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 34px;
+    color: var(--color-muted);
+    font-size: 13px;
+  }
