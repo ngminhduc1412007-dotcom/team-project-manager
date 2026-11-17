@@ -55,6 +55,24 @@ if (window.location.hash === "#register") {
   switchToRegister();
 }
 
+// ---------- 2.1. XỬ LÝ TRẠNG THÁI URL (LOGOUT / AUTH REQUIRED / AUTO REDIRECT) ----------
+(function handleInitialAuthState() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isLogout = urlParams.get("logout") === "true";
+  const reason = urlParams.get("reason");
+  const redirectTarget = urlParams.get("redirect");
+
+  if (isLogout) {
+    showToast("Đã đăng xuất thành công khỏi hệ thống!", "info");
+    const cleanUrl = window.location.pathname + (redirectTarget ? "?redirect=" + redirectTarget : "");
+    history.replaceState(null, null, cleanUrl);
+  } else if (reason === "auth_required") {
+    showToast("Vui lòng đăng nhập để tiếp tục truy cập!", "error");
+  } else if (auth.isAuthenticated()) {
+    auth.redirectIfAuth();
+  }
+})();
+
 // ---------- 3. XÓA BÁO LỖI KHI GÕ PHÍM ----------
 [loginEmailInput, loginPasswordInput, regFullnameInput, regEmailInput, regPasswordInput, regConfirmInput].forEach((input) => {
   input.addEventListener("input", () => {
@@ -114,26 +132,58 @@ loginForm.addEventListener("submit", async (e) => {
   const password = loginPasswordInput.value;
 
   try {
+    let token = null;
+    let user = null;
+
     try {
       const res = await api.post("/auth/login", { email, password });
-      auth.setToken(res.token || "token_demo");
-      auth.setUser(res.user || { email, full_name: email.split("@")[0] });
-    } catch {
-      // Backend chưa chạy thì lưu session demo
-      auth.setToken("token_demo");
-      auth.setUser({ email, full_name: email.split("@")[0] });
+      // Backend FastAPI trả về TokenResponse trong res.data:
+      // { access_token, refresh_token, token_type, user: { id, email, full_name, role } }
+      token = res.data?.access_token || res.access_token || res.data?.token || res.token;
+      user = res.data?.user || res.user;
+    } catch (apiErr) {
+      if (apiErr.status === 0) {
+        // Backend offline -> chạy demo tạm thời
+        console.warn("Backend offline, sử dụng phiên demo tạm.");
+        token = "demo_jwt_token_" + Date.now();
+        user = {
+          id: 1,
+          email: email,
+          full_name: email.startsWith("truongnhom") ? "Trưởng nhóm PTIT" : email.split("@")[0],
+          role: "STUDENT",
+        };
+        showToast("Đang chạy chế độ demo (Backend chưa bật).", "info");
+      } else {
+        // Backend trả về lỗi thật (sai pass, không tồn tại email) -> ném lỗi để hiển thị
+        throw apiErr;
+      }
     }
 
+    if (!token) token = "demo_jwt_token_" + Date.now();
+    if (!user) user = { id: 1, email, full_name: email.split("@")[0], role: "STUDENT" };
+
+    // Lưu token và thông tin user vào localStorage
+    auth.setToken(token);
+    auth.setUser(user);
+
     showToast("Đăng nhập thành công!", "success");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectTarget = urlParams.get("redirect");
+
     setTimeout(() => {
+    if (redirectTarget) {
+      window.location.href = decodeURIComponent(redirectTarget);
+    } else {
       window.location.href = "projects.html";
-    }, 1000);
+    }
+  }, 700);
   } catch (err) {
-    showToast(err.message, "error");
-  } finally {
-    btnLogin.disabled = false;
-    btnLogin.textContent = "Đăng nhập";
-  }
+  showToast(err.message, "error");
+} finally {
+  btnLogin.disabled = false;
+  btnLogin.textContent = "Đăng nhập";
+}
 });
 
 // Điền nhanh tài khoản mẫu
@@ -219,16 +269,21 @@ regForm.addEventListener("submit", async (e) => {
     full_name: regFullnameInput.value.trim(),
     email: regEmailInput.value.trim(),
     password: regPasswordInput.value,
+    role: "STUDENT",
   };
 
   try {
     try {
-      await api.post("/auth/register", data);
-    } catch {
-      // Backend chưa chạy thì mô phỏng thành công
+      const res = await api.post("/auth/register", data);
+      showToast(res.message || "Đăng ký tài khoản thành công! Hãy đăng nhập.", "success");
+    } catch (apiErr) {
+      if (apiErr.status === 0) {
+        // Backend offline -> demo
+        showToast("Đăng ký thành công (chế độ demo offline)! Hãy đăng nhập.", "info");
+      } else {
+        throw apiErr;
+      }
     }
-
-    showToast("Đăng ký thành công! Hãy đăng nhập.", "success");
 
     // Điền sẵn email vừa đăng ký vào form đăng nhập và chuyển sang form đăng nhập
     loginEmailInput.value = data.email;
