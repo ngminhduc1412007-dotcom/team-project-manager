@@ -21,12 +21,11 @@ function showToast(message, type = "success") {
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  setTimeout(() => toast.remove(), 3500);
 }
 
 // Quản lý xác thực, token và phiên làm việc
 const auth = {
-// 1. Lưu & lấy token từ localStorage
 getToken: function () {
   return localStorage.getItem("token");
 },
@@ -37,8 +36,6 @@ setToken: function (token) {
     localStorage.removeItem("token");
   }
 },
-
-// 2. Lưu & lấy thông tin người dùng từ localStorage
 getUser: function () {
   try {
     const user = localStorage.getItem("user");
@@ -54,21 +51,15 @@ setUser: function (user) {
     localStorage.removeItem("user");
   }
 },
-
-// 3. Kiểm tra xem đã đăng nhập hay chưa
 isAuthenticated: function () {
   return Boolean(localStorage.getItem("token"));
 },
-
-// 4. Đăng xuất: xóa token, user và chuyển về trang đăng nhập
 logout: function () {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   const root = document.body.dataset.root || "./";
   window.location.href = root + "pages/login.html?logout=true";
 },
-
-// 5. Auth Guard: Tự chuyển về trang đăng nhập khi chưa đăng nhập
 requireAuth: function () {
   if (!this.isAuthenticated()) {
     const root = document.body.dataset.root || "./";
@@ -78,8 +69,6 @@ requireAuth: function () {
   }
   return true;
 },
-
-// 6. Guest Guard: Nếu đã đăng nhập thì tự chuyển sang trang dự án
 redirectIfAuth: function () {
   if (this.isAuthenticated()) {
     const root = document.body.dataset.root || "./";

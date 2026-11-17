@@ -28,7 +28,7 @@
       <div>
         <h1 style="margin: 0; font-size: 24px;">Dự án của tôi</h1>
         <p style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
-          Quản lý tiến độ đồ án và phân công công việc các bài tập nhóm
+          Quản lý tiến độ đồ án và phân công công việc các bài tập nhóm (đồng bộ Backend API)
         </p>
       </div>
       <div>
@@ -36,40 +36,93 @@
       </div>
     </div>
 
-    <!-- Thanh tìm kiếm & Bộ lọc trạng thái -->
-    <div class="toolbar card" style="padding: 14px 16px;">
-      <div class="toolbar-search">
-        <input type="search" id="search-input" placeholder="🔍 Tìm theo tên hoặc mô tả đồ án...">
-      </div>
-      <div class="filter-group" id="filter-group">
-        <button class="filter-btn active" data-status="ALL">Tất cả</button>
-        <button class="filter-btn" data-status="ACTIVE">Đang thực hiện</button>
-        <button class="filter-btn" data-status="PLANNING">Lập kế hoạch</button>
-        <button class="filter-btn" data-status="COMPLETED">Đã hoàn thành</button>
-      </div>
-    </div>
+        <!-- Thanh tìm kiếm, lọc, sắp xếp và phân trang -->
+        <div class="card" style="padding: 16px; margin-bottom: 20px;">
+          <!-- Hàng 1: Tìm kiếm theo tên & Lọc Dự án của tôi -->
+          <div
+            style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px;">
+            <div class="toolbar-search" style="flex: 1; min-width: 260px;">
+              <input type="search" id="search-input" placeholder="🔍 Tìm theo tên hoặc mô tả đồ án...">
+            </div>
 
-    <!-- Lưới thẻ dự án (Project Cards) -->
-    <div id="project-grid" class="project-grid"></div>
+            <!-- Toggle lọc dự án -->
+            <div class="filter-group" id="my-filter-group">
+              <button type="button" class="filter-btn active" data-my="false">🌐 Tất cả dự án</button>
+              <button type="button" class="filter-btn" data-my="true" id="btn-filter-my">👤 Dự án của tôi</button>
+            </div>
+          </div>
 
-    <!-- Trạng thái rỗng (Empty State) -->
-    <div id="empty-state" class="empty-box" style="display: none;">
-      <div class="empty-icon">📁</div>
-      <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
-      <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
-      <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
-    </div>
+            <!-- Hàng 2: Lọc trạng thái, Sắp xếp & Chọn số bản ghi mỗi trang -->
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--color-border); padding-top: 12px;">
+              <!-- Lọc trạng thái -->
+              <div class="filter-group" id="filter-group">
+                <button type="button" class="filter-btn active" data-status="ALL">Tất cả</button>
+                <button type="button" class="filter-btn" data-status="in_progress">Đang thực hiện</button>
+                <button type="button" class="filter-btn" data-status="planning">Lập kế hoạch</button>
+                <button type="button" class="filter-btn" data-status="completed">Đã hoàn thành</button>
+              </div>
+
+              <!-- Nhóm sắp xếp & kích thước trang -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <label for="sort-by" style="font-size: 13px; color: var(--color-muted); white-space: nowrap;">Sắp
+                  xếp:</label>
+                <select id="sort-by" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                  <option value="created_at" selected>Ngày tạo</option>
+                  <option value="name">Tên dự án</option>
+                  <option value="deadline">Hạn chót</option>
+                  <option value="updated_at">Ngày cập nhật</option>
+                  <option value="id">Mã dự án</option>
+                </select>
+
+                <select id="sort-order" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                  <option value="desc" selected>Giảm dần</option>
+                  <option value="asc">Tăng dần</option>
+                </select>
+
+                <label for="page-size"
+                  style="font-size: 13px; color: var(--color-muted); margin-left: 6px; white-space: nowrap;">Hiển
+                  thị:</label>
+                <select id="page-size" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                  <option value="6">6 / trang</option>
+                  <option value="10" selected>10 / trang</option>
+                  <option value="20">20 / trang</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lưới thẻ dự án (Project Cards) -->
+          <div id="project-grid" class="project-grid"></div>
+
+          <!-- Trạng thái rỗng (Empty State) -->
+          <div id="empty-state" class="empty-box" style="display: none;">
+            <div class="empty-icon">📁</div>
+            <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
+            <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
+            <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
+          </div>
+
+          <!-- Thanh phân trang (Pagination) -->
+          <div class="pagination-wrapper" id="pagination-wrapper" style="display: none;">
+            <div class="pagination-info" id="pagination-info">
+              Hiển thị 0 trên tổng số 0 dự án
+            </div>
+            <div class="pagination-controls" id="pagination-controls"></div>
+          </div>
   </main>
 
-  <!-- Modal Tạo Dự Án Mới -->
+  <!-- Modal Tạo / Chỉnh Sửa Dự Án -->
   <div class="modal-backdrop" id="create-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3>Tạo đồ án / dự án mới</h3>
+        <h3 id="modal-project-title">Tạo đồ án / dự án mới</h3>
         <button type="button" class="modal-close" id="btn-close-modal" aria-label="Đóng">&times;</button>
       </div>
 
       <form id="create-project-form" novalidate>
+        <input type="hidden" id="edit-project-id" value="">
+
         <div class="form-group">
           <label for="project-name">Tên dự án / đề tài *</label>
           <input type="text" id="project-name" placeholder="VD: Website Quản lý Đồ án Sinh viên PTIT">
@@ -91,12 +144,14 @@
             <input type="date" id="end-date">
           </div>
         </div>
+        <div class="form-error" id="date-error" style="margin-top: -8px; margin-bottom: 12px;"></div>
 
         <div class="form-group">
-          <label for="project-status">Trạng thái ban đầu</label>
+          <label for="project-status">Trạng thái</label>
           <select id="project-status">
-            <option value="PLANNING">Lập kế hoạch (PLANNING)</option>
-            <option value="ACTIVE" selected>Đang thực hiện (ACTIVE)</option>
+            <option value="planning">Lập kế hoạch</option>
+            <option value="in_progress" selected>Đang thực hiện</option>
+            <option value="completed">Đã hoàn thành</option>
           </select>
         </div>
 
@@ -105,6 +160,28 @@
           <button type="submit" class="btn btn-primary" id="btn-submit-project">Tạo dự án</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Xác Nhận Xóa Dự Án -->
+  <div class="modal-backdrop" id="delete-modal">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="color: #ef4444; display: flex; align-items: center; gap: 8px;">
+          <span>⚠️</span> Xác nhận xóa dự án
+        </h3>
+        <button type="button" class="modal-close" id="btn-close-delete-modal" aria-label="Đóng">&times;</button>
+      </div>
+      <div style="padding: 16px 0;">
+        <p>Bạn có chắc chắn muốn xóa dự án <strong id="delete-project-name-display" style="color: #0f172a;"></strong> không?</p>
+        <p style="color: #64748b; font-size: 13px; margin-top: 8px;">
+          Hành động này không thể hoàn tác. Mọi công việc và dữ liệu liên quan sẽ bị xóa vĩnh viễn.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="btn-cancel-delete-modal">Hủy bỏ</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-action">Xác nhận xóa</button>
+      </div>
     </div>
   </div>
 

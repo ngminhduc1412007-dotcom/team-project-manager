@@ -1,7 +1,8 @@
 // Layout chung: tự động nạp header và footer vào các trang
 const MENU = [
   { href: "index.html", label: "Trang chủ" },
-  { href: "pages/projects.html", label: "Dự án của tôi" },
+  { href: "pages/projects.html", label: "Dự án" },
+  { href: "pages/tasks.html", label: "Công việc (Tasks)" },
   { href: "pages/login.html", label: "Đăng nhập" },
 ];
 

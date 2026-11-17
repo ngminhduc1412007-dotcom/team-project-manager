@@ -8,10 +8,16 @@ async function checkHealth() {
   try {
     const res = await api.get("/health");
     box.className = "status status-ok";
-    box.textContent = `✅ Backend kết nối thành công · Database: ${res.database || "OK"}`;
+    const appName = res.data?.app_name || res.message || "Team Project Manager API";
+    const env = res.data?.environment || "development";
+    const statusText = res.data?.status || "healthy";
+    box.textContent = `✅ Backend kết nối thành công: ${appName} · Môi trường: ${env} · Trạng thái: ${statusText}`;
   } catch (err) {
-    box.className = "status status-error";
-    box.textContent = `❌ Chưa kết nối được Backend: ${err.message}`;
+    box.className = "status";
+    box.style.background = "#eff6ff";
+    box.style.color = "#1e40af";
+    box.style.border = "1px solid #bfdbfe";
+    box.textContent = `ℹ️ Backend chưa chạy trên cổng 8000 (hệ thống tự động chạy chế độ Demo). Khi bạn bật server Backend, trạng thái sẽ tự chuyển sang kết nối thành công.`;
   }
 }
 
@@ -22,25 +28,23 @@ function updateAuthBanner() {
   if (auth.isAuthenticated()) {
     const user = auth.getUser();
     const name = (user && (user.full_name || user.email)) || "Sinh viên";
-    container.innerHTML = `
-      <div style="padding: 12px 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <div>
-          <span style="color: #065f46; font-weight: 600;">👋 Chào mừng ${escapeHtml(name)}!</span>
-          <span style="color: #047857; font-size: 13px; margin-left: 6px;">(Đã đăng nhập, token hợp lệ)</span>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <a href="pages/projects.html" class="btn btn-primary btn-small">Vào Dự án của tôi &rarr;</a>
-          <button type="button" class="btn btn-small btn-danger" onclick="auth.logout()">Đăng xuất</button>
-        </div>
-      </div>
-    `;
+    container.innerHTML =
+      '<div style="padding: 12px 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">' +
+      '<div>' +
+      '<span style="color: #065f46; font-weight: 600;">👋 Chào mừng ' + escapeHtml(name) + '!</span>' +
+      '<span style="color: #047857; font-size: 13px; margin-left: 6px;">(Đã đăng nhập vào hệ thống)</span>' +
+      '</div>' +
+      '<div style="display: flex; gap: 8px;">' +
+      '<a href="pages/projects.html" class="btn btn-primary btn-small">Vào Dự án của tôi &rarr;</a>' +
+      '<button type="button" class="btn btn-small btn-danger" onclick="auth.logout()">Đăng xuất</button>' +
+      '</div>' +
+      '</div>';
   } else {
-    container.innerHTML = `
-      <div style="padding: 12px 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <span style="color: #92400e; font-size: 13px;">🔒 Bạn chưa đăng nhập. Vui lòng đăng nhập để truy cập trang quản lý dự án.</span>
-        <a href="pages/login.html" class="btn btn-primary btn-small">Đăng nhập ngay</a>
-      </div>
-    `;
+    container.innerHTML =
+      '<div style="padding: 12px 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">' +
+      '<span style="color: #92400e; font-size: 13px;">🔒 Bạn chưa đăng nhập. Vui lòng đăng nhập để truy cập trang quản lý dự án.</span>' +
+      '<a href="pages/login.html" class="btn btn-primary btn-small">Đăng nhập ngay</a>' +
+      '</div>';
   }
 }
 
