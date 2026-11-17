@@ -8,7 +8,6 @@ async function checkHealth() {
   try {
     const res = await api.get("/health");
     box.className = "status status-ok";
-    box.textContent = `✅ Backend kết nối thành công · Database: ${res.database || "OK"}`;
     const appName = res.data?.app_name || CONFIG.APP_NAME;
     const env = res.data?.environment || "development";
     const statusText = res.data?.status || "healthy";
@@ -23,7 +22,7 @@ function updateAuthBanner() {
   const container = document.getElementById("home-auth-banner");
   if (!container) return;
 
-  if (auth.isAuthenticated()) {
+  if (typeof auth !== "undefined" && auth.isAuthenticated && auth.isAuthenticated()) {
     const user = auth.getUser();
     const name = (user && (user.full_name || user.email)) || "Sinh viên";
     container.innerHTML = `
@@ -48,11 +47,6 @@ function updateAuthBanner() {
   }
 }
 
-document.getElementById("api-url").textContent = CONFIG.API_BASE_URL;
-document.getElementById("btn-recheck").addEventListener("click", checkHealth);
-
-checkHealth();
-updateAuthBanner();
 const apiUrlEl = document.getElementById("api-url");
 if (apiUrlEl) {
   apiUrlEl.textContent = CONFIG.API_BASE_URL;
@@ -64,3 +58,4 @@ if (btnRecheck) {
 }
 
 checkHealth();
+updateAuthBanner();

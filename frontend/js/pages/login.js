@@ -69,7 +69,7 @@ if (window.location.hash === "#register") {
     history.replaceState(null, null, cleanUrl);
   } else if (reason === "auth_required") {
     showToast("Vui lòng đăng nhập để truy cập trang quản lý dự án!", "error");
-  } else if (auth.isAuthenticated()) {
+  } else if (typeof auth !== "undefined" && auth.isAuthenticated && auth.isAuthenticated()) {
     // Nếu người dùng đã đăng nhập từ trước và không phải vừa bấm đăng xuất -> chuyển thẳng vào trang dự án
     auth.redirectIfAuth();
   }
@@ -139,22 +139,19 @@ loginForm.addEventListener("submit", async (e) => {
 
     try {
       const res = await api.post("/auth/login", { email, password });
-      // Hỗ trợ định dạng response backend FastAPI JWT: { access_token, user } hoặc { token, user }
-      token = res.access_token || res.token || (res.data && (res.data.access_token || res.data.token));
-      user = res.user || (res.data && res.data.user);
-    } catch {
-      // Backend chưa chạy -> cấp token và user mô phỏng để test đầy đủ chức năng
+      token = res.data?.access_token || res.access_token || res.data?.token || res.token;
+      user = res.data?.user || res.user;
+    } catch (apiErr) {
+      // Nếu là lỗi phản hồi từ backend (400, 401, 403, 422), hiển thị lỗi đúng thực tế
+      if (apiErr.status && apiErr.status > 0) {
+        throw apiErr;
+      }
+      // Chỉ khi backend hoàn toàn không chạy (status 0), fallback sang tài khoản demo
       console.warn("Backend API không khả dụng, sử dụng phiên demo.");
     }
 
     if (!token) {
       token = "jwt_token_ptit_" + Date.now();
-    const res = await api.post("/auth/login", { email, password });
-    const token = res.data?.access_token || res.access_token || res.data?.token || res.token;
-    const user = res.data?.user || res.user || { email, full_name: email.split("@")[0] };
-
-    if (!token) {
-      throw new Error("Không nhận được token xác thực từ máy chủ.");
     }
     if (!user) {
       const namePart = email.split("@")[0];
@@ -162,14 +159,11 @@ loginForm.addEventListener("submit", async (e) => {
         id: 1,
         email: email,
         full_name: email.startsWith("truongnhom") ? "Trưởng nhóm PTIT" : namePart,
-        role: email.startsWith("truongnhom") ? "LEADER" : "MEMBER"
+        role: "STUDENT",
       };
     }
 
     // 1. LƯU TOKEN VÀ USER VÀO LOCALSTORAGE
-    auth.setToken(token);
-    auth.setUser(user);
-
     auth.setToken(token);
     auth.setUser(user);
 
@@ -186,8 +180,6 @@ loginForm.addEventListener("submit", async (e) => {
         window.location.href = "projects.html";
       }
     }, 700);
-      window.location.href = "projects.html";
-    }, 800);
   } catch (err) {
     showToast(err.message, "error");
   } finally {
@@ -283,7 +275,15 @@ regForm.addEventListener("submit", async (e) => {
   };
 
   try {
-    await api.post("/auth/register", data);
+    try {
+      await api.post("/auth/register", data);
+    } catch (apiErr) {
+      if (apiErr.status && apiErr.status > 0) {
+        throw apiErr;
+      }
+      console.warn("Backend API không khả dụng, mô phỏng đăng ký demo.");
+    }
+
     showToast("Đăng ký tài khoản thành công! Hãy đăng nhập.", "success");
 
     // Điền sẵn email vừa đăng ký vào form đăng nhập và chuyển sang form đăng nhập
@@ -303,4 +303,3 @@ regForm.addEventListener("submit", async (e) => {
     btnRegister.textContent = "Đăng ký tài khoản";
   }
 });
-

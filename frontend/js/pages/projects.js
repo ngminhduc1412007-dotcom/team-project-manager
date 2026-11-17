@@ -329,31 +329,8 @@ function getBadge(status) {
   return '<span class="badge badge-completed">Đã hoàn thành</span>';
 }
 
-// 2. Render danh sách thẻ dự án
-function renderProjects() {
-  const filtered = mockProjects.filter((p) => {
-    const matchStatus = currentFilter === "ALL" || p.status === currentFilter;
-    const matchKeyword = !searchKeyword ||
-      p.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      (p.description && p.description.toLowerCase().includes(searchKeyword.toLowerCase()));
-    return matchStatus && matchKeyword;
-  });
-
-  // Xử lý trạng thái rỗng (Empty State)
-  if (filtered.length === 0) {
-    grid.innerHTML = "";
-    emptyState.style.display = "block";
-    if (searchKeyword) {
-      emptyTitle.textContent = `Không tìm thấy dự án phù hợp với "${searchKeyword}"`;
-      emptyDesc.textContent = "Vui lòng thử tìm với từ khóa khác hoặc bấm nút Tạo dự án mới bên dưới.";
-    } else {
-      emptyTitle.textContent = "Chưa có dự án nào";
-      emptyDesc.textContent = "Hiện chưa có dự án nào trong mục này. Hãy bắt đầu bằng cách tạo dự án mới!";
-    }
-    return;
-  }
-    // 4. Mock Engine: Xử lý tìm kiếm, lọc, sắp xếp và phân trang chuẩn đặc tả khi backend chưa chạy
-    function runMockEngine(params) {
+// 4. Mock Engine: Xử lý tìm kiếm, lọc, sắp xếp và phân trang chuẩn đặc tả khi backend chưa chạy
+function runMockEngine(params) {
       const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
       const currentUserId = currentUser ? (currentUser.id || 1) : 1;
 
@@ -371,8 +348,14 @@ function renderProjects() {
         // owner_id: Lọc theo ID chủ dự án
         const matchOwner = !params.owner_id || (p.owner_id === Number(params.owner_id));
 
-        // status: Lọc trạng thái
-        const matchStatus = !params.status || params.status === "ALL" || p.status === params.status;
+        // status: Lọc trạng thái (tương thích cả ACTIVE lẫn in_progress)
+        const pStatus = String(p.status || "").toLowerCase();
+        const filterStatus = String(params.status || "ALL").toLowerCase();
+        const matchStatus =
+          !params.status ||
+          filterStatus === "all" ||
+          pStatus === filterStatus ||
+          ((filterStatus === "in_progress" || filterStatus === "active") && (pStatus === "active" || pStatus === "in_progress"));
 
         return matchSearch && matchMy && matchOwner && matchStatus;
       });
@@ -735,55 +718,6 @@ let searchDebounceTimer = null;
               return;
             }
 
-            const nowIso = new Date().toISOString();
-            const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
-
-            const newProject = {
-              id: Date.now(),
-              name,
-              description: desc,
-              start_date: startDate,
-              deadline: deadline,
-              end_date: deadline,
-              created_at: nowIso,
-              updated_at: nowIso,
-              status,
-              owner_id: currentUser ? (currentUser.id || 1) : 1,
-              owner: currentUser || { id: 1, full_name: "Nguyễn Văn Đức", email: "truongnhom@ptit.edu.vn" },
-              total_tasks: 0,
-              done_tasks: 0,
-              members: 1
-            };
-
-            localProjects.unshift(newProject);
-            closeModal();
-            showToast("Tạo dự án mới thành công!", "success");
-
-  const newProject = {
-    id: Date.now(),
-    name,
-    description: desc,
-    start_date: startDate,
-    end_date: endDate,
-    status,
-    total_tasks: 0,
-    done_tasks: 0,
-    members: 1
-  };
-
-  mockProjects.unshift(newProject);
-  closeModal();
-  showToast("Tạo dự án mới thành công!", "success");
-  renderProjects();
-});
-
-// Khởi chạy render lần đầu nếu đã xác thực
-if (auth.isAuthenticated()) {
-  renderProjects();
-}
-            // Về trang 1 và tải lại danh sách
-            queryState.page = 1;
-            loadProjects();
             const token = typeof auth !== "undefined" && auth.getToken ? auth.getToken() : null;
             if (!token) {
               showToast("Vui lòng đăng nhập trước khi tạo dự án mới!", "error");
@@ -800,7 +734,7 @@ if (auth.isAuthenticated()) {
             }
 
             try {
-              // Gọi API backend tạo dự án
+              let createdFromApi = false;
               const payload = {
                 name: name,
                 description: desc || null,
@@ -809,7 +743,40 @@ if (auth.isAuthenticated()) {
                 status: statusVal,
               };
 
-              await api.post("/projects", payload);
+              if (typeof api !== "undefined" && api.post) {
+                try {
+                  await api.post("/projects", payload);
+                  createdFromApi = true;
+                } catch (apiErr) {
+                  if (apiErr.status && apiErr.status > 0) {
+                    throw apiErr;
+                  }
+                  console.warn("Backend API không khả dụng, lưu dự án vào bộ nhớ demo.");
+                }
+              }
+
+              if (!createdFromApi) {
+                const nowIso = new Date().toISOString();
+                const currentUser = typeof auth !== "undefined" && auth.getUser ? auth.getUser() : null;
+                const newProject = {
+                  id: Date.now(),
+                  name,
+                  description: desc,
+                  start_date: startDate || nowIso.slice(0, 10),
+                  deadline: deadline || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+                  end_date: deadline,
+                  created_at: nowIso,
+                  updated_at: nowIso,
+                  status: statusVal,
+                  owner_id: currentUser ? currentUser.id || 1 : 1,
+                  owner: currentUser || { id: 1, full_name: "Nguyễn Văn Đức", email: "truongnhom@ptit.edu.vn" },
+                  total_tasks: 0,
+                  done_tasks: 0,
+                  members: 1,
+                };
+                localProjects.unshift(newProject);
+              }
+
               closeModal();
               showToast("Tạo dự án mới thành công!", "success");
 
