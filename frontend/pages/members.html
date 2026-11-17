@@ -230,14 +230,19 @@
       color: #166534;
     }
 
+    .badge-planning {
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    .badge-completed {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
     .badge-owner {
       background: #dbeafe;
       color: #1d4ed8;
-    }
-
-    .badge-admin {
-      background: #e0e7ff;
-      color: #4338ca;
     }
 
     .badge-member {
@@ -253,10 +258,18 @@
     .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 16px;
       margin-bottom: 16px;
       flex-wrap: wrap;
+    }
+
+    .project-status-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
     }
 
     .project-subnav {
@@ -298,8 +311,9 @@
 
     .project-stats-bar {
       display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
       font-size: 13px;
       color: var(--color-muted);
     }
@@ -462,24 +476,41 @@
   <main class="container">
     <div class="page-header">
       <div>
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <h1 id="project-title" style="margin: 0; font-size: 24px;">Dự án: Student Project Hub</h1>
-          <span class="badge badge-active" id="project-status-badge">ACTIVE</span>
+          <span class="badge badge-active" id="project-status-badge">Đang làm</span>
         </div>
         <p id="project-desc" style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
           Quản lý danh sách thành viên, thêm thành viên qua API và phân quyền vai trò trong dự án
         </p>
+
+        <div class="project-status-box" id="project-status-controls">
+          <span style="font-size: 13px; font-weight: 600;">Trạng thái dự án:</span>
+          <select id="project-status-select" style="width: 170px; padding: 5px 10px; font-size: 13px;">
+            <option value="PLANNING">Lên kế hoạch</option>
+            <option value="ACTIVE" selected>Đang làm</option>
+            <option value="COMPLETED">Đã hoàn thành</option>
+          </select>
+          <button type="button" class="btn btn-small btn-primary" id="btn-update-project-status">
+            Đổi trạng thái
+          </button>
+          <span id="project-status-role-hint" style="font-size: 12px; color: var(--color-muted);">
+            (Chỉ Owner và Admin được đổi)
+          </span>
+        </div>
       </div>
 
       <div class="project-stats-bar">
-        <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy ( Owner )</strong></span>
-        <span>Thành viên: <strong id="total-members-stat">5</strong></span>
+        <div>
+          <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy ( Owner )</strong></span>
+          <span style="margin-left: 14px;">Thành viên: <strong id="total-members-stat">5</strong></span>
+        </div>
       </div>
     </div>
 
     <div class="project-subnav">
-      <a href="tasks.html" class="subnav-link">Danh sách Task</a>
-      <a href="members.html" class="subnav-link active">Thành viên dự án</a>
+      <a href="tasks.html" id="subnav-tasks-link" class="subnav-link">Danh sách Task</a>
+      <a href="members.html" id="subnav-members-link" class="subnav-link active">Thành viên dự án</a>
       <a href="projects.html" class="subnav-link">Quay lại Danh sách dự án</a>
     </div>
 
@@ -504,7 +535,7 @@
 
           <select id="member-role-select" style="width: 180px;">
             <option value="member">Vai trò: MEMBER</option>
-            <option value="admin">Vai trò: ADMIN</option>
+            <option value="owner">Vai trò: OWNER</option>
             <option value="viewer">Vai trò: VIEWER</option>
           </select>
 
@@ -527,7 +558,6 @@
           <select id="filter-role-select" style="width: 160px;">
             <option value="ALL">Tất cả vai trò</option>
             <option value="OWNER">OWNER</option>
-            <option value="ADMIN">ADMIN</option>
             <option value="MEMBER">MEMBER</option>
             <option value="VIEWER">VIEWER</option>
           </select>

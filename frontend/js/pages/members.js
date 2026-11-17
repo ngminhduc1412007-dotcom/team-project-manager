@@ -61,18 +61,56 @@ const initialMembers = [
   }
 ];
 
-let membersList = [...initialMembers];
+const urlParams = new URLSearchParams(window.location.search);
+const currentProjectId = Number(urlParams.get("project_id") || urlParams.get("id") || 1);
+
+const MEMBERS_STORAGE_KEY = "sph_members_project_" + currentProjectId;
+const STATUS_STORAGE_KEY = "sph_project_status_" + currentProjectId;
+
+function loadStoredMembers() {
+  try {
+    const raw = localStorage.getItem(MEMBERS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    // Bỏ qua lỗi đọc localStorage
+  }
+  localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(initialMembers));
+  return [...initialMembers];
+}
+
+function saveStoredMembers(list) {
+  try {
+    localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(list));
+  } catch (e) {
+    // Bỏ qua lỗi ghi localStorage
+  }
+}
+
+let membersList = loadStoredMembers();
 let searchKeyword = "";
 let roleFilter = "ALL";
 let pendingDeleteMember = null;
 
-const urlParams = new URLSearchParams(window.location.search);
-const currentProjectId = Number(urlParams.get("project_id") || urlParams.get("id") || 1);
+const subnavTasksLink = document.getElementById("subnav-tasks-link");
+const subnavMembersLink = document.getElementById("subnav-members-link");
+if (subnavTasksLink) subnavTasksLink.href = "tasks.html?project_id=" + currentProjectId;
+if (subnavMembersLink) subnavMembersLink.href = "members.html?project_id=" + currentProjectId;
 
 const membersTbody = document.getElementById("members-tbody");
 const memberCountLabel = document.getElementById("member-count-label");
 const totalMembersStat = document.getElementById("total-members-stat");
 const statusBanner = document.getElementById("status-banner");
+
+const projectStatusBadge = document.getElementById("project-status-badge");
+const projectStatusSelect = document.getElementById("project-status-select");
+const btnUpdateProjectStatus = document.getElementById("btn-update-project-status");
+const projectStatusRoleHint = document.getElementById("project-status-role-hint");
+const currentUserLabel = document.getElementById("current-user-label");
 
 const addMemberForm = document.getElementById("add-member-form");
 const emailInput = document.getElementById("member-email-input");
@@ -121,10 +159,17 @@ function notifyResult(message, type = "success") {
   }
 }
 
+// Chuẩn hóa vai trò: cả "owner" và "admin" trong dự án đều có quyền tương đương OWNER
+function normalizeProjectRole(role) {
+  const r = String(role || "member").trim().toUpperCase();
+  if (r === "OWNER" || r === "ADMIN") return "OWNER";
+  if (r === "VIEWER") return "VIEWER";
+  return "MEMBER";
+}
+
 function getRoleBadge(role) {
-  const normalized = String(role || "member").toUpperCase();
+  const normalized = normalizeProjectRole(role);
   if (normalized === "OWNER") return '<span class="badge badge-owner">OWNER</span>';
-  if (normalized === "ADMIN") return '<span class="badge badge-admin">ADMIN</span>';
   if (normalized === "VIEWER") return '<span class="badge badge-viewer">VIEWER</span>';
   return '<span class="badge badge-member">MEMBER</span>';
 }
@@ -142,11 +187,121 @@ function getMemberEmail(member) {
   return "";
 }
 
+// Kiểm tra người dùng hiện tại có phải là Owner hoặc Admin không
+function isCurrentUserOwnerOrAdmin() {
+  const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
+  if (!currentUser) {
+    // Mặc định tài khoản mẫu trên trang là Lê Quang Huy (Owner)
+    return true;
+  }
+
+  const sysRole = String(currentUser.role || currentUser.system_role || "").toLowerCase();
+  if (sysRole === "admin" || sysRole === "owner") {
+    return true;
+  }
+
+  const email = String(currentUser.email || "").toLowerCase();
+  const matchedMember = membersList.find(
+    (m) => getMemberEmail(m).toLowerCase() === email || Number(m.user_id) === Number(currentUser.id)
+  );
+  if (matchedMember) {
+    return normalizeProjectRole(matchedMember.role) === "OWNER";
+  }
+
+  return true;
+}
+
+// Đồng bộ và hiển thị trạng thái dự án (Lên kế hoạch, Đang làm, Đã hoàn thành)
+function normalizeProjectStatus(status) {
+  const s = String(status || "ACTIVE").trim().toUpperCase();
+  if (s === "PLANNING") return "PLANNING";
+  if (s === "COMPLETED" || s === "DONE") return "COMPLETED";
+  return "ACTIVE";
+}
+
+function renderProjectStatusUI(statusValue) {
+  const normalized = normalizeProjectStatus(statusValue);
+  localStorage.setItem(STATUS_STORAGE_KEY, normalized);
+
+  if (projectStatusSelect) {
+    projectStatusSelect.value = normalized;
+  }
+
+  if (projectStatusBadge) {
+    if (normalized === "PLANNING") {
+      projectStatusBadge.className = "badge badge-planning";
+      projectStatusBadge.textContent = "Lên kế hoạch";
+    } else if (normalized === "COMPLETED") {
+      projectStatusBadge.className = "badge badge-completed";
+      projectStatusBadge.textContent = "Đã hoàn thành";
+    } else {
+      projectStatusBadge.className = "badge badge-active";
+      projectStatusBadge.textContent = "Đang làm";
+    }
+  }
+
+  const canChangeStatus = isCurrentUserOwnerOrAdmin();
+  if (projectStatusSelect) projectStatusSelect.disabled = !canChangeStatus;
+  if (btnUpdateProjectStatus) btnUpdateProjectStatus.disabled = !canChangeStatus;
+  if (projectStatusRoleHint) {
+    projectStatusRoleHint.textContent = canChangeStatus
+      ? "(Quyền Owner / Admin: có thể đổi trạng thái)"
+      : "(Chỉ Owner và Admin mới có thể đổi trạng thái)";
+  }
+}
+
+if (btnUpdateProjectStatus) {
+  btnUpdateProjectStatus.addEventListener("click", async () => {
+    if (!isCurrentUserOwnerOrAdmin()) {
+      notifyResult("Chỉ Owner và Admin mới có quyền đổi trạng thái dự án.", "error");
+      return;
+    }
+
+    const selectedStatus = projectStatusSelect ? projectStatusSelect.value : "ACTIVE";
+    const backendStatusMap = {
+      PLANNING: "planning",
+      ACTIVE: "in_progress",
+      COMPLETED: "completed"
+    };
+    const backendStatus = backendStatusMap[selectedStatus] || "in_progress";
+
+    btnUpdateProjectStatus.disabled = true;
+    btnUpdateProjectStatus.textContent = "Đang lưu...";
+
+    try {
+      if (typeof api !== "undefined" && api.patch) {
+        try {
+          await api.patch("/projects/" + currentProjectId + "/status", {
+            status: backendStatus
+          });
+        } catch (apiErr) {
+          if (apiErr && apiErr.status && apiErr.status !== 0 && apiErr.status !== 404) {
+            throw new Error(apiErr.data?.message || apiErr.message || "Không thể đổi trạng thái dự án.");
+          }
+        }
+      }
+
+      renderProjectStatusUI(selectedStatus);
+      const labelMap = {
+        PLANNING: "Lên kế hoạch",
+        ACTIVE: "Đang làm",
+        COMPLETED: "Đã hoàn thành"
+      };
+      notifyResult("Đã đổi trạng thái dự án sang: " + labelMap[selectedStatus], "success");
+    } catch (err) {
+      notifyResult(err.message || "Lỗi khi cập nhật trạng thái dự án.", "error");
+    } finally {
+      btnUpdateProjectStatus.disabled = false;
+      btnUpdateProjectStatus.textContent = "Đổi trạng thái";
+    }
+  });
+}
+
 function renderMembers() {
   if (!membersTbody) return;
 
   const filtered = membersList.filter((m) => {
-    const roleUpper = String(m.role || "member").toUpperCase();
+    const roleUpper = normalizeProjectRole(m.role);
     const matchRole = roleFilter === "ALL" || roleUpper === roleFilter;
 
     const kw = searchKeyword.trim().toLowerCase();
@@ -168,13 +323,13 @@ function renderMembers() {
 
   membersTbody.innerHTML = filtered
     .map((m, idx) => {
-      const roleUpper = String(m.role || "member").toUpperCase();
-      const isOwner = roleUpper === "OWNER";
+      const roleUpper = normalizeProjectRole(m.role);
+      const isPrimaryOwner = Number(m.id) === 1 && roleUpper === "OWNER";
       const name = safeEscape(getMemberName(m));
       const email = safeEscape(getMemberEmail(m));
       const joinedDate = safeDate(m.joined_at);
 
-      const actionHtml = isOwner
+      const actionHtml = isPrimaryOwner
         ? '<span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span>'
         : '<button type="button" class="btn btn-small btn-danger btn-remove-member" data-id="' +
           m.id +
@@ -195,20 +350,25 @@ function renderMembers() {
 }
 
 async function loadProjectMembers() {
+  const savedStatus = localStorage.getItem(STATUS_STORAGE_KEY) || "ACTIVE";
+  renderProjectStatusUI(savedStatus);
+
   try {
     if (typeof api !== "undefined" && api.get) {
       const res = await api.get("/projects/" + currentProjectId + "/members");
       const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : null;
       if (items && items.length > 0) {
         membersList = items;
+        saveStoredMembers(membersList);
         renderMembers();
         return;
       }
     }
   } catch (err) {
-    // Fallback dữ liệu mặc định khi backend chưa bật
+    // Fallback dữ liệu trong localStorage khi backend chưa bật
   }
 
+  saveStoredMembers(membersList);
   renderMembers();
 }
 
@@ -240,7 +400,7 @@ if (addMemberForm) {
   addMemberForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = (emailInput?.value || "").trim().toLowerCase();
-    const role = (roleSelect?.value || "member").toLowerCase();
+    const selectedRole = (roleSelect?.value || "member").toLowerCase();
 
     const errorMsg = validateEmail(email);
     if (errorMsg) {
@@ -260,13 +420,19 @@ if (addMemberForm) {
 
     try {
       let createdMember = null;
+      // Backend schema nhận role ('admin', 'member', 'viewer'), trong đó 'admin' trong dự án có quyền như 'owner'
+      const apiRolePayload = selectedRole === "owner" ? "admin" : selectedRole;
+
       if (typeof api !== "undefined" && api.post) {
         try {
           const res = await api.post("/projects/" + currentProjectId + "/members", {
             email,
-            role
+            role: apiRolePayload
           });
           createdMember = res?.data || res;
+          if (createdMember && selectedRole === "owner") {
+            createdMember.role = "owner";
+          }
         } catch (apiErr) {
           if (apiErr && apiErr.status && apiErr.status !== 0) {
             const msg = apiErr.data?.message || apiErr.message || "Không thể thêm thành viên.";
@@ -285,7 +451,7 @@ if (addMemberForm) {
           id: Date.now(),
           project_id: currentProjectId,
           user_id: Date.now(),
-          role,
+          role: selectedRole === "owner" ? "owner" : selectedRole,
           joined_at: new Date().toISOString(),
           user: {
             id: Date.now(),
@@ -296,9 +462,10 @@ if (addMemberForm) {
       }
 
       membersList.push(createdMember);
+      saveStoredMembers(membersList);
       emailInput.value = "";
       renderMembers();
-      notifyResult("Thêm thành viên " + email + " vào dự án thành công!", "success");
+      notifyResult("Thêm thành viên " + email + " (" + normalizeProjectRole(selectedRole) + ") vào dự án thành công!", "success");
     } catch (err) {
       emailInput.classList.add("is-invalid");
       if (emailError) {
@@ -369,6 +536,7 @@ if (btnConfirmDelete) {
       }
 
       membersList = membersList.filter((m) => Number(m.id) !== Number(target.id));
+      saveStoredMembers(membersList);
       closeDeleteModal();
       renderMembers();
       notifyResult("Đã xóa thành viên " + targetName + " khỏi dự án.", "success");
