@@ -77,4 +77,15 @@ redirectIfAuth: function () {
   }
   return false;
 }
+  getToken: () => localStorage.getItem("token"),
+  setToken: (t) => localStorage.setItem("token", t),
+  getUser: () => {
+    try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
+  },
+  setUser: (u) => localStorage.setItem("user", JSON.stringify(u)),
+  logout: () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.reload();
+  }
 };
