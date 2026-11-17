@@ -1,7 +1,8 @@
 // Layout chung: tự động nạp header và footer vào các trang
 const MENU = [
   { href: "index.html", label: "Trang chủ" },
-  { href: "pages/projects.html", label: "Dự án của tôi" },
+  { href: "pages/projects.html", label: "Dự án" },
+  { href: "pages/tasks.html", label: "Công việc (Tasks)" },
   { href: "pages/login.html", label: "Đăng nhập" },
 ];
 
@@ -9,9 +10,11 @@ function renderLayout() {
   const root = document.body.dataset.root || "./";
   const currentPath = window.location.pathname;
   const user = auth.getUser();
+  const isLoggedIn = auth.isAuthenticated();
 
     const links = MENU.map(function (item) {
-      if (user && item.href === "pages/login.html") {
+      // Nếu đã đăng nhập thì không hiện nút Đăng nhập trên navbar
+      if (isLoggedIn && item.href === "pages/login.html") {
         return "";
       }
       const isActive = currentPath.endsWith("/" + item.href) ||
@@ -21,10 +24,11 @@ function renderLayout() {
     }).join("");
 
     let userSection = "";
-    if (user) {
+    if (isLoggedIn) {
+      const displayName = (user && (user.full_name || user.email)) || "Sinh viên";
       userSection = '<div class="user-nav">' +
-        '<span>Xin chào, <strong>' + escapeHtml(user.full_name || user.email) + '</strong></span>' +
-        '<button type="button" class="btn btn-small btn-danger" onclick="auth.logout()">Đăng xuất</button>' +
+        '<span class="user-greeting">Xin chào, <strong>' + escapeHtml(displayName) + '</strong></span>' +
+        '<button type="button" class="btn btn-small btn-danger btn-logout" id="btn-logout" onclick="auth.logout()" title="Đăng xuất khỏi tài khoản">Đăng xuất</button>' +
         '</div>';
     }
 
@@ -46,4 +50,4 @@ function renderLayout() {
     }
   }
 
-renderLayout();
+  renderLayout();

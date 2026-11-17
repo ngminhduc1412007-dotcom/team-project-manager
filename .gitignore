@@ -17,7 +17,10 @@ ENV/
 *.sqlite
 *.sqlite3
 
-# OS generated
+# Nested git clones
+team-project-manager/
+backend/team-project-manager/
+
 .DS_Store
 Thumbs.db
 
