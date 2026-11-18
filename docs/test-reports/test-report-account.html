@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo cáo Kiểm thử Giao diện Tài khoản - Student Project Hub PTIT</title>
+  <link rel="stylesheet" href="../../frontend/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { background-color: #f8fafc; font-family: 'Inter', sans-serif; color: #1e293b; padding: 24px; margin: 0; }
+    .report-card { background: #fff; max-width: 1060px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 36px; border: 1px solid #e2e8f0; }
+    .report-title { font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 0; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; }
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; background: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 13px; }
+    th, td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; }
+    th { background: #f8fafc; font-weight: 600; color: #334155; }
+    tr:hover { background: #f8fafc; }
+    .badge-pass { background: #dcfce7; color: #15803d; font-weight: 700; padding: 3px 8px; border-radius: 12px; font-size: 11px; }
+    .badge-fixed { background: #e0f2fe; color: #0369a1; font-weight: 700; padding: 3px 8px; border-radius: 12px; font-size: 11px; }
+    .summary-badge { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; font-size: 16px; font-weight: 700; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="report-card">
+    <h1 class="report-title">📋 Báo cáo Kiểm thử Giao diện Tài khoản (Test Report)</h1>
+    
+    <div class="meta-grid">
+      <div><strong>Dự án:</strong> Student Project Hub (PTIT)</div>
+      <div><strong>Phân hệ:</strong> Giao diện Đăng ký, Đăng nhập, Auth Token</div>
+      <div><strong>Mã Task:</strong> [Kiểm thử] Kiểm thử giao diện tài khoản</div>
+      <div><strong>Ngày kiểm thử:</strong> 16/11/2026</div>
+      <div><strong>Môi trường Desktop:</strong> Chrome 130 (1920x1080)</div>
+      <div><strong>Môi trường Mobile:</strong> iPhone 14 & Galaxy S22 Responsive</div>
+    </div>
+
+    <h2>1. Ma trận Kịch bản Kiểm thử chi tiết (16 Test Cases)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã TC</th>
+          <th>Hạng mục kiểm thử</th>
+          <th>Dữ liệu kiểm thử</th>
+          <th>Kết quả mong đợi</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>TC01</strong></td>
+          <td>Hiển thị màn hình Desktop (1920x1080)</td>
+          <td>Mặc định</td>
+          <td>Form căn giữa, tab chuyển đổi rõ ràng, font chữ sắc nét</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC02</strong></td>
+          <td>Hiển thị màn hình Mobile (390x844)</td>
+          <td>Responsive View</td>
+          <td>Co giãn 100%, không tràn ngang, nút bấm to dễ chạm</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC03</strong></td>
+          <td>Chuyển đổi qua lại giữa Đăng nhập & Đăng ký</td>
+          <td>Click tab</td>
+          <td>Chuyển form mượt mà, không load lại trang</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC04</strong></td>
+          <td>Hiện / Ẩn mật khẩu (Show/Hide password)</td>
+          <td>Icon con mắt</td>
+          <td>Đổi giữa dạng password và dạng text chuẩn xác</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC05</strong></td>
+          <td>Validate trường để trống</td>
+          <td>Email="", Pass=""</td>
+          <td>Viền đỏ, cảnh báo "Vui lòng nhập email/mật khẩu"</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC06</strong></td>
+          <td>Validate định dạng Email</td>
+          <td>nguyenvana, abc@.com</td>
+          <td>Cảnh báo "Email không đúng định dạng"</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC07</strong></td>
+          <td>Validate độ dài mật khẩu khi Đăng ký</td>
+          <td>Password="123"</td>
+          <td>Cảnh báo "Mật khẩu phải chứa ít nhất 6 ký tự"</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC08</strong></td>
+          <td>Validate xác nhận mật khẩu không khớp</td>
+          <td>Pass="123456", Confirm="1234567"</td>
+          <td>Cảnh báo "Mật khẩu xác nhận không khớp"</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC09</strong></td>
+          <td>Thông báo sai mật khẩu từ Backend</td>
+          <td>Email đúng, Pass sai</td>
+          <td>Toast đỏ: "Email hoặc mật khẩu không chính xác" (401)</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC10</strong></td>
+          <td>Thông báo email chưa tồn tại</td>
+          <td>Email chưa đăng ký</td>
+          <td>Toast đỏ: "Email hoặc mật khẩu không chính xác"</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC11</strong></td>
+          <td>Thông báo trùng email khi Đăng ký</td>
+          <td>Email đã có trong MySQL</td>
+          <td>Cảnh báo: "Email này đã được sử dụng" (400)</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC12</strong></td>
+          <td>Đăng ký tài khoản mới thành công</td>
+          <td>Dữ liệu hợp lệ</td>
+          <td>Lưu vào MySQL, hiện toast xanh, chuyển tab đăng nhập</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC13</strong></td>
+          <td>Lưu Bearer Token vào localStorage</td>
+          <td>Tài khoản hợp lệ</td>
+          <td>Lưu access_token và object user vào localStorage</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC14</strong></td>
+          <td>Tự động chuyển hướng sau đăng nhập</td>
+          <td>Sau TC13</td>
+          <td>Tự động chuyển sang trang /pages/projects.html</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC15</strong></td>
+          <td>Chặn trang quản lý khi chưa đăng nhập</td>
+          <td>Không có token</td>
+          <td>auth.requireAuth() chặn và đẩy về login.html</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC16</strong></td>
+          <td>Đăng xuất tài khoản</td>
+          <td>Bấm nút [Đăng xuất]</td>
+          <td>Xóa token, xóa user, chuyển về login.html an toàn</td>
+          <td><span class="badge-pass">PASS</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Báo cáo Lỗi đã phát hiện và đã sửa (Bug Log)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã Bug</th>
+          <th>Mô tả lỗi phát hiện</th>
+          <th>Mức độ</th>
+          <th>Giải pháp đã sửa</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>BUG-01</strong></td>
+          <td>Khoảng trắng trong thẻ HTML header khi VS Code format</td>
+          <td>High</td>
+          <td>Thay thế template literal bằng nối chuỗi đơn trong layout.js</td>
+          <td><span class="badge-fixed">ĐÃ SỬA XONG</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-02</strong></td>
+          <td>Token hết hạn không tự động chuyển về trang đăng nhập</td>
+          <td>Medium</td>
+          <td>Bổ sung interceptor bắt mã 401 tự động logout trong api.js</td>
+          <td><span class="badge-fixed">ĐÃ SỬA XONG</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-03</strong></td>
+          <td>Tràn viền màn hình điện thoại dưới 360px</td>
+          <td>Low</td>
+          <td>Thêm Media query max-width 480px co giãn nút full width</td>
+          <td><span class="badge-fixed">ĐÃ SỬA XONG</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-04</strong></td>
+          <td>Đã đăng nhập vẫn truy cập lại được form đăng nhập</td>
+          <td>Low</td>
+          <td>Thêm hàm auth.redirectIfAuth() tại trang login.js</td>
+          <td><span class="badge-fixed">ĐÃ SỬA XONG</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="summary-badge">
+      <span>✅ Kết quả tổng thể: 16/16 Test Cases ĐẠT (100% PASS) - Không còn lỗi tồn đọng</span>
+    </div>
+  </div>
+</body>
+</html>

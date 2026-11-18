@@ -321,6 +321,28 @@ const endDateInput = document.getElementById("end-date");
 const statusInput = document.getElementById("project-status");
 const nameError = document.getElementById("name-error");
 
+// Delete Mode DOM Elements
+const btnToggleDeleteMode = document.getElementById("btn-toggle-delete-mode");
+const batchDeleteBar = document.getElementById("batch-delete-bar");
+const checkboxSelectAll = document.getElementById("checkbox-select-all");
+const selectedCountText = document.getElementById("selected-count-text");
+const deleteSelectedBadge = document.getElementById("delete-selected-badge");
+const btnCancelDeleteMode = document.getElementById("btn-cancel-delete-mode");
+const btnConfirmDeleteSelected = document.getElementById("btn-confirm-delete-selected");
+
+// Delete Modal DOM Elements
+const deleteModal = document.getElementById("delete-modal");
+const btnCloseDeleteModal = document.getElementById("btn-close-delete-modal");
+const btnCancelDeleteModal = document.getElementById("btn-cancel-delete-modal");
+const btnExecuteDelete = document.getElementById("btn-execute-delete");
+const deleteModalQuestion = document.getElementById("delete-modal-question");
+const deleteModalProjectList = document.getElementById("delete-modal-project-list");
+
+// State for Delete Mode
+let isDeleteMode = false;
+const selectedProjectIds = new Set();
+let currentLoadedProjects = [];
+
 // Helper: Hiển thị badge trạng thái
 function getBadge(status) {
   const s = String(status || "").toLowerCase();
@@ -531,80 +553,101 @@ function runMockEngine(params) {
 
       // 6. Render danh sách thẻ dự án
       function renderProjectList(items) {
+        currentLoadedProjects = items || [];
+
         if (!items || items.length === 0) {
           grid.innerHTML = "";
           emptyState.style.display = "block";
-            paginationWrapper.style.display = "none";
+          paginationWrapper.style.display = "none";
 
-            if (queryState.search) {
-              emptyTitle.textContent = 'Không tìm thấy dự án phù hợp với "' + escapeHtml(queryState.search) + '"';
-              emptyDesc.textContent = "Vui lòng thử tìm với từ khóa khác hoặc bấm nút Tạo dự án mới.";
-            } else if (queryState.my) {
-              emptyTitle.textContent = "Bạn chưa có dự án nào";
-              emptyDesc.textContent = "Bấm nút 'Tất cả dự án' để xem các dự án khác hoặc bấm Tạo dự án mới bên dưới.";
-            } else {
-              emptyTitle.textContent = "Chưa có dự án nào";
-              emptyDesc.textContent = "Hiện chưa có dự án nào trong danh mục này.";
-            }
-            return;
+          if (queryState.search) {
+            emptyTitle.textContent = 'Không tìm thấy dự án phù hợp với "' + escapeHtml(queryState.search) + '"';
+            emptyDesc.textContent = "Vui lòng thử tìm với từ khóa khác hoặc bấm nút Tạo dự án mới.";
+          } else if (queryState.my) {
+            emptyTitle.textContent = "Bạn chưa có dự án nào";
+            emptyDesc.textContent = "Bấm nút 'Tất cả dự án' để xem các dự án khác hoặc bấm Tạo dự án mới bên dưới.";
+          } else {
+            emptyTitle.textContent = "Chưa có dự án nào";
+            emptyDesc.textContent = "Hiện chưa có dự án nào trong danh mục này.";
           }
+          return;
+        }
 
-          emptyState.style.display = "none";
-            paginationWrapper.style.display = "flex";
+        emptyState.style.display = "none";
+        paginationWrapper.style.display = "flex";
 
-            grid.innerHTML = items.map((p) => {
-              const effectiveStatus = getEffectiveProjectStatus(p);
-              const memberCount = getEffectiveMemberCount(p);
-              const canEditStatus = canUserChangeProjectStatus(p);
-              const percent = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
-              const deadlineText = p.deadline || p.end_date ? formatDate(p.deadline || p.end_date) : "Chưa đặt";
-              const createdText = p.created_at ? formatDate(p.created_at) : "—";
-              const ownerName = (p.owner && (p.owner.full_name || p.owner.email)) ? p.owner.full_name || p.owner.email : "Sinh viên PTIT";
+        grid.innerHTML = items.map((p) => {
+          const effectiveStatus = getEffectiveProjectStatus(p);
+          const memberCount = getEffectiveMemberCount(p);
+          const canEditStatus = canUserChangeProjectStatus(p);
+          const percent = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
+          const deadlineText = p.deadline || p.end_date ? formatDate(p.deadline || p.end_date) : "Chưa đặt";
+          const createdText = p.created_at ? formatDate(p.created_at) : "—";
+          const ownerName = (p.owner && (p.owner.full_name || p.owner.email)) ? p.owner.full_name || p.owner.email : "Sinh viên PTIT";
 
-              return (
-                '<article class="project-card">' +
-                '<div class="project-card-header">' +
-                '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
-                getBadge(effectiveStatus) +
-                '</div>' +
-                '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
-                '<div class="project-meta">' +
-                '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
-                '<span>👥 ' + memberCount + ' thành viên</span>' +
-                '</div>' +
-                '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
-                '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
-                '<span>📅 Tạo: ' + createdText + '</span>' +
-                '</div>' +
-                '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px;">' +
-                '<span style="color: var(--color-muted);">Đổi trạng thái (Owner/Admin):</span>' +
-                '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled") + '>' +
-                '<option value="PLANNING"' + (effectiveStatus === "PLANNING" ? " selected" : "") + '>Lên kế hoạch</option>' +
-                '<option value="ACTIVE"' + (effectiveStatus === "ACTIVE" ? " selected" : "") + '>Đang làm</option>' +
-                '<option value="COMPLETED"' + (effectiveStatus === "COMPLETED" ? " selected" : "") + '>Đã hoàn thành</option>' +
-                '</select>' +
-                '</div>' +
-                '<div class="progress-wrap">' +
-                '<div class="progress-info">' +
-                '<span>Tiến độ hoàn thành</span>' +
-                '<strong>' + percent + '% (' + (p.done_tasks || 0) + '/' + (p.total_tasks || 0) + ' việc)</strong>' +
-                '</div>' +
-                '<div class="progress-track">' +
-                '<div class="progress-fill" style="width: ' + percent + '%;"></div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="project-card-actions">' +
-                '<a href="tasks.html?project_id=' + p.id + '" class="btn btn-small btn-primary" style="flex: 1;">' +
-                'Xem chi tiết' +
-                '</a>' +
-                '<a href="members.html?project_id=' + p.id + '" class="btn btn-small">' +
-                'Thành viên' +
-                '</a>' +
-                '</div>' +
-                '</article>'
-              );
-            }).join("");
-          }
+          const isSelected = selectedProjectIds.has(p.id);
+          const cardStyle = isDeleteMode
+            ? ("position: relative; cursor: pointer; transition: all 0.2s;" + (isSelected ? " border: 2px solid #ef4444; background: #fff5f5; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15); transform: translateY(-2px);" : " border: 1px dashed #cbd5e1;"))
+            : "position: relative;";
+
+          const checkboxHtml = isDeleteMode
+            ? '<div class="card-select-checkbox-wrap" style="position: absolute; top: 12px; left: 12px; z-index: 5;">' +
+              '<input type="checkbox" class="project-card-checkbox" data-id="' + p.id + '" ' + (isSelected ? "checked" : "") + ' style="width: 20px; height: 20px; cursor: pointer; accent-color: #ef4444;">' +
+              '</div>'
+            : '';
+
+          const headerPaddingStyle = isDeleteMode ? 'padding-left: 28px;' : '';
+
+          const deleteCardBtn = canEditStatus
+            ? '<button type="button" class="btn btn-small btn-outline" style="color: #ef4444; border-color: #fca5a5; padding: 6px 10px;" onclick="openSingleDeleteModal(' + p.id + ', \'' + escapeHtml(p.name).replace(/'/g, "\\'") + '\')" title="Xóa dự án này">🗑️</button>'
+            : '';
+
+          return (
+            '<article class="project-card" data-id="' + p.id + '" style="' + cardStyle + '">' +
+            checkboxHtml +
+            '<div class="project-card-header" style="' + headerPaddingStyle + '">' +
+            '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
+            getBadge(effectiveStatus) +
+            '</div>' +
+            '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
+            '<div class="project-meta">' +
+            '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
+            '<span>👥 ' + memberCount + ' thành viên</span>' +
+            '</div>' +
+            '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
+            '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
+            '<span>📅 Tạo: ' + createdText + '</span>' +
+            '</div>' +
+            '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px;">' +
+            '<span style="color: var(--color-muted);">Đổi trạng thái (Owner/Admin):</span>' +
+            '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled") + '>' +
+            '<option value="PLANNING"' + (effectiveStatus === "PLANNING" ? " selected" : "") + '>Lên kế hoạch</option>' +
+            '<option value="ACTIVE"' + (effectiveStatus === "ACTIVE" ? " selected" : "") + '>Đang làm</option>' +
+            '<option value="COMPLETED"' + (effectiveStatus === "COMPLETED" ? " selected" : "") + '>Đã hoàn thành</option>' +
+            '</select>' +
+            '</div>' +
+            '<div class="progress-wrap">' +
+            '<div class="progress-info">' +
+            '<span>Tiến độ hoàn thành</span>' +
+            '<strong>' + percent + '% (' + (p.done_tasks || 0) + '/' + (p.total_tasks || 0) + ' việc)</strong>' +
+            '</div>' +
+            '<div class="progress-track">' +
+            '<div class="progress-fill" style="width: ' + percent + '%;"></div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="project-card-actions">' +
+            '<a href="tasks.html?project_id=' + p.id + '" class="btn btn-small btn-primary" style="flex: 1;">' +
+            'Xem chi tiết' +
+            '</a>' +
+            '<a href="members.html?project_id=' + p.id + '" class="btn btn-small">' +
+            'Thành viên' +
+            '</a>' +
+            deleteCardBtn +
+            '</div>' +
+            '</article>'
+          );
+        }).join("");
+      }
 
 // 7. Render thanh phân trang
 function renderPagination(meta) {
@@ -871,5 +914,225 @@ let searchDebounceTimer = null;
             }
           });
 
-          // 12. Khởi chạy tải dữ liệu ban đầu
+          // 12. Chế độ chọn và xóa nhiều dự án (Batch Delete Mode)
+          function toggleDeleteMode(enable) {
+            isDeleteMode = typeof enable === "boolean" ? enable : !isDeleteMode;
+            if (!isDeleteMode) {
+              selectedProjectIds.clear();
+            }
+            updateDeleteModeUI();
+            renderProjectList(currentLoadedProjects);
+          }
+
+          function updateDeleteModeUI() {
+            if (isDeleteMode) {
+              if (btnToggleDeleteMode) {
+                btnToggleDeleteMode.innerHTML = "✖️ Hủy chọn xóa";
+                btnToggleDeleteMode.className = "btn btn-danger";
+              }
+              if (batchDeleteBar) batchDeleteBar.style.display = "flex";
+            } else {
+              if (btnToggleDeleteMode) {
+                btnToggleDeleteMode.innerHTML = "🗑️ Xóa dự án";
+                btnToggleDeleteMode.className = "btn btn-outline";
+                btnToggleDeleteMode.style.color = "var(--color-danger, #ef4444)";
+                btnToggleDeleteMode.style.borderColor = "#fca5a5";
+              }
+              if (batchDeleteBar) batchDeleteBar.style.display = "none";
+            }
+
+            const count = selectedProjectIds.size;
+            if (selectedCountText) selectedCountText.textContent = count;
+            if (deleteSelectedBadge) deleteSelectedBadge.textContent = count;
+            if (btnConfirmDeleteSelected) btnConfirmDeleteSelected.disabled = count === 0;
+
+            if (checkboxSelectAll) {
+              if (currentLoadedProjects.length > 0 && currentLoadedProjects.every(p => selectedProjectIds.has(p.id))) {
+                checkboxSelectAll.checked = true;
+                checkboxSelectAll.indeterminate = false;
+              } else if (count > 0 && currentLoadedProjects.some(p => selectedProjectIds.has(p.id))) {
+                checkboxSelectAll.checked = false;
+                checkboxSelectAll.indeterminate = true;
+              } else {
+                checkboxSelectAll.checked = false;
+                checkboxSelectAll.indeterminate = false;
+              }
+            }
+          }
+
+          function openSingleDeleteModal(id, name) {
+            selectedProjectIds.clear();
+            selectedProjectIds.add(id);
+            if (deleteModalQuestion) {
+              deleteModalQuestion.textContent = 'Bạn có chắc chắn muốn xóa dự án "' + name + '" không?';
+            }
+            if (deleteModalProjectList) {
+              deleteModalProjectList.innerHTML = '<div style="padding: 6px 0; font-weight: 600; color: #ef4444;">• ' + escapeHtml(name) + '</div>';
+            }
+            if (deleteModal) deleteModal.classList.add("is-open");
+          }
+          window.openSingleDeleteModal = openSingleDeleteModal;
+
+          function openBatchDeleteModal() {
+            if (selectedProjectIds.size === 0) {
+              showToast("Vui lòng chọn ít nhất một dự án cần xóa!", "warning");
+              return;
+            }
+            const selectedList = [];
+            for (const id of selectedProjectIds) {
+              const p = currentLoadedProjects.find(item => item.id === id) || localProjects.find(item => item.id === id);
+              if (p) selectedList.push(p);
+            }
+            if (deleteModalQuestion) {
+              deleteModalQuestion.textContent = 'Bạn có chắc chắn muốn xóa ' + selectedList.length + ' dự án đã chọn không?';
+            }
+            if (deleteModalProjectList) {
+              deleteModalProjectList.innerHTML = selectedList
+                .map(p => '<div style="padding: 4px 0; border-bottom: 1px solid #e2e8f0; font-weight: 500;">• ' + escapeHtml(p.name) + '</div>')
+                .join("");
+            }
+            if (deleteModal) deleteModal.classList.add("is-open");
+          }
+
+          function closeDeleteModal() {
+            if (deleteModal) deleteModal.classList.remove("is-open");
+          }
+
+          async function executeDeleteProjects() {
+            if (selectedProjectIds.size === 0) return;
+
+            if (btnExecuteDelete) {
+              btnExecuteDelete.disabled = true;
+              btnExecuteDelete.textContent = "Đang xóa...";
+            }
+
+            let successCount = 0;
+            let errorCount = 0;
+            const idsToDelete = Array.from(selectedProjectIds);
+
+            for (const id of idsToDelete) {
+              let deletedViaApi = false;
+              if (typeof api !== "undefined" && api.delete) {
+                try {
+                  await api.delete('/projects/' + id);
+                  deletedViaApi = true;
+                } catch (err) {
+                  console.warn('Lỗi khi gọi API xóa dự án #' + id + ':', err);
+                  if (err.status && err.status === 404) {
+                    deletedViaApi = true;
+                  } else if (err.status && err.status > 0) {
+                    errorCount++;
+                    continue;
+                  }
+                }
+              }
+
+              const idx = localProjects.findIndex(p => p.id === id);
+              if (idx !== -1) {
+                localProjects.splice(idx, 1);
+              }
+              selectedProjectIds.delete(id);
+              successCount++;
+            }
+
+            if (btnExecuteDelete) {
+              btnExecuteDelete.disabled = false;
+              btnExecuteDelete.textContent = "Xác nhận xóa";
+            }
+
+            closeDeleteModal();
+
+            if (successCount > 0) {
+              showToast('Đã xóa thành công ' + successCount + ' dự án!', "success");
+            }
+            if (errorCount > 0) {
+              showToast('Có ' + errorCount + ' dự án không thể xóa (vui lòng kiểm tra quyền sở hữu).', "error");
+            }
+
+            isDeleteMode = false;
+            selectedProjectIds.clear();
+            updateDeleteModeUI();
+            await loadProjects();
+          }
+
+          // Event listeners cho tính năng chọn xóa dự án
+          if (btnToggleDeleteMode) {
+            btnToggleDeleteMode.addEventListener("click", () => toggleDeleteMode());
+          }
+
+          if (btnCancelDeleteMode) {
+            btnCancelDeleteMode.addEventListener("click", () => toggleDeleteMode(false));
+          }
+
+          if (checkboxSelectAll) {
+            checkboxSelectAll.addEventListener("change", (e) => {
+              if (e.target.checked) {
+                currentLoadedProjects.forEach(p => selectedProjectIds.add(p.id));
+              } else {
+                currentLoadedProjects.forEach(p => selectedProjectIds.delete(p.id));
+              }
+              updateDeleteModeUI();
+              renderProjectList(currentLoadedProjects);
+            });
+          }
+
+          if (btnConfirmDeleteSelected) {
+            btnConfirmDeleteSelected.addEventListener("click", openBatchDeleteModal);
+          }
+
+          if (btnCloseDeleteModal) {
+            btnCloseDeleteModal.addEventListener("click", closeDeleteModal);
+          }
+
+          if (btnCancelDeleteModal) {
+            btnCancelDeleteModal.addEventListener("click", closeDeleteModal);
+          }
+
+          if (deleteModal) {
+            deleteModal.addEventListener("click", (e) => {
+              if (e.target === deleteModal) closeDeleteModal();
+            });
+          }
+
+          if (btnExecuteDelete) {
+            btnExecuteDelete.addEventListener("click", executeDeleteProjects);
+          }
+
+          // Bắt sự kiện click chọn thẻ dự án hoặc checkbox trên thẻ
+          if (grid) {
+            grid.addEventListener("click", (e) => {
+              if (e.target.closest("a") || e.target.closest("select") || e.target.closest("button")) {
+                return;
+              }
+              if (!isDeleteMode) return;
+
+              const card = e.target.closest(".project-card");
+              if (!card) return;
+              const projectId = Number(card.dataset.id);
+              if (!projectId) return;
+
+              if (selectedProjectIds.has(projectId)) {
+                selectedProjectIds.delete(projectId);
+              } else {
+                selectedProjectIds.add(projectId);
+              }
+              updateDeleteModeUI();
+              renderProjectList(currentLoadedProjects);
+            });
+
+            grid.addEventListener("change", (e) => {
+              if (e.target.classList.contains("project-card-checkbox")) {
+                const projectId = Number(e.target.dataset.id);
+                if (e.target.checked) {
+                  selectedProjectIds.add(projectId);
+                } else {
+                  selectedProjectIds.delete(projectId);
+                }
+                updateDeleteModeUI();
+                renderProjectList(currentLoadedProjects);
+              }
+            });
+          }
+
+          // 13. Khởi chạy tải dữ liệu ban đầu
           loadProjects();
