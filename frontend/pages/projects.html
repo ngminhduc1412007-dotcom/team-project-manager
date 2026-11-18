@@ -31,118 +31,122 @@
           Quản lý tiến độ đồ án và phân công công việc các bài tập nhóm
         </p>
       </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <button id="btn-toggle-delete-mode" class="btn"
-            style="background: #fee2e2; color: #b91c1c; border: 1.5px solid #ef4444; font-weight: 700; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25); cursor: pointer; transition: all 0.2s;"
-            onmouseover="if (!isDeleteMode) { this.style.background='#dc2626'; this.style.color='#fff'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)'; }"
-            onmouseout="if (!isDeleteMode) { this.style.background='#fee2e2'; this.style.color='#b91c1c'; this.style.boxShadow='0 2px 6px rgba(239, 68, 68, 0.25)'; }">
-            <span style="font-size: 16px;">🗑️</span>
-            <span>Xóa dự án</span>
-          </button>
-          <button id="btn-open-modal" class="btn btn-primary" style="font-weight: 600; padding: 8px 18px; border-radius: 8px;">+ Tạo dự án mới</button>
-        </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button id="btn-toggle-delete-mode" class="btn"
+              style="background: #fee2e2; color: #b91c1c; border: 1.5px solid #ef4444; font-weight: 700; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25); cursor: pointer; transition: all 0.2s;"
+              onmouseover="if (!isDeleteMode) { this.style.background='#dc2626'; this.style.color='#fff'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)'; }"
+              onmouseout="if (!isDeleteMode) { this.style.background='#fee2e2'; this.style.color='#b91c1c'; this.style.boxShadow='0 2px 6px rgba(239, 68, 68, 0.25)'; }">
+              <span style="font-size: 16px;">🗑️</span>
+              <span>Xóa dự án</span>
+            </button>
+            <button id="btn-open-modal" class="btn btn-primary"
+              style="font-weight: 600; padding: 8px 18px; border-radius: 8px;">+ Tạo dự án mới</button>
+          </div>
       </div>
 
       <!-- Thanh thao tác chọn xóa nhiều dự án (Batch Delete Bar) -->
       <div id="batch-delete-bar" class="batch-delete-bar"
-        style="display: none; background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 2px solid #f43f5e; border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 4px 16px rgba(244, 63, 94, 0.15);">
+        style="display: none; background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 2px solid #f43f5e;
+        border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; justify-content: space-between; align-items:
+        center; flex-wrap: wrap; gap: 14px; box-shadow: 0 4px 16px rgba(244, 63, 94, 0.15);">
         <div style="display: flex; align-items: center; gap: 16px;">
           <label
-            style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 14px; user-select: none; color: #9f1239;">
+            style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size:
+            14px; user-select: none; color: #9f1239;">
             <input type="checkbox" id="checkbox-select-all"
-              style="width: 20px; height: 20px; cursor: pointer; accent-color: #e11d48;">
+            style="width: 20px; height: 20px; cursor: pointer; accent-color: #e11d48;">
             <span>Chọn tất cả trang này</span>
           </label>
           <span style="color: #fda4af;">|</span>
           <span style="font-size: 14px; color: #4c0519; font-weight: 500;">Đã chọn: <strong id="selected-count-text"
               style="color: #e11d48; font-size: 18px; font-weight: 800;">0</strong> dự án</span>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <button type="button" class="btn" id="btn-cancel-delete-mode"
-            style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px;">
-            Hủy bỏ
-          </button>
-          <button type="button" class="btn" id="btn-confirm-delete-selected" disabled
-            style="background: #dc2626; color: #ffffff; border: none; font-weight: 700; padding: 8px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35); cursor: pointer; transition: all 0.2s;">
-            🗑️ Xóa các dự án đã chọn (<span id="delete-selected-badge">0</span>)
-          </button>
-        </div>
-      </div>
-
-      <!-- Thanh tìm kiếm, lọc, sắp xếp và phân trang -->
-      <div class="card" style="padding: 16px; margin-bottom: 20px;">
-        <!-- Hàng 1: Tìm kiếm theo tên & Lọc Dự án của tôi -->
-        <div
-          style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px;">
-          <div class="toolbar-search" style="flex: 1; min-width: 260px;">
-            <input type="search" id="search-input" placeholder="🔍 Tìm theo tên hoặc mô tả đồ án...">
-          </div>
-
-          <!-- Toggle lọc dự án -->
-          <div class="filter-group" id="my-filter-group">
-            <button type="button" class="filter-btn active" data-my="false">🌐 Tất cả dự án</button>
-            <button type="button" class="filter-btn" data-my="true" id="btn-filter-my">👤 Dự án của tôi</button>
-          </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn" id="btn-cancel-delete-mode"
+                style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px;">
+                Hủy bỏ
+              </button>
+              <button type="button" class="btn" id="btn-confirm-delete-selected" disabled
+                style="background: #dc2626; color: #ffffff; border: none; font-weight: 700; padding: 8px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35); cursor: pointer; transition: all 0.2s;">
+                🗑️ Xóa các dự án đã chọn (<span id="delete-selected-badge">0</span>)
+              </button>
+            </div>
         </div>
 
-        <!-- Hàng 2: Lọc trạng thái, Sắp xếp & Chọn số bản ghi mỗi trang -->
-        <div
-          style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--color-border); padding-top: 12px;">
-          <!-- Lọc trạng thái -->
-          <div class="filter-group" id="filter-group">
-            <button type="button" class="filter-btn active" data-status="ALL">Tất cả</button>
-            <button type="button" class="filter-btn" data-status="ACTIVE">Đang thực hiện</button>
-            <button type="button" class="filter-btn" data-status="PLANNING">Lập kế hoạch</button>
-            <button type="button" class="filter-btn" data-status="COMPLETED">Đã hoàn thành</button>
+        <!-- Thanh tìm kiếm, lọc, sắp xếp và phân trang -->
+        <div class="card" style="padding: 16px; margin-bottom: 20px;">
+          <!-- Hàng 1: Tìm kiếm theo tên & Lọc Dự án của tôi -->
+          <div
+            style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px;">
+            <div class="toolbar-search" style="flex: 1; min-width: 260px;">
+              <input type="search" id="search-input" placeholder="🔍 Tìm theo tên hoặc mô tả đồ án...">
+            </div>
+
+            <!-- Toggle lọc dự án -->
+            <div class="filter-group" id="my-filter-group">
+              <button type="button" class="filter-btn active" data-my="false">🌐 Tất cả dự án</button>
+              <button type="button" class="filter-btn" data-my="true" id="btn-filter-my">👤 Dự án của tôi</button>
+            </div>
           </div>
 
-          <!-- Nhóm sắp xếp & kích thước trang -->
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <label for="sort-by" style="font-size: 13px; color: var(--color-muted); white-space: nowrap;">Sắp
-              xếp:</label>
-            <select id="sort-by" style="width: auto; padding: 6px 10px; font-size: 13px;">
-              <option value="created_at" selected>Ngày tạo</option>
-              <option value="name">Tên dự án</option>
-              <option value="deadline">Hạn chót</option>
-              <option value="updated_at">Ngày cập nhật</option>
-              <option value="id">Mã dự án</option>
-            </select>
+          <!-- Hàng 2: Lọc trạng thái, Sắp xếp & Chọn số bản ghi mỗi trang -->
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--color-border); padding-top: 12px;">
+            <!-- Lọc trạng thái -->
+            <div class="filter-group" id="filter-group">
+              <button type="button" class="filter-btn active" data-status="ALL">Tất cả</button>
+              <button type="button" class="filter-btn" data-status="ACTIVE">Đang thực hiện</button>
+              <button type="button" class="filter-btn" data-status="PLANNING">Lập kế hoạch</button>
+              <button type="button" class="filter-btn" data-status="COMPLETED">Đã hoàn thành</button>
+            </div>
 
-            <select id="sort-order" style="width: auto; padding: 6px 10px; font-size: 13px;">
-              <option value="desc" selected>Giảm dần</option>
-              <option value="asc">Tăng dần</option>
-            </select>
+            <!-- Nhóm sắp xếp & kích thước trang -->
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <label for="sort-by" style="font-size: 13px; color: var(--color-muted); white-space: nowrap;">Sắp
+                xếp:</label>
+              <select id="sort-by" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                <option value="created_at" selected>Ngày tạo</option>
+                <option value="name">Tên dự án</option>
+                <option value="deadline">Hạn chót</option>
+                <option value="updated_at">Ngày cập nhật</option>
+                <option value="id">Mã dự án</option>
+              </select>
 
-            <label for="page-size"
-              style="font-size: 13px; color: var(--color-muted); margin-left: 6px; white-space: nowrap;">Hiển
-              thị:</label>
-            <select id="page-size" style="width: auto; padding: 6px 10px; font-size: 13px;">
-              <option value="6">6 / trang</option>
-              <option value="10" selected>10 / trang</option>
-              <option value="20">20 / trang</option>
-            </select>
+              <select id="sort-order" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                <option value="desc" selected>Giảm dần</option>
+                <option value="asc">Tăng dần</option>
+              </select>
+
+              <label for="page-size"
+                style="font-size: 13px; color: var(--color-muted); margin-left: 6px; white-space: nowrap;">Hiển
+                thị:</label>
+              <select id="page-size" style="width: auto; padding: 6px 10px; font-size: 13px;">
+                <option value="6">6 / trang</option>
+                <option value="10" selected>10 / trang</option>
+                <option value="20">20 / trang</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Lưới thẻ dự án (Project Cards) -->
-      <div id="project-grid" class="project-grid"></div>
+        <!-- Lưới thẻ dự án (Project Cards) -->
+        <div id="project-grid" class="project-grid"></div>
 
-      <!-- Trạng thái rỗng (Empty State) -->
-      <div id="empty-state" class="empty-box" style="display: none;">
-        <div class="empty-icon">📁</div>
-        <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
-        <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
-        <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
-      </div>
-
-      <!-- Thanh phân trang (Pagination) -->
-      <div class="pagination-wrapper" id="pagination-wrapper" style="display: none;">
-        <div class="pagination-info" id="pagination-info">
-          Hiển thị 0 trên tổng số 0 dự án
+        <!-- Trạng thái rỗng (Empty State) -->
+        <div id="empty-state" class="empty-box" style="display: none;">
+          <div class="empty-icon">📁</div>
+          <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
+          <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
+          <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
         </div>
-        <div class="pagination-controls" id="pagination-controls"></div>
-      </div>
+
+        <!-- Thanh phân trang (Pagination) -->
+        <div class="pagination-wrapper" id="pagination-wrapper" style="display: none;">
+          <div class="pagination-info" id="pagination-info">
+            Hiển thị 0 trên tổng số 0 dự án
+          </div>
+          <div class="pagination-controls" id="pagination-controls"></div>
+        </div>
   </main>
 
   <!-- Modal Tạo Dự Án Mới -->

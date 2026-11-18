@@ -576,84 +576,84 @@ function renderProjectList(items) {
   emptyState.style.display = "none";
   paginationWrapper.style.display = "flex";
 
-    grid.innerHTML = items.map((p) => {
-      const effectiveStatus = getEffectiveProjectStatus(p);
-      const memberCount = getEffectiveMemberCount(p);
-      const canEditStatus = canUserChangeProjectStatus(p);
-      const percent = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
-      const deadlineText = p.deadline || p.end_date ? formatDate(p.deadline || p.end_date) : "Chưa đặt";
-      const createdText = p.created_at ? formatDate(p.created_at) : "—";
-      const ownerName = (p.owner && (p.owner.full_name || p.owner.email)) ? p.owner.full_name || p.owner.email : "Sinh viên PTIT";
+  grid.innerHTML = items.map((p) => {
+    const effectiveStatus = getEffectiveProjectStatus(p);
+    const memberCount = getEffectiveMemberCount(p);
+    const canEditStatus = canUserChangeProjectStatus(p);
+    const percent = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
+    const deadlineText = p.deadline || p.end_date ? formatDate(p.deadline || p.end_date) : "Chưa đặt";
+    const createdText = p.created_at ? formatDate(p.created_at) : "—";
+    const ownerName = (p.owner && (p.owner.full_name || p.owner.email)) ? p.owner.full_name || p.owner.email : "Sinh viên PTIT";
 
-          const isSelected = selectedProjectIds.has(p.id);
-  const cardStyle = isDeleteMode
-    ? ("position: relative; cursor: pointer; transition: all 0.2s;" + (isSelected ? " border: 2px solid #ef4444; background: #fff5f5; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15); transform: translateY(-2px);" : " border: 1px dashed #cbd5e1;"))
-    : "position: relative;";
+    const isSelected = selectedProjectIds.has(p.id);
+    const cardStyle = isDeleteMode
+      ? ("position: relative; cursor: pointer; transition: all 0.2s;" + (isSelected ? " border: 2px solid #ef4444; background: #fff5f5; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15); transform: translateY(-2px);" : " border: 1px dashed #cbd5e1;"))
+      : "position: relative;";
 
-  const checkboxHtml = isDeleteMode
-    ? '<div class="card-select-checkbox-wrap" style="position: absolute; top: 12px; left: 12px; z-index: 5;">' +
-    '<input type="checkbox" class="project-card-checkbox" data-id="' + p.id + '" ' + (isSelected ? "checked" : "") + ' style="width: 20px; height: 20px; cursor: pointer; accent-color: #ef4444;">' +
-    '</div>'
-    : '';
+    const checkboxHtml = isDeleteMode
+      ? '<div class="card-select-checkbox-wrap" style="position: absolute; top: 12px; left: 12px; z-index: 5;">' +
+      '<input type="checkbox" class="project-card-checkbox" data-id="' + p.id + '" ' + (isSelected ? "checked" : "") + ' style="width: 20px; height: 20px; cursor: pointer; accent-color: #ef4444;">' +
+      '</div>'
+      : '';
 
-  const headerPaddingStyle = isDeleteMode ? 'padding-left: 28px;' : '';
+    const headerPaddingStyle = isDeleteMode ? 'padding-left: 28px;' : '';
 
-  const deleteCardBtn = canEditStatus
-    ? '<button type="button" class="btn btn-small btn-card-delete" ' +
-      'style="background: #fee2e2; color: #b91c1c; border: 1.5px solid #f87171; font-weight: 700; padding: 6px 14px; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; cursor: pointer; transition: all 0.2s;" ' +
-      'onmouseover="this.style.background=\'#dc2626\'; this.style.color=\'#ffffff\'; this.style.borderColor=\'#b91c1c\'; this.style.boxShadow=\'0 2px 8px rgba(220, 38, 38, 0.35)\';" ' +
-      'onmouseout="this.style.background=\'#fee2e2\'; this.style.color=\'#b91c1c\'; this.style.borderColor=\'#f87171\'; this.style.boxShadow=\'none\';" ' +
-      'onclick="openSingleDeleteModal(' + p.id + ', \'' + escapeHtml(p.name).replace(/'/g, "\\'") + '\')" title="Xóa dự án này">' +
-      '🗑️ Xóa' +
-      '</button>'
-    : '';
+    const deleteCardBtn = canEditStatus
+        ? '<button type="button" class="btn btn-small btn-card-delete" ' +
+        'style="background: #fee2e2; color: #b91c1c; border: 1.5px solid #f87171; font-weight: 700; padding: 6px 14px; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; cursor: pointer; transition: all 0.2s;" ' +
+        'onmouseover="this.style.background=\'#dc2626\'; this.style.color=\'#ffffff\'; this.style.borderColor=\'#b91c1c\'; this.style.boxShadow=\'0 2px 8px rgba(220, 38, 38, 0.35)\';" ' +
+        'onmouseout="this.style.background=\'#fee2e2\'; this.style.color=\'#b91c1c\'; this.style.borderColor=\'#f87171\'; this.style.boxShadow=\'none\';" ' +
+        'onclick="openSingleDeleteModal(' + p.id + ', \'' + escapeHtml(p.name).replace(/'/g, "\\'") + '\')" title="Xóa dự án này">' +
+        '🗑️ Xóa' +
+        '</button>'
+        : '';
 
-  return (
-    '<article class="project-card" data-id="' + p.id + '" style="' + cardStyle + '">' +
-    checkboxHtml +
-    '<div class="project-card-header" style="' + headerPaddingStyle + '">' +
-    '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
-    getBadge(effectiveStatus) +
-    '</div>' +
-    '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
-    '<div class="project-meta">' +
-    '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
-    '<span>👥 ' + memberCount + ' thành viên</span>' +
-    '</div>' +
-    '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
-    '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
-    '<span>📅 Tạo: ' + createdText + '</span>' +
-    '</div>' +
-    '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px;">' +
-    '<span style="color: var(--color-muted);">Đổi trạng thái (Owner/Admin):</span>' +
-    '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled") + '>' +
-    '<option value="PLANNING"' + (effectiveStatus === "PLANNING" ? " selected" : "") + '>Lên kế hoạch</option>' +
-    '<option value="ACTIVE"' + (effectiveStatus === "ACTIVE" ? " selected" : "") + '>Đang làm</option>' +
-    '<option value="COMPLETED"' + (effectiveStatus === "COMPLETED" ? " selected" : "") + '>Đã hoàn thành</option>' +
-    '</select>' +
-    '</div>' +
-    '<div class="progress-wrap">' +
-    '<div class="progress-info">' +
-    '<span>Tiến độ hoàn thành</span>' +
-    '<strong>' + percent + '% (' + (p.done_tasks || 0) + '/' + (p.total_tasks || 0) + ' việc)</strong>' +
-    '</div>' +
-    '<div class="progress-track">' +
-    '<div class="progress-fill" style="width: ' + percent + '%;"></div>' +
-    '</div>' +
-    '</div>' +
-    '<div class="project-card-actions">' +
-    '<a href="tasks.html?project_id=' + p.id + '" class="btn btn-small btn-primary" style="flex: 1;">' +
-    'Xem chi tiết' +
-    '</a>' +
-    '<a href="members.html?project_id=' + p.id + '" class="btn btn-small">' +
-    'Thành viên' +
-    '</a>' +
-    deleteCardBtn +
-    '</div>' +
-    '</article>'
-  );
-}).join("");
-      }
+    return (
+      '<article class="project-card" data-id="' + p.id + '" style="' + cardStyle + '">' +
+      checkboxHtml +
+      '<div class="project-card-header" style="' + headerPaddingStyle + '">' +
+      '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
+      getBadge(effectiveStatus) +
+      '</div>' +
+      '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
+      '<div class="project-meta">' +
+      '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
+      '<span>👥 ' + memberCount + ' thành viên</span>' +
+      '</div>' +
+      '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
+      '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
+      '<span>📅 Tạo: ' + createdText + '</span>' +
+      '</div>' +
+      '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px;">' +
+      '<span style="color: var(--color-muted);">Đổi trạng thái (Owner/Admin):</span>' +
+      '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled") + '>' +
+      '<option value="PLANNING"' + (effectiveStatus === "PLANNING" ? " selected" : "") + '>Lên kế hoạch</option>' +
+      '<option value="ACTIVE"' + (effectiveStatus === "ACTIVE" ? " selected" : "") + '>Đang làm</option>' +
+      '<option value="COMPLETED"' + (effectiveStatus === "COMPLETED" ? " selected" : "") + '>Đã hoàn thành</option>' +
+      '</select>' +
+      '</div>' +
+      '<div class="progress-wrap">' +
+      '<div class="progress-info">' +
+      '<span>Tiến độ hoàn thành</span>' +
+      '<strong>' + percent + '% (' + (p.done_tasks || 0) + '/' + (p.total_tasks || 0) + ' việc)</strong>' +
+      '</div>' +
+      '<div class="progress-track">' +
+      '<div class="progress-fill" style="width: ' + percent + '%;"></div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="project-card-actions">' +
+      '<a href="tasks.html?project_id=' + p.id + '" class="btn btn-small btn-primary" style="flex: 1;">' +
+      'Xem chi tiết' +
+      '</a>' +
+      '<a href="members.html?project_id=' + p.id + '" class="btn btn-small">' +
+      'Thành viên' +
+      '</a>' +
+      deleteCardBtn +
+      '</div>' +
+      '</article>'
+    );
+  }).join("");
+}
 
 // 7. Render thanh phân trang
 function renderPagination(meta) {
