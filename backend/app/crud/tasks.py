@@ -17,7 +17,7 @@ from app.crud.project_members import is_user_in_project
 from app.models.projects import Project
 from app.models.tasks import Task, TaskPriority, TaskStatus
 from app.models.users import User
-from app.schemas.tasks import TaskCreate, TaskUpdate
+from app.schemas.tasks import TaskCreate, TaskStatusUpdate, TaskUpdate
 
 
 # Tạo công việc mới trong dự án.
@@ -79,6 +79,8 @@ def get_tasks_service(
     assignee_id: Optional[int] = None,
     task_status: Optional[str] = None,
     priority: Optional[str] = None,
+    due_date_from: Optional[date] = None,
+    due_date_to: Optional[date] = None,
     search: Optional[str] = None,
     page: int = 1,
     page_size: int = 10,
@@ -97,6 +99,13 @@ def get_tasks_service(
     if priority is not None:
         query = query.filter(Task.priority == priority.lower())
 
+    # Lọc theo khoảng hạn hoàn thành (due_date)
+    if due_date_from is not None:
+        query = query.filter(Task.due_date >= due_date_from)
+
+    if due_date_to is not None:
+        query = query.filter(Task.due_date <= due_date_to)
+
     if search and search.strip():
         kw = f"%{search.strip()}%"
         query = query.filter(or_(Task.title.ilike(kw), Task.description.ilike(kw)))
@@ -105,7 +114,7 @@ def get_tasks_service(
 
     offset = (page - 1) * page_size
     items = (
-        query.order_by(Task.due_date.asc().nullslast(), Task.created_at.desc())
+        query.order_by(Task.due_date.is_(None), Task.due_date.asc(), Task.created_at.desc())
         .offset(offset)
         .limit(page_size)
         .all()
@@ -194,3 +203,41 @@ def delete_task_service(
     except Exception:
         db.rollback()
         raise
+
+
+# Đổi trạng thái công việc (endpoint chuyên dụng).
+def update_task_status_service(
+    db: Session,
+    task_id: int,
+    data: TaskStatusUpdate,
+    current_user_id: int,
+) -> Task:
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise NotFoundException(message=f"Không tìm thấy công việc với id={task_id}.")
+
+    # Kiểm tra quyền: Phải thuộc dự án chứa task
+    if not is_user_in_project(db=db, project_id=task.project_id, user_id=current_user_id):
+        raise ForbiddenException(message="Bạn không có quyền thay đổi trạng thái công việc trong dự án này.")
+
+    # Không cho phép đổi sang trạng thái hiện tại
+    if task.status == data.status:
+        raise BadRequestException(
+            message=f"Công việc đã ở trạng thái '{data.status.value}' rồi."
+        )
+
+    task.status = data.status
+
+    try:
+        db.commit()
+        db.refresh(task)
+    except Exception:
+        db.rollback()
+        raise
+
+    return (
+        db.query(Task)
+        .options(joinedload(Task.assignee))
+        .filter(Task.id == task.id)
+        .first()
+    )

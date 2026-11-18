@@ -3,8 +3,9 @@
 Muốn thêm cấu hình mới: thêm 1 dòng vào class Settings + thêm vào .env.example.
 """
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 from urllib.parse import quote_plus
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Đường dẫn tuyệt đối tới file backend/.env
@@ -24,6 +25,15 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     DEBUG: bool = True
     API_V1_STR: str = "/api/v1"
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, v):
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "t", "yes", "y", "debug", "dev", "development")
+        return bool(v)
 
     # Server Settings
     HOST: str = "0.0.0.0"

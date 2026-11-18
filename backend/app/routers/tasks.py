@@ -1,12 +1,14 @@
 """API Quản lý Công việc (Tasks).
 
 Endpoints:
-  POST   /api/tasks             – Tạo công việc mới trong dự án
-  GET    /api/tasks             – Danh sách công việc (lọc theo project, assignee, status, priority, phân trang)
-  GET    /api/tasks/{task_id}   – Chi tiết một công việc
-  PATCH  /api/tasks/{task_id}   – Cập nhật công việc (tiêu đề, mô tả, deadline, priority, status, assignee)
-  DELETE /api/tasks/{task_id}   – Xoá công việc (chỉ chủ dự án)
+  POST   /api/tasks                    – Tạo công việc mới trong dự án
+  GET    /api/tasks                    – Danh sách công việc (lọc theo project, assignee, status, priority, due_date, phân trang)
+  GET    /api/tasks/{task_id}          – Chi tiết một công việc
+  PATCH  /api/tasks/{task_id}          – Cập nhật công việc (tiêu đề, mô tả, deadline, priority, status, assignee)
+  PATCH  /api/tasks/{task_id}/status   – Đổi trạng thái công việc
+  DELETE /api/tasks/{task_id}          – Xoá công việc (chỉ chủ dự án)
 """
+from datetime import date
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
@@ -20,6 +22,7 @@ from app.crud.tasks import (
     get_task_by_id_service,
     get_tasks_service,
     update_task_service,
+    update_task_status_service,
 )
 from app.db.session import get_db
 from app.models.users import User
@@ -27,6 +30,7 @@ from app.schemas.common import ResponseModel
 from app.schemas.tasks import (
     TaskCreate,
     TaskResponse,
+    TaskStatusUpdate,
     TaskUpdate,
 )
 
@@ -63,11 +67,13 @@ def create_task(
     status_code=status.HTTP_200_OK,
     summary="Danh sách công việc (tìm kiếm, phân trang, lọc)",
     description=(
-        "Lấy danh sách các công việc hỗ trợ tìm kiếm, lọc theo dự án, người thực hiện, trạng thái và độ ưu tiên.\n"
+        "Lấy danh sách các công việc hỗ trợ tìm kiếm, lọc theo dự án, người thực hiện, trạng thái, độ ưu tiên và hạn hoàn thành.\n"
         "- `project_id`: Lọc theo ID dự án.\n"
         "- `assignee_id`: Lọc theo ID người được giao.\n"
         "- `status`: Lọc trạng thái (`todo`, `in_progress`, `done`, `cancelled`).\n"
         "- `priority`: Lọc độ ưu tiên (`low`, `medium`, `high`, `urgent`).\n"
+        "- `due_date_from`: Lọc task có hạn từ ngày này trở đi (YYYY-MM-DD).\n"
+        "- `due_date_to`: Lọc task có hạn đến ngày này (YYYY-MM-DD).\n"
         "- `search`: Tìm kiếm theo tiêu đề hoặc mô tả công việc.\n"
         "- `page`: Trang hiện tại (mặc định 1).\n"
         "- `page_size`: Số bản ghi mỗi trang (mặc định 10)."
@@ -79,6 +85,8 @@ def list_tasks(
     assignee_id: Optional[int] = Query(default=None, description="Lọc theo ID người được giao"),
     task_status: Optional[str] = Query(default=None, alias="status", description="Trạng thái công việc: todo, in_progress, done, cancelled"),
     priority: Optional[str] = Query(default=None, description="Độ ưu tiên: low, medium, high, urgent"),
+    due_date_from: Optional[date] = Query(default=None, description="Hạn từ ngày (YYYY-MM-DD)"),
+    due_date_to: Optional[date] = Query(default=None, description="Hạn đến ngày (YYYY-MM-DD)"),
     search: Optional[str] = Query(default=None, description="Tìm theo tiêu đề hoặc mô tả"),
     page: int = Query(default=1, ge=1, description="Trang hiện tại"),
     page_size: int = Query(default=10, ge=1, le=100, description="Số lượng mỗi trang"),
@@ -91,6 +99,8 @@ def list_tasks(
         assignee_id=assignee_id,
         task_status=task_status,
         priority=priority,
+        due_date_from=due_date_from,
+        due_date_to=due_date_to,
         search=search,
         page=page,
         page_size=page_size,
@@ -156,6 +166,38 @@ def update_task(
         request=request,
         status_code=status.HTTP_200_OK,
         message="Cập nhật công việc thành công.",
+        data=task_data,
+    )
+
+
+@routers.patch(
+    "/{task_id}/status",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    summary="Đổi trạng thái công việc",
+    description=(
+        "Chuyển trạng thái công việc sang giá trị mới.\n"
+        "Giá trị hợp lệ: `todo` (Cần làm), `in_progress` (Đang làm), `done` (Hoàn thành), `cancelled` (Đã huỷ)."
+    ),
+)
+def update_task_status(
+    request: Request,
+    task_id: int,
+    data: TaskStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    updated_task = update_task_status_service(
+        db=db,
+        task_id=task_id,
+        data=data,
+        current_user_id=current_user.id,
+    )
+    task_data = TaskResponse.model_validate(updated_task).model_dump()
+    return create_response(
+        request=request,
+        status_code=status.HTTP_200_OK,
+        message=f"Đổi trạng thái công việc thành '{data.status.value}' thành công.",
         data=task_data,
     )
 
