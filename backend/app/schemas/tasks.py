@@ -129,6 +129,17 @@ class TaskUpdate(BaseModel):
     )
 
 
+class TaskStatusUpdate(BaseModel):
+    """Payload chuyên dùng để đổi trạng thái công việc."""
+    status: TaskStatus = Field(
+        ...,
+        description=(
+            "Trạng thái mới: "
+            "todo (Cần làm) | in_progress (Đang làm) | done (Hoàn thành) | cancelled (Đã huỷ)"
+        ),
+    )
+
+
 class AssigneeInfo(BaseModel):
     """Thông tin rút gọn của người được giao task."""
     id: int

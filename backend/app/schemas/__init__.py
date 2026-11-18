@@ -27,6 +27,17 @@ from app.schemas.projects import (
     ProjectStatus,
     ProjectUpdate,
 )
+from app.schemas.tasks import (
+    TASK_PRIORITY_LABEL,
+    TASK_STATUS_LABEL,
+    TaskBase,
+    TaskCreate,
+    TaskPriority,
+    TaskResponse,
+    TaskStatus,
+    TaskStatusUpdate,
+    TaskUpdate,
+)
 from app.schemas.users import (
     UserBase,
     UserCreate,
@@ -56,6 +67,15 @@ __all__ = [
     "ProjectDetailResponse",
     "ProjectStatus",
     "PROJECT_STATUS_LABEL",
+    "TaskBase",
+    "TaskCreate",
+    "TaskUpdate",
+    "TaskStatusUpdate",
+    "TaskResponse",
+    "TaskStatus",
+    "TaskPriority",
+    "TASK_STATUS_LABEL",
+    "TASK_PRIORITY_LABEL",
     "ProjectMemberRole",
     "ProjectMemberBase",
     "ProjectMemberCreate",
