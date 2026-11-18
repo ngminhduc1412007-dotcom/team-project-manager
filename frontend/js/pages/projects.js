@@ -324,9 +324,73 @@ const nameError = document.getElementById("name-error");
 // Helper: Hiển thị badge trạng thái
 function getBadge(status) {
   const s = String(status || "").toLowerCase();
-  if (s === "active" || s === "in_progress") return '<span class="badge badge-active">Đang thực hiện</span>';
-  if (s === "planning") return '<span class="badge badge-planning">Lập kế hoạch</span>';
+  if (s === "active" || s === "in_progress") return '<span class="badge badge-active">Đang làm</span>';
+  if (s === "planning") return '<span class="badge badge-planning">Lên kế hoạch</span>';
   return '<span class="badge badge-completed">Đã hoàn thành</span>';
+}
+
+function getEffectiveProjectStatus(p) {
+  const saved = localStorage.getItem("sph_project_status_" + p.id);
+  if (saved) return saved;
+  const raw = String(p.status || "ACTIVE").toUpperCase();
+  if (raw === "IN_PROGRESS") return "ACTIVE";
+  return raw;
+}
+
+function getEffectiveMemberCount(p) {
+  try {
+    const raw = localStorage.getItem("sph_members_project_" + p.id);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length > 0) return arr.length;
+    }
+  } catch (e) {}
+  return p.members || 1;
+}
+
+function canUserChangeProjectStatus(p) {
+  const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
+  if (!currentUser) return true;
+  const sysRole = String(currentUser.role || currentUser.system_role || "").toLowerCase();
+  if (sysRole === "admin" || sysRole === "owner") return true;
+  if (Number(p.owner_id) === Number(currentUser.id)) return true;
+  return true;
+}
+
+async function handleQuickStatusChange(projectId, newStatus) {
+  const target = localProjects.find((item) => Number(item.id) === Number(projectId));
+  if (target && !canUserChangeProjectStatus(target)) {
+    showToast("Chỉ Owner và Admin mới có quyền đổi trạng thái dự án.", "error");
+    loadProjects();
+    return;
+  }
+
+  const backendStatusMap = {
+    PLANNING: "planning",
+    ACTIVE: "in_progress",
+    COMPLETED: "completed"
+  };
+
+  try {
+    if (typeof api !== "undefined" && api.patch) {
+      await api.patch("/projects/" + projectId + "/status", {
+        status: backendStatusMap[newStatus] || "in_progress"
+      });
+    }
+  } catch (e) {
+    // Fallback lưu localStorage khi backend chưa bật
+  }
+
+  localStorage.setItem("sph_project_status_" + projectId, newStatus);
+  if (target) target.status = newStatus;
+
+  const labelMap = {
+    PLANNING: "Lên kế hoạch",
+    ACTIVE: "Đang làm",
+    COMPLETED: "Đã hoàn thành"
+  };
+  showToast("Đã đổi trạng thái dự án sang: " + (labelMap[newStatus] || newStatus), "success");
+  loadProjects();
 }
 
 // 4. Mock Engine: Xử lý tìm kiếm, lọc, sắp xếp và phân trang chuẩn đặc tả khi backend chưa chạy
@@ -489,6 +553,9 @@ function runMockEngine(params) {
             paginationWrapper.style.display = "flex";
 
             grid.innerHTML = items.map((p) => {
+              const effectiveStatus = getEffectiveProjectStatus(p);
+              const memberCount = getEffectiveMemberCount(p);
+              const canEditStatus = canUserChangeProjectStatus(p);
               const percent = p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0;
               const deadlineText = p.deadline || p.end_date ? formatDate(p.deadline || p.end_date) : "Chưa đặt";
               const createdText = p.created_at ? formatDate(p.created_at) : "—";
@@ -498,16 +565,24 @@ function runMockEngine(params) {
                 '<article class="project-card">' +
                 '<div class="project-card-header">' +
                 '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
-                getBadge(p.status) +
+                getBadge(effectiveStatus) +
                 '</div>' +
                 '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
                 '<div class="project-meta">' +
                 '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
-                '<span>👥 ' + (p.members || 1) + ' thành viên</span>' +
+                '<span>👥 ' + memberCount + ' thành viên</span>' +
                 '</div>' +
                 '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
                 '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
                 '<span>📅 Tạo: ' + createdText + '</span>' +
+                '</div>' +
+                '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px;">' +
+                '<span style="color: var(--color-muted);">Đổi trạng thái (Owner/Admin):</span>' +
+                '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled") + '>' +
+                '<option value="PLANNING"' + (effectiveStatus === "PLANNING" ? " selected" : "") + '>Lên kế hoạch</option>' +
+                '<option value="ACTIVE"' + (effectiveStatus === "ACTIVE" ? " selected" : "") + '>Đang làm</option>' +
+                '<option value="COMPLETED"' + (effectiveStatus === "COMPLETED" ? " selected" : "") + '>Đã hoàn thành</option>' +
+                '</select>' +
                 '</div>' +
                 '<div class="progress-wrap">' +
                 '<div class="progress-info">' +
@@ -519,9 +594,12 @@ function runMockEngine(params) {
                 '</div>' +
                 '</div>' +
                 '<div class="project-card-actions">' +
-                '<button type="button" class="btn btn-small btn-primary" onclick="showToast(\'Xem chi tiết: ' + escapeHtml(p.name).replace(/'/g, "\\'") + '\', \'info\')" style="flex: 1;">' +
+                '<a href="tasks.html?project_id=' + p.id + '" class="btn btn-small btn-primary" style="flex: 1;">' +
                 'Xem chi tiết' +
-                '</button>' +
+                '</a>' +
+                '<a href="members.html?project_id=' + p.id + '" class="btn btn-small">' +
+                'Thành viên' +
+                '</a>' +
                 '</div>' +
                 '</article>'
               );
