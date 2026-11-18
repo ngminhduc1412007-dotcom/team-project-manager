@@ -2,6 +2,33 @@ from sqlalchemy import inspect, text
 from app.db.session import engine
 
 
+def migrate_users_table():
+    """Tự động kiểm tra và bổ sung các cột còn thiếu trong bảng users khi khởi động."""
+    try:
+        with engine.connect() as conn:
+            insp = inspect(conn)
+            if "users" not in insp.get_table_names():
+                return
+
+            cols = {c["name"] for c in insp.get_columns("users")}
+
+            if "avatar_url" not in cols:
+                conn.execute(
+                    text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500) NULL AFTER is_active;")
+                )
+                print("[DB Migration] Đã bổ sung cột 'avatar_url' vào bảng users.")
+
+            if "bio" not in cols:
+                conn.execute(
+                    text("ALTER TABLE users ADD COLUMN bio TEXT NULL AFTER avatar_url;")
+                )
+                print("[DB Migration] Đã bổ sung cột 'bio' vào bảng users.")
+
+            conn.commit()
+    except Exception as e:
+        print(f"[DB Migration] Kiểm tra schema users: {e}")
+
+
 def migrate_projects_table():
     """Tự động kiểm tra và bổ sung các cột, index còn thiếu trong bảng projects khi khởi động."""
     try:
@@ -43,4 +70,5 @@ def migrate_projects_table():
 
 
 if __name__ == "__main__":
+    migrate_users_table()
     migrate_projects_table()

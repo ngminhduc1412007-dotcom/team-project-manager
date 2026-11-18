@@ -15,7 +15,7 @@ from sqlalchemy.exc import OperationalError
 from app import models  # noqa: F401 - import để SQLAlchemy biết các bảng
 from app.core.config import settings
 from app.core.exception_handlers import register_exception_handlers
-from app.db.migrate import migrate_projects_table
+from app.db.migrate import migrate_projects_table, migrate_users_table
 from app.db.session import Base, engine
 from app.routers import auth, health, projects, tasks, users
 
@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
     # Tự tạo các bảng còn thiếu khi server khởi động (bảng đã có thì bỏ qua).
     try:
         Base.metadata.create_all(bind=engine)
+        migrate_users_table()
         migrate_projects_table()
         print(f"[DB] Đã kết nối cơ sở dữ liệu ({settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME})")
     except OperationalError as error:
