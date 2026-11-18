@@ -3,7 +3,7 @@
 Xử lý các thao tác tạo, đọc, cập nhật, xóa task và kiểm tra ràng buộc logic.
 """
 from datetime import date
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
@@ -13,11 +13,65 @@ from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
-from app.crud.project_members import is_user_in_project
+from app.crud.project_members import get_user_project_role, is_user_in_project
 from app.models.projects import Project
 from app.models.tasks import Task, TaskPriority, TaskStatus
 from app.models.users import User
+from app.schemas.project_members import ProjectMemberRole
 from app.schemas.tasks import TaskCreate, TaskStatusUpdate, TaskUpdate
+from app.schemas.users import UserRole
+
+
+def check_task_permission(
+    db: Session,
+    task: Task,
+    current_user: Union[User, int],
+    action_desc: str = "thay đổi trạng thái công việc",
+) -> None:
+    """
+    Kiểm tra phân quyền thao tác trên công việc:
+    1. Quản trị viên hệ thống (Admin): Có toàn quyền với mọi công việc.
+    2. Chủ sở hữu dự án (Owner): Có toàn quyền với mọi công việc trong dự án của mình.
+    3. Thành viên dự án:
+       - Quản trị viên dự án (Admin): Có quyền sửa/đổi trạng thái công việc.
+       - Thành viên dự án (Member): Có quyền cập nhật trạng thái/tiến độ công việc khi kéo thả.
+       - Người xem (Viewer): Chỉ có quyền đọc (Read-only), KHÔNG được phép thay đổi hay kéo thả.
+    4. Người dùng không thuộc dự án: Bị từ chối quyền truy cập (403 Forbidden).
+    """
+    if isinstance(current_user, User):
+        user = current_user
+    else:
+        user = db.query(User).filter(User.id == current_user).first()
+        if not user:
+            raise ForbiddenException(message="Không xác định được danh tính người dùng.")
+
+    # 1. Admin hệ thống có toàn quyền
+    if getattr(user, "role", None) in (UserRole.ADMIN, "ADMIN", "admin"):
+        return
+
+    # 2. Kiểm tra dự án chứa task
+    project = db.query(Project).filter(Project.id == task.project_id).first()
+    if not project:
+        raise NotFoundException(message=f"Không tìm thấy dự án với id={task.project_id}.")
+
+    # 3. Chủ sở hữu dự án (owner)
+    if project.owner_id == user.id:
+        return
+
+    # 4. Kiểm tra vai trò trong bảng project_members
+    role = get_user_project_role(db=db, project_id=task.project_id, user_id=user.id)
+    if not role:
+        raise ForbiddenException(message="Bạn không thuộc dự án này, không có quyền thao tác với công việc.")
+
+    role_str = str(role.value if hasattr(role, "value") else role).strip().lower()
+
+    if role_str == ProjectMemberRole.VIEWER.value or role_str == "viewer":
+        raise ForbiddenException(
+            message=f"Thành viên có vai trò Người xem (Viewer) không có quyền {action_desc}."
+        )
+
+    # Các vai trò hợp lệ: owner, admin, member
+    return
 
 
 # Tạo công việc mới trong dự án.
@@ -147,9 +201,13 @@ def update_task_service(
     if not task:
         raise NotFoundException(message=f"Không tìm thấy công việc với id={task_id}.")
 
-    # Kiểm tra quyền: Phải thuộc dự án chứa task
-    if not is_user_in_project(db=db, project_id=task.project_id, user_id=current_user_id):
-        raise ForbiddenException(message="Bạn không có quyền chỉnh sửa công việc trong dự án này.")
+    # Kiểm tra quyền: Phải thuộc dự án chứa task và không phải là viewer
+    check_task_permission(
+        db=db,
+        task=task,
+        current_user=current_user_id,
+        action_desc="chỉnh sửa công việc",
+    )
 
     update_dict = data.model_dump(exclude_unset=True)
 
@@ -205,27 +263,36 @@ def delete_task_service(
         raise
 
 
-# Đổi trạng thái công việc (endpoint chuyên dụng).
+# Đổi trạng thái công việc (chuyên dụng cho thao tác kéo thả Kanban).
 def update_task_status_service(
     db: Session,
     task_id: int,
     data: TaskStatusUpdate,
-    current_user_id: int,
-) -> Task:
+    current_user: Union[User, int],
+) -> Tuple[Task, bool]:
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise NotFoundException(message=f"Không tìm thấy công việc với id={task_id}.")
 
-    # Kiểm tra quyền: Phải thuộc dự án chứa task
-    if not is_user_in_project(db=db, project_id=task.project_id, user_id=current_user_id):
-        raise ForbiddenException(message="Bạn không có quyền thay đổi trạng thái công việc trong dự án này.")
+    # 1. Kiểm tra phân quyền người dùng (chỉ Owner, Admin, Member thuộc dự án mới được đổi trạng thái; Viewer bị từ chối)
+    check_task_permission(
+        db=db,
+        task=task,
+        current_user=current_user,
+        action_desc="thay đổi trạng thái công việc",
+    )
 
-    # Không cho phép đổi sang trạng thái hiện tại
+    # 2. Hỗ trợ thao tác kéo thả: Nếu thả lại đúng cột hiện tại (idempotent drag & drop), không cần ghi DB
     if task.status == data.status:
-        raise BadRequestException(
-            message=f"Công việc đã ở trạng thái '{data.status.value}' rồi."
+        task_with_assignee = (
+            db.query(Task)
+            .options(joinedload(Task.assignee))
+            .filter(Task.id == task.id)
+            .first()
         )
+        return task_with_assignee or task, False
 
+    # 3. Cập nhật trạng thái mới
     task.status = data.status
 
     try:
@@ -235,9 +302,10 @@ def update_task_status_service(
         db.rollback()
         raise
 
-    return (
+    task_updated = (
         db.query(Task)
         .options(joinedload(Task.assignee))
         .filter(Task.id == task.id)
         .first()
     )
+    return task_updated or task, True
