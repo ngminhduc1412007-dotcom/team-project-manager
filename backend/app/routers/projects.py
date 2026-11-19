@@ -18,9 +18,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import NotFoundException, UnauthorizedException
+from app.core.deps import get_current_user
+from app.core.exceptions import NotFoundException
 from app.core.response import create_response, paginated_response
-from app.core.security import decode_access_token
 from app.crud.project_members import (
     add_project_member_by_email,
     get_project_members,
@@ -49,43 +49,7 @@ from app.schemas.projects import (
     ProjectStatusUpdate,
     ProjectUpdate,
 )
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
 router = APIRouter(prefix="/projects", tags=["Projects"])
-
-_bearer = HTTPBearer(auto_error=False)
-
-
-# ─────────────────────── dependency: current user ───────────────────────────
-
-def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
-    db: Session = Depends(get_db),
-) -> User:
-    """
-    Giải mã Bearer token trong header Authorization.
-    Ném 401 nếu token thiếu, hết hạn hoặc không hợp lệ.
-    Ném 401 nếu người dùng không tồn tại hoặc bị vô hiệu hoá.
-    """
-    if not credentials or not credentials.credentials:
-        raise UnauthorizedException(message="Yêu cầu Bearer token để truy cập endpoint này.")
-
-    try:
-        payload = decode_access_token(credentials.credentials)
-    except ValueError as exc:
-        raise UnauthorizedException(message=f"Token không hợp lệ: {exc}.")
-
-    user_id_str = payload.get("sub")
-    if not user_id_str:
-        raise UnauthorizedException(message="Token không chứa thông tin người dùng.")
-
-    user = db.query(User).filter(User.id == int(user_id_str)).first()
-    if not user:
-        raise UnauthorizedException(message="Không tìm thấy người dùng tương ứng với token.")
-    if not user.is_active:
-        raise UnauthorizedException(message="Tài khoản đã bị vô hiệu hoá.")
-
-    return user
 
 
 # ─────────────────────────── endpoints ──────────────────────────────────────

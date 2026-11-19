@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -66,13 +66,40 @@ def get_current_user(
     return user
 
 
+def _is_system_admin(user: User) -> bool:
+    """Kiểm tra người dùng có phải quản trị viên hệ thống (ADMIN) hay không."""
+    role = getattr(user, "role", None)
+    return role in (UserRole.ADMIN, "ADMIN", "admin")
+
+
 # Chỉ cho phép quản trị viên hệ thống (ADMIN) truy cập; ngược lại trả 403.
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != UserRole.ADMIN:
+    if not _is_system_admin(current_user):
         raise ForbiddenException(
             message="Chỉ quản trị viên hệ thống mới có quyền thực hiện thao tác này."
         )
     return current_user
+
+
+# Tạo dependency kiểm tra vai trò ở cấp độ hệ thống (STUDENT, LECTURER, ADMIN).
+def require_system_roles(*allowed_roles: Union[UserRole, str]) -> Callable[..., User]:
+    allowed_values = {
+        (r.value if hasattr(r, "value") else str(r)).upper() for r in allowed_roles
+    }
+
+    def _dependency(current_user: User = Depends(get_current_user)) -> User:
+        user_role = (
+            current_user.role.value
+            if hasattr(current_user.role, "value")
+            else str(current_user.role)
+        ).upper()
+        if user_role not in allowed_values:
+            raise ForbiddenException(
+                message="Bạn không có vai trò phù hợp để thực hiện thao tác này."
+            )
+        return current_user
+
+    return _dependency
 
 
 # Trích xuất project_id từ path ({project_id} hoặc {id}) hoặc query của request.
@@ -97,11 +124,11 @@ def _extract_project_id(request: Request) -> int:
 def _get_project_or_404(db: Session, project_id: int) -> Project:
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
-        raise NotFoundException(message="Không tìm thấy dự án.")
+        raise NotFoundException(message=f"Không tìm thấy dự án với id={project_id}.")
     return project
 
 
-# Chỉ thành viên dự án (hoặc chủ dự án) được truy cập; ngoài nhóm trả 403.
+# Chỉ thành viên dự án, chủ dự án hoặc Admin hệ thống được truy cập; ngoài nhóm trả 403.
 def require_project_member(
     request: Request,
     current_user: User = Depends(get_current_user),
@@ -109,12 +136,14 @@ def require_project_member(
 ) -> Project:
     project_id = _extract_project_id(request)
     project = _get_project_or_404(db, project_id)
+    if _is_system_admin(current_user):
+        return project
     if not is_user_in_project(db=db, project_id=project_id, user_id=current_user.id):
         raise ForbiddenException(message="Bạn không phải thành viên của dự án này.")
     return project
 
 
-# Chỉ trưởng nhóm (owner) được sửa/xóa dự án hoặc thêm/xóa thành viên; còn lại trả 403.
+# Chỉ chủ dự án (owner) hoặc Admin hệ thống được thực hiện; còn lại trả 403.
 def require_project_leader(
     request: Request,
     current_user: User = Depends(get_current_user),
@@ -122,17 +151,24 @@ def require_project_leader(
 ) -> Project:
     project_id = _extract_project_id(request)
     project = _get_project_or_404(db, project_id)
+    if _is_system_admin(current_user):
+        return project
     role = get_user_project_role(db=db, project_id=project_id, user_id=current_user.id)
     if role != ProjectMemberRole.OWNER.value:
         raise ForbiddenException(
-            message="Chỉ trưởng nhóm mới có quyền thực hiện thao tác này."
+            message="Chỉ chủ dự án mới có quyền thực hiện thao tác này."
         )
     return project
 
 
 # Tạo dependency kiểm tra theo danh sách vai trò cụ thể trong dự án.
-def require_project_roles(*allowed_roles: ProjectMemberRole) -> Callable[..., Project]:
-    allowed_values = {r.value if hasattr(r, "value") else str(r) for r in allowed_roles}
+def require_project_roles(
+    *allowed_roles: Union[ProjectMemberRole, str],
+    allow_system_admin: bool = True,
+) -> Callable[..., Project]:
+    allowed_values = {
+        (r.value if hasattr(r, "value") else str(r)).lower() for r in allowed_roles
+    }
 
     def _dependency(
         request: Request,
@@ -141,12 +177,21 @@ def require_project_roles(*allowed_roles: ProjectMemberRole) -> Callable[..., Pr
     ) -> Project:
         project_id = _extract_project_id(request)
         project = _get_project_or_404(db, project_id)
+        if allow_system_admin and _is_system_admin(current_user):
+            return project
         role = get_user_project_role(db=db, project_id=project_id, user_id=current_user.id)
-        if role not in allowed_values:
+        if role is None or role.lower() not in allowed_values:
             raise ForbiddenException(
                 message="Bạn không có quyền thực hiện thao tác này trong dự án."
             )
         return project
 
     return _dependency
+
+
+# Dependency dùng chung cho các thao tác chỉnh sửa nội dung dự án (owner hoặc member, chặn viewer).
+require_project_editor = require_project_roles(
+    ProjectMemberRole.OWNER,
+    ProjectMemberRole.MEMBER,
+)
 
