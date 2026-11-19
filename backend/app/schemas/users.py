@@ -1,7 +1,7 @@
 from datetime import datetime
 import enum
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 # Các vai trò người dùng trong hệ thống.
@@ -48,6 +48,33 @@ class UserProfileUpdate(BaseModel):
 class ChangePasswordRequest(BaseModel):
     old_password: str = Field(..., min_length=1, description="Mật khẩu hiện tại cần xác thực")
     new_password: str = Field(..., min_length=6, max_length=100, description="Mật khẩu mới (tối thiểu 6 ký tự)")
+    confirm_password: Optional[str] = Field(default=None, description="Xác nhận mật khẩu mới (tùy chọn)")
+
+    @field_validator("old_password", mode="before")
+    @classmethod
+    def validate_old_password(cls, v):
+        if v is None or not isinstance(v, str) or not v.strip():
+            raise ValueError("Mật khẩu hiện tại không được để trống.")
+        return v
+
+    @field_validator("new_password", mode="before")
+    @classmethod
+    def validate_new_password(cls, v):
+        if v is None or not isinstance(v, str) or not v.strip():
+            raise ValueError("Mật khẩu mới không được để trống hoặc chỉ chứa khoảng trắng.")
+        if len(v.strip()) < 6:
+            raise ValueError("Mật khẩu mới phải có độ dài tối thiểu 6 ký tự.")
+        if len(v) > 100:
+            raise ValueError("Mật khẩu mới không được vượt quá 100 ký tự.")
+        return v
+
+    @model_validator(mode="after")
+    def validate_passwords_match(self) -> "ChangePasswordRequest":
+        if self.new_password == self.old_password:
+            raise ValueError("Mật khẩu mới không được trùng với mật khẩu hiện tại.")
+        if self.confirm_password is not None and self.confirm_password != self.new_password:
+            raise ValueError("Xác nhận mật khẩu mới không khớp.")
+        return self
 
 
 # Schema trả về thông tin người dùng an toàn ra API (không chứa mật khẩu).
