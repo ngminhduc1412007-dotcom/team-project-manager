@@ -12,6 +12,33 @@ from app.core.response import create_response
 logger = logging.getLogger("app.exceptions")
 
 
+def _localize_validation_message(field: str, err: dict) -> str:
+    """Chuẩn hóa và Việt hóa thông báo lỗi validation từ Pydantic."""
+    err_type = err.get("type", "")
+    raw_msg = err.get("msg", "Giá trị không hợp lệ")
+    ctx = err.get("ctx") or {}
+
+    if raw_msg.startswith("Value error, "):
+        return raw_msg[len("Value error, "):]
+
+    if err_type == "missing":
+        return f"Trường '{field}' là bắt buộc."
+    if err_type == "string_too_short":
+        min_len = ctx.get("min_length", 1)
+        return f"Trường '{field}' phải có ít nhất {min_len} ký tự."
+    if err_type == "string_too_long":
+        max_len = ctx.get("max_length", "")
+        return f"Trường '{field}' không được vượt quá {max_len} ký tự."
+    if err_type in ("datetime_from_date_parsing", "datetime_parsing"):
+        return f"Trường '{field}' phải có định dạng ngày giờ hợp lệ (ISO 8601)."
+    if err_type == "int_parsing":
+        return f"Trường '{field}' phải là số nguyên hợp lệ."
+    if err_type == "json_invalid":
+        return "Dữ liệu JSON gửi lên không hợp lệ."
+
+    return raw_msg
+
+
 def format_validation_errors(errors: list) -> List[dict]:
     formatted = []
     for err in errors:
@@ -19,7 +46,7 @@ def format_validation_errors(errors: list) -> List[dict]:
         field = ".".join(loc) if loc else "general"
         formatted.append({
             "field": field,
-            "message": err.get("msg", "Giá trị không hợp lệ"),
+            "message": _localize_validation_message(field, err),
             "type": err.get("type", "value_error"),
         })
     return formatted
