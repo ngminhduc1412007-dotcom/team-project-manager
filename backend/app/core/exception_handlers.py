@@ -21,6 +21,10 @@ def _localize_validation_message(field: str, err: dict) -> str:
     if raw_msg.startswith("Value error, "):
         return raw_msg[len("Value error, "):]
 
+    if "valid email address" in raw_msg.lower():
+        return f"Trường '{field}' phải là địa chỉ email hợp lệ."
+    if err_type == "enum":
+        return f"Giá trị của trường '{field}' không hợp lệ."
     if err_type == "missing":
         return f"Trường '{field}' là bắt buộc."
     if err_type == "string_too_short":
