@@ -11,7 +11,7 @@ from app.crud.project_members import (
 )
 from app.db.session import get_db
 from app.models.users import User
-from app.routers.projects import get_current_user
+from app.core.deps import get_current_user
 from app.schemas.common import ResponseModel
 from app.schemas.project_members import (
     AddMemberByEmailRequest,
