@@ -174,9 +174,10 @@ def update_task(
     "/{task_id}/status",
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
-    summary="Đổi trạng thái công việc",
+    summary="Đổi trạng thái công việc (Kéo thả Kanban)",
     description=(
-        "Chuyển trạng thái công việc sang giá trị mới.\n"
+        "Chuyển trạng thái công việc sang giá trị mới (tối ưu cho thao tác kéo thả trên Kanban Board).\n"
+        "Kiểm tra tính hợp lệ của trạng thái và phân quyền người dùng (chỉ Owner, Admin, Member thuộc dự án mới được cập nhật; Viewer bị từ chối).\n"
         "Giá trị hợp lệ: `todo` (Cần làm), `in_progress` (Đang làm), `done` (Hoàn thành), `cancelled` (Đã huỷ)."
     ),
 )
@@ -187,17 +188,22 @@ def update_task_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    updated_task = update_task_status_service(
+    updated_task, is_changed = update_task_status_service(
         db=db,
         task_id=task_id,
         data=data,
-        current_user_id=current_user.id,
+        current_user=current_user,
     )
     task_data = TaskResponse.model_validate(updated_task).model_dump()
+    msg = (
+        f"Đổi trạng thái công việc thành '{data.status.value}' thành công."
+        if is_changed
+        else f"Trạng thái công việc không thay đổi (vẫn là '{data.status.value}')."
+    )
     return create_response(
         request=request,
         status_code=status.HTTP_200_OK,
-        message=f"Đổi trạng thái công việc thành '{data.status.value}' thành công.",
+        message=msg,
         data=task_data,
     )
 
