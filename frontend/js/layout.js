@@ -4,6 +4,7 @@ const MENU = [
   { href: "pages/projects.html", label: "Dự án của tôi" },
   { href: "pages/tasks.html", label: "Nhiệm vụ" },
   { href: "pages/members.html", label: "Thành viên" },
+  { href: "pages/profile.html", label: "Hồ sơ" },
   { href: "pages/login.html", label: "Đăng nhập" },
 ];
 
