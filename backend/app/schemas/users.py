@@ -3,6 +3,8 @@ import enum
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
+from app.core.security import get_password_strength_error
+
 
 # Các vai trò người dùng trong hệ thống.
 class UserRole(str, enum.Enum):
@@ -44,10 +46,15 @@ class UserProfileUpdate(BaseModel):
     bio: Optional[str] = Field(default=None, max_length=1000, description="Mô tả bản thân / tiểu sử mới")
 
 
-# Schema đổi mật khẩu tài khoản (yêu cầu mật khẩu cũ).
+# Schema đổi mật khẩu tài khoản (yêu cầu mật khẩu cũ và mật khẩu mới đủ mạnh).
 class ChangePasswordRequest(BaseModel):
     old_password: str = Field(..., min_length=1, description="Mật khẩu hiện tại cần xác thực")
-    new_password: str = Field(..., min_length=6, max_length=100, description="Mật khẩu mới (tối thiểu 6 ký tự)")
+    new_password: str = Field(
+        ...,
+        min_length=8,
+        max_length=100,
+        description="Mật khẩu mới (tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt)",
+    )
     confirm_password: Optional[str] = Field(default=None, description="Xác nhận mật khẩu mới (tùy chọn)")
 
     @field_validator("old_password", mode="before")
@@ -60,12 +67,9 @@ class ChangePasswordRequest(BaseModel):
     @field_validator("new_password", mode="before")
     @classmethod
     def validate_new_password(cls, v):
-        if v is None or not isinstance(v, str) or not v.strip():
-            raise ValueError("Mật khẩu mới không được để trống hoặc chỉ chứa khoảng trắng.")
-        if len(v.strip()) < 6:
-            raise ValueError("Mật khẩu mới phải có độ dài tối thiểu 6 ký tự.")
-        if len(v) > 100:
-            raise ValueError("Mật khẩu mới không được vượt quá 100 ký tự.")
+        strength_error = get_password_strength_error(v)
+        if strength_error:
+            raise ValueError(strength_error)
         return v
 
     @model_validator(mode="after")

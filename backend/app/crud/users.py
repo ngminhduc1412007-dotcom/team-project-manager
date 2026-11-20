@@ -10,7 +10,7 @@ from app.core.exceptions import (
     ConflictException,
     NotFoundException,
 )
-from app.core.security import hash_password, verify_password
+from app.core.security import get_password_strength_error, hash_password, verify_password
 from app.models.users import User
 from app.schemas.users import UserProfileUpdate
 
@@ -94,13 +94,13 @@ def change_user_password(
     if verify_password(new_password, user.hashed_password):
         raise BadRequestException(message="Mật khẩu mới không được trùng với mật khẩu hiện tại.")
 
-    # 3. Kiểm tra độ dài mật khẩu mới
-    cleaned_new_password = new_password.strip()
-    if len(cleaned_new_password) < 6:
-        raise BadRequestException(message="Mật khẩu mới phải có độ dài tối thiểu 6 ký tự.")
+    # 3. Kiểm tra độ mạnh mật khẩu mới (không cho lưu nếu mật khẩu yếu)
+    strength_error = get_password_strength_error(new_password)
+    if strength_error:
+        raise BadRequestException(message=strength_error)
 
     # 4. Băm mật khẩu mới và cập nhật
-    user.hashed_password = hash_password(cleaned_new_password)
+    user.hashed_password = hash_password(new_password)
     try:
         db.commit()
         return True
