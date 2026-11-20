@@ -1,0 +1,13 @@
+Ma_TC,Nhom_Kich_Ban,Thiet_Bi_Viewport,Buoc_Thuc_Hien,Ket_Qua_Mong_Doi,Ket_Qua_Thuc_Te,Trang_Thai
+TC-01,Form Tao Task,Desktop 1366px,"Bam + Tao Task moi, nhap day du thong tin va chon trang thai IN_PROGRESS",Task moi xuat hien dung cot Dang lam va hien Toast thanh cong,Hien thi dung cot va luu dong bo,PASS
+TC-02,Tao nhanh theo cot,Desktop 1366px,"Bam nut + tren dau cot CHO DUYET (REVIEW)",Modal mo len tu chon san trang thai REVIEW,Chon san dung REVIEW khong fix cung TODO,PASS
+TC-03,Validate ten rong,Desktop & Mobile,"De trong hoac chi nhap khoang trang o Ten nhiem vu va bam Tao Task",Chan submit va hien thong bao loi inline mau do,Chan dung va hien loi ro rang,PASS
+TC-04,Validate do dai ten,Desktop 1366px,"Nhap ten 2 ky tu hoac > 255 ky tu va bam Tao Task",Bao loi inline do dai 3-255 ky tu,Validate chinh xac,PASS
+TC-05,Dong bo Assignee,Desktop 1366px,"Them thanh vien moi ben members.html roi mo Modal Tao Task",Thanh vien moi xuat hien ngay trong dropdown Nguoi phu trach va Avatar Stack,Dong bo tuc thoi,PASS
+TC-06,Sua & Xoa Task,Desktop 1366px,"Mo chi tiet #T-03, sua thong tin -> Luu; sau do bam Xoa Task -> xac nhan",Cap nhat dung tren the; xoa khoi cot va tinh lai tien do %,Hoat dong chinh xac,PASS
+TC-07,Tim kiem Task,Desktop & Mobile,"Go 'JWT' hoac '#T-03' vao o tim kiem",Chi hien thi #T-03 va cap nhat so dem cot,Loc realtime chinh xac,PASS
+TC-08,Loc ket hop & Xoa bo loc,Desktop 1366px,"Loc URGENT + thanh vien, sau do bam Xoa bo loc",Loc dung ket qua; nut Xoa bo loc khoi phuc toan bo bang,Hoat dong dung,PASS
+TC-09,Keo tha Kanban (Drag & Drop),Desktop 1366px,"Keo the #T-06 tu Can lam tha sang Dang lam",Cot dich sang vien net dut xanh; the doi cot va tinh lai %,Keo tha muot va luu ben vung,PASS
+TC-10,Chuyen cot nhanh & Doi che do xem,Desktop & Mobile,"Doi cot bang dropdown tren the; chuyen qua lai Kanban / Bang",Chuyen cot va chuyen che do xem khong mat bo loc,Dat 100%,PASS
+TC-11,Doi trang thai du an (Owner/Admin),Desktop 1366px,"Owner doi trang thai du an; kiem tra Member bi khoa quyen",Owner/Admin doi duoc va cap nhat badge; Member bi disabled,Dung phan quyen,PASS
+TC-12,Responsive Mobile 360px,Mobile 360x800,"Kiem tra Header, Hero, Bo loc, Kanban vuot ngang va Modal tren 360px",Khong tran ngang vo layout; Modal gom 1 cot; dropdown khong bi cat mep,Dat chuan NFR-004 sau khi fix BUG-01..04,PASS

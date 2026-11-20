@@ -330,8 +330,13 @@
 
     .table {
       width: 100%;
+      min-width: 640px;
       border-collapse: collapse;
       font-size: 14px;
+    }
+
+    .table .btn-remove-member {
+      white-space: nowrap;
     }
 
     .table th,
@@ -455,6 +460,149 @@
     .toast-info {
       background: #0284c7;
     }
+
+    .autocomplete-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+      max-width: 400px;
+    }
+
+    .autocomplete-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #dbe4f0;
+      border-radius: 11px;
+      padding: 6px;
+      box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.16), 0 4px 10px -4px rgba(15, 23, 42, 0.08);
+      max-height: 280px;
+      overflow-y: auto;
+      z-index: 120;
+      display: none;
+    }
+
+    .autocomplete-menu.is-open {
+      display: block;
+    }
+
+    .autocomplete-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      transition: background 0.12s ease;
+    }
+
+    .autocomplete-item:hover:not(:disabled),
+    .autocomplete-item.is-active:not(:disabled) {
+      background: #eef4fb;
+    }
+
+    .autocomplete-item:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .autocomplete-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .autocomplete-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .autocomplete-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .autocomplete-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--color-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .autocomplete-email {
+      font-size: 12px;
+      color: var(--color-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .autocomplete-email mark,
+    .autocomplete-name mark {
+      background: #fef08a;
+      color: #0f172a;
+      padding: 0 2px;
+      border-radius: 3px;
+    }
+
+    .autocomplete-state {
+      padding: 14px 10px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .selected-user-chip {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #eef4fb;
+      border: 1px solid #bfdbfe;
+      font-size: 12.5px;
+      color: #163b65;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .selected-user-chip.is-visible {
+      display: flex;
+    }
+
+    .selected-user-clear {
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-size: 15px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .selected-user-clear:hover {
+      color: var(--color-danger);
+    }
   </style>
 </head>
 <body data-root="../">
@@ -524,12 +672,18 @@
 
       <form id="add-member-form" novalidate>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start;">
-          <div style="flex: 1; min-width: 240px; max-width: 360px;">
+          <div class="autocomplete-wrap" id="user-autocomplete-wrap">
             <input
               type="email"
               id="member-email-input"
-              placeholder="Nhập email sinh viên (VD: sv@ptit.edu.vn)..."
+              autocomplete="off"
+              placeholder="Tìm hoặc nhập email sinh viên (VD: sv@ptit.edu.vn)..."
             >
+            <div class="autocomplete-menu" id="user-suggestions-menu" role="listbox"></div>
+            <div class="selected-user-chip" id="selected-user-chip">
+              <span id="selected-user-text"></span>
+              <button type="button" class="selected-user-clear" id="btn-clear-selected-user" title="Bỏ chọn">&times;</button>
+            </div>
             <div class="form-error" id="member-email-error"></div>
           </div>
 
@@ -658,6 +812,7 @@
   <script src="../js/api.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/layout.js"></script>
+  <script src="../js/custom-select.js"></script>
   <script src="../js/pages/members.js"></script>
 </body>
 </html>

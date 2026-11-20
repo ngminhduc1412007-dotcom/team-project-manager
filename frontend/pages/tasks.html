@@ -1101,25 +1101,18 @@
         <input
           type="search"
           id="search-task-input"
-          placeholder="Tìm theo tiêu đề Task..."
-          style="width: 195px;"
+          placeholder="Tìm theo tên Task..."
+          style="width: 205px;"
         >
-        <select id="filter-status-select" style="width: 150px;">
-          <option value="">Tất cả trạng thái</option>
-          <option value="TODO">Cần làm (TODO)</option>
-          <option value="IN_PROGRESS">Đang làm (IN_PROGRESS)</option>
-          <option value="REVIEW">Chờ duyệt (REVIEW)</option>
-          <option value="DONE">Hoàn thành (DONE)</option>
-        </select>
-        <select id="filter-priority-select" style="width: 140px;">
+        <select id="filter-priority-select" style="width: 145px;">
           <option value="">Tất cả ưu tiên</option>
           <option value="URGENT">URGENT</option>
           <option value="HIGH">HIGH</option>
           <option value="MEDIUM">MEDIUM</option>
           <option value="LOW">LOW</option>
         </select>
-        <select id="filter-assignee-select" style="width: 160px;">
-          <option value="">Tất cả người nhận</option>
+        <select id="filter-assignee-select" style="width: 165px;">
+          <option value="">Tất cả thành viên</option>
         </select>
 
         <button type="button" class="btn btn-small" id="btn-reset-filters" style="display: none;">
@@ -1134,8 +1127,6 @@
         <button type="button" class="btn btn-primary" id="btn-open-create-task">+ Tạo Task mới</button>
       </div>
     </section>
-
-    <div id="filter-result-summary" style="display: none; margin-bottom: 12px; font-size: 13px; color: var(--color-text-sub); background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; padding: 8px 14px;"></div>
 
     <div id="status-banner" class="status-banner"></div>
 
