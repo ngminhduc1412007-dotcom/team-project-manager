@@ -967,7 +967,7 @@ if (taskForm) {
         if (typeof api !== "undefined" && api.post) {
           await api.post("/projects/" + currentProjectId + "/tasks", {
             title,
-            description,
+            description: description || null,
             assignee_id: assigneeId,
             priority: priority.toLowerCase(),
             status: status === "REVIEW" ? "in_progress" : status.toLowerCase(),
