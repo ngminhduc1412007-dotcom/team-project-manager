@@ -117,7 +117,7 @@ def upload_current_user_avatar(
     response_model=ResponseModel,
     status_code=status.HTTP_200_OK,
     summary="Đổi mật khẩu",
-    description="Đổi mật khẩu tài khoản. Yêu cầu nhập mật khẩu hiện tại chính xác, mật khẩu mới tối thiểu 6 ký tự và khác mật khẩu cũ.",
+    description="Đổi mật khẩu tài khoản. Yêu cầu nhập mật khẩu hiện tại chính xác; mật khẩu mới tối thiểu 8 ký tự (gồm chữ hoa, chữ thường, số, ký tự đặc biệt) và khác mật khẩu cũ.",
 )
 @routers.post(
     "/me/change-password",
