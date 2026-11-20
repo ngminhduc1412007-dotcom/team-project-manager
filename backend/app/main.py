@@ -55,6 +55,11 @@ app.include_router(tasks.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 
 
+# Phục vụ file upload tĩnh (ảnh đại diện, tài liệu...) tại /uploads
+uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
 # Phục vụ giao diện Frontend tĩnh nếu thư mục frontend tồn tại
 frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
 if frontend_dir.is_dir():
