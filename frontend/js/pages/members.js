@@ -321,15 +321,17 @@ function renderMembers() {
     return;
   }
 
+  const ownerCount = membersList.filter((item) => normalizeProjectRole(item.role) === "OWNER").length;
+
   membersTbody.innerHTML = filtered
     .map((m, idx) => {
       const roleUpper = normalizeProjectRole(m.role);
-      const isPrimaryOwner = Number(m.id) === 1 && roleUpper === "OWNER";
+      const isProtectedOwner = roleUpper === "OWNER" && (Number(m.id) === 1 || ownerCount <= 1);
       const name = safeEscape(getMemberName(m));
       const email = safeEscape(getMemberEmail(m));
       const joinedDate = safeDate(m.joined_at);
 
-      const actionHtml = isPrimaryOwner
+      const actionHtml = isProtectedOwner
         ? '<span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span>'
         : '<button type="button" class="btn btn-small btn-danger btn-remove-member" data-id="' +
           m.id +
@@ -803,6 +805,12 @@ if (deleteModal) {
   });
 }
 
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && deleteModal && deleteModal.classList.contains("is-open")) {
+    closeDeleteModal();
+  }
+});
+
 if (btnConfirmDelete) {
   btnConfirmDelete.addEventListener("click", async () => {
     if (!pendingDeleteMember) return;
@@ -830,6 +838,9 @@ if (btnConfirmDelete) {
       saveStoredMembers(membersList);
       closeDeleteModal();
       renderMembers();
+      if (suggestionsMenu && suggestionsMenu.classList.contains("is-open") && emailInput) {
+        fetchUserSuggestions(emailInput.value);
+      }
       notifyResult("Đã xóa thành viên " + targetName + " khỏi dự án.", "success");
     } catch (err) {
       closeDeleteModal();
