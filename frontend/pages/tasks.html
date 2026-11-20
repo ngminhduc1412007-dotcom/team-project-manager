@@ -3,23 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chi tiết dự án - Danh sách Task | Student Project Hub</title>
+  <title>Bảng Kanban Task | Student Project Hub</title>
   <link rel="icon" href="../assets/images/logo.png">
   <link rel="stylesheet" href="../css/style.css">
   <style>
     :root {
       --color-primary: #163b65;
       --color-primary-dark: #0f2947;
+      --color-primary-soft: #eef4fb;
       --color-accent: #2fa84f;
       --color-danger: #dc2626;
       --color-success: #16a34a;
       --color-warning: #d97706;
-      --color-text: #1f2937;
-      --color-muted: #6b7280;
-      --color-border: #e5e7eb;
-      --color-bg: #f8fafc;
+      --color-text: #0f172a;
+      --color-text-sub: #475569;
+      --color-muted: #64748b;
+      --color-border: #e2e8f0;
+      --color-bg: #f1f5f9;
       --color-card: #ffffff;
-      --radius: 8px;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 10px 24px -6px rgba(15, 23, 42, 0.12), 0 4px 10px -4px rgba(15, 23, 42, 0.06);
+      --col-todo: #2563eb;
+      --col-progress: #f59e0b;
+      --col-review: #7c3aed;
+      --col-done: #10b981;
     }
 
     * {
@@ -49,15 +59,20 @@
       padding: 0 16px;
     }
 
-    main.container {
+    .board-container {
+      width: 100%;
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 20px 20px 32px;
       flex: 1;
-      padding-top: 24px;
-      padding-bottom: 24px;
     }
 
     #app-header {
       background: var(--color-card);
       border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 60;
     }
 
     .header-inner {
@@ -65,7 +80,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      height: 72px;
+      height: 68px;
+      max-width: 1380px;
     }
 
     .brand {
@@ -86,19 +102,21 @@
 
     .nav a {
       padding: 6px 14px;
-      border-radius: var(--radius);
+      border-radius: 8px;
       color: var(--color-muted);
       font-size: 14px;
       text-decoration: none;
+      transition: background 0.15s, color 0.15s;
     }
 
     .nav a:hover {
       background: var(--color-bg);
       color: var(--color-text);
+      text-decoration: none;
     }
 
     .nav a.active {
-      background: #e8f0f8;
+      background: var(--color-primary-soft);
       color: var(--color-primary);
       font-weight: 600;
     }
@@ -115,7 +133,7 @@
     }
 
     #app-footer {
-      padding: 18px 0;
+      padding: 16px 0;
       text-align: center;
       color: var(--color-muted);
       font-size: 13px;
@@ -123,36 +141,215 @@
       background: var(--color-card);
     }
 
-    .card {
+    .project-hero {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-xs);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .hero-left {
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .hero-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hero-title-row h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--color-text);
+    }
+
+    .hero-desc {
+      margin: 4px 0 12px;
+      color: var(--color-text-sub);
+      font-size: 13.5px;
+    }
+
+    .project-status-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hero-metrics {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .metric-box {
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      min-width: 125px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mini-progress-track {
+      width: 100%;
+      height: 5px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .mini-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #163b65, #2fa84f);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .avatar-stack {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar-stack-item {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffffff;
+      margin-left: -7px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+    }
+
+    .avatar-stack-item:first-child {
+      margin-left: 0;
+    }
+
+    .workspace-bar {
       background: var(--color-card);
       border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      padding: 22px;
-      margin-bottom: 20px;
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-xs);
     }
 
-    .form-group {
-      margin-bottom: 15px;
-      text-align: left;
+    .subnav-pills {
+      display: inline-flex;
+      background: var(--color-bg);
+      padding: 4px;
+      border-radius: 10px;
+      gap: 4px;
     }
 
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
+    .subnav-pill {
+      padding: 6px 14px;
+      border-radius: 8px;
       font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-sub);
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .subnav-pill:hover {
+      color: var(--color-text);
+      text-decoration: none;
+    }
+
+    .subnav-pill.active {
+      background: #ffffff;
+      color: var(--color-primary);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .workspace-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .view-switch {
+      display: inline-flex;
+      background: var(--color-bg);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+    }
+
+    .view-switch-btn {
+      border: none;
+      background: transparent;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--color-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .view-switch-btn.active {
+      background: #ffffff;
+      color: var(--color-primary);
+      box-shadow: var(--shadow-xs);
     }
 
     input,
     textarea,
     select {
       width: 100%;
-      padding: 9px 12px;
+      padding: 8px 12px;
       border: 1px solid var(--color-border);
-      border-radius: var(--radius);
+      border-radius: 8px;
       font: inherit;
-      font-size: 14px;
+      font-size: 13.5px;
       background: #ffffff;
+      color: var(--color-text);
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     input:focus,
@@ -168,6 +365,18 @@
       background: #fef2f2;
     }
 
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--color-text);
+    }
+
     .form-error {
       color: var(--color-danger);
       font-size: 12px;
@@ -181,21 +390,12 @@
 
     .form-grid-2 {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 14px;
     }
 
-    .form-grid-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 14px;
-    }
-
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 16px;
+    .form-grid-2 > .form-group {
+      min-width: 0;
     }
 
     .btn {
@@ -203,175 +403,437 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 8px 16px;
+      padding: 8px 14px;
       border: 1px solid var(--color-border);
-      border-radius: var(--radius);
+      border-radius: 8px;
       background: var(--color-card);
       color: var(--color-text);
       font: inherit;
-      font-size: 14px;
+      font-size: 13.5px;
+      font-weight: 500;
       cursor: pointer;
       text-decoration: none;
+      transition: all 0.15s ease;
     }
 
     .btn:hover {
       background: var(--color-bg);
+      text-decoration: none;
     }
 
     .btn:disabled {
-      opacity: 0.6;
+      opacity: 0.55;
       cursor: not-allowed;
     }
 
     .btn-primary {
       background: var(--color-primary);
       border-color: var(--color-primary);
-      color: #fff;
+      color: #ffffff;
+      font-weight: 600;
     }
 
     .btn-primary:hover {
       background: var(--color-primary-dark);
-      color: #fff;
+      color: #ffffff;
     }
 
     .btn-danger {
       color: var(--color-danger);
       border-color: #fca5a5;
+      background: #ffffff;
+    }
+
+    .btn-danger:hover {
+      background: #fef2f2;
     }
 
     .btn-small {
-      padding: 4px 10px;
+      padding: 5px 10px;
       font-size: 12px;
     }
 
     .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 11.5px;
       font-weight: 600;
+      line-height: 1.4;
     }
 
-    .badge-active {
-      background: #dcfce7;
-      color: #166534;
-    }
+    .badge-active { background: #dcfce7; color: #166534; }
+    .badge-planning { background: #e0f2fe; color: #075985; }
+    .badge-completed { background: #e2e8f0; color: #334155; }
 
-    .badge-planning {
-      background: #e0f2fe;
-      color: #075985;
-    }
+    .badge-todo { background: #eff6ff; color: #1d4ed8; }
+    .badge-in-progress { background: #fffbeb; color: #b45309; }
+    .badge-review { background: #f5f3ff; color: #6d28d9; }
+    .badge-done { background: #ecfdf5; color: #047857; }
 
-    .badge-completed {
-      background: #f3f4f6;
-      color: #374151;
-    }
+    .priority-low { background: #f1f5f9; color: #475569; }
+    .priority-medium { background: #e0f2fe; color: #0369a1; }
+    .priority-high { background: #fff7ed; color: #c2410c; }
+    .priority-urgent { background: #fef2f2; color: #b91c1c; }
 
-    .badge-todo {
-      background: #f1f5f9;
-      color: #475569;
-    }
-
-    .badge-in-progress {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .badge-review {
-      background: #fef3c7;
-      color: #b45309;
-    }
-
-    .badge-done {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
-    .priority-low {
-      background: #f1f5f9;
-      color: #475569;
-    }
-
-    .priority-medium {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-
-    .priority-high {
-      background: #ffedd5;
-      color: #c2410c;
-    }
-
-    .priority-urgent {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
+    .status-banner {
+      padding: 10px 16px;
+      border-radius: 10px;
       margin-bottom: 16px;
-      flex-wrap: wrap;
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
     }
 
-    .project-status-box {
+    .status-banner.is-visible {
+      display: block;
+    }
+
+    .status-banner.success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-banner.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    /* ---------- KANBAN BOARD KIỂU TRELLO NÂNG CẤP ---------- */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(280px, 1fr));
+      gap: 16px;
+      align-items: start;
+      overflow-x: auto;
+      padding-bottom: 12px;
+    }
+
+    .kanban-column {
+      background: #e9eff7;
+      border: 1px solid #dce5f0;
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+      overflow: hidden;
+      transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .kanban-column[data-status="TODO"] { border-top: 3.5px solid var(--col-todo); }
+    .kanban-column[data-status="IN_PROGRESS"] { border-top: 3.5px solid var(--col-progress); }
+    .kanban-column[data-status="REVIEW"] { border-top: 3.5px solid var(--col-review); }
+    .kanban-column[data-status="DONE"] { border-top: 3.5px solid var(--col-done); }
+
+    .kanban-column.is-drag-over {
+      background: #dbeafe;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    .kanban-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 10px;
+      gap: 8px;
+    }
+
+    .kanban-col-title-wrap {
       display: flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
     }
 
-    .project-subnav {
+    .col-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-todo { background: var(--col-todo); }
+    .dot-progress { background: var(--col-progress); }
+    .dot-review { background: var(--col-review); }
+    .dot-done { background: var(--col-done); }
+
+    .kanban-col-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #1e293b;
+    }
+
+    .kanban-col-right {
       display: flex;
-      gap: 8px;
-      border-bottom: 1px solid var(--color-border);
-      margin-bottom: 20px;
-      padding-bottom: 10px;
+      align-items: center;
+      gap: 6px;
     }
 
-    .subnav-link {
-      padding: 6px 14px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 500;
+    .kanban-count {
+      background: #ffffff;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 24px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #d5dfec;
+    }
+
+    .col-quick-add {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #475569;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .col-quick-add:hover {
+      background: #ffffff;
+      color: var(--color-primary);
+      border-color: #cbd5e1;
+    }
+
+    .kanban-cards {
+      padding: 4px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      flex: 1;
+    }
+
+    .kanban-empty {
+      border: 1.5px dashed #cbd5e1;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 12px;
+      padding: 34px 14px;
+      text-align: center;
       color: var(--color-muted);
-      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.15s ease;
     }
 
-    .subnav-link:hover {
-      background: var(--color-card);
-      color: var(--color-text);
-    }
-
-    .subnav-link.active {
-      background: var(--color-primary);
-      color: #ffffff;
+    .kanban-column.is-drag-over .kanban-empty {
+      border-color: #2563eb;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1d4ed8;
       font-weight: 600;
     }
 
-    .project-stats-bar {
+    /* ---------- THẺ TASK (KANBAN CARD) ---------- */
+    .task-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-left-width: 4px;
+      border-radius: 12px;
+      padding: 13px 14px;
+      box-shadow: var(--shadow-sm);
+      cursor: grab;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+      position: relative;
+      user-select: none;
+    }
+
+    .task-card[data-priority="URGENT"] { border-left-color: #ef4444; }
+    .task-card[data-priority="HIGH"] { border-left-color: #f97316; }
+    .task-card[data-priority="MEDIUM"] { border-left-color: #0284c7; }
+    .task-card[data-priority="LOW"] { border-left-color: #94a3b8; }
+
+    .task-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: #cbd5e1;
+    }
+
+    .task-card:active {
+      cursor: grabbing;
+    }
+
+    .task-card.is-dragging {
+      opacity: 0.42;
+      transform: rotate(1.8deg) scale(0.98);
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+    }
+
+    .task-card-top {
       display: flex;
-      gap: 20px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .task-card-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       flex-wrap: wrap;
+    }
+
+    .task-code {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-muted);
+      background: #f1f5f9;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    .drag-grip {
+      color: #94a3b8;
       font-size: 13px;
+      letter-spacing: 1px;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      opacity: 0.65;
+      transition: opacity 0.15s, color 0.15s;
+    }
+
+    .task-card:hover .drag-grip {
+      opacity: 1;
+      color: #475569;
+    }
+
+    .task-card-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 0 0 6px;
+      line-height: 1.38;
+      cursor: pointer;
+    }
+
+    .task-card-title:hover {
+      color: var(--color-primary);
+    }
+
+    .task-card-desc {
+      font-size: 12.5px;
+      color: var(--color-text-sub);
+      margin: 0 0 11px;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .task-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
       color: var(--color-muted);
     }
 
-    .project-stats-bar strong {
-      color: var(--color-text);
-      font-size: 14px;
+    .assignee-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
     }
 
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
+    .assignee-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #ffffff;
+      display: inline-flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .assignee-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 135px;
+    }
+
+    .due-pill {
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .due-pill.is-overdue {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .due-pill.is-done {
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    .task-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .quick-move-select {
+      width: auto;
+      padding: 4px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border-radius: 7px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      cursor: pointer;
+    }
+
+    .quick-move-select:hover {
+      border-color: var(--color-primary);
+      background: #ffffff;
+    }
+
+    /* ---------- CHẾ ĐỘ XEM BẢNG (TABLE VIEW) ---------- */
+    .table-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-xs);
+      display: none;
+    }
+
+    .table-card.is-visible {
+      display: block;
     }
 
     .table-wrap {
@@ -382,7 +844,7 @@
     .table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 13.5px;
     }
 
     .table th,
@@ -394,75 +856,172 @@
     }
 
     .table th {
-      background: var(--color-bg);
+      background: #f8fafc;
       color: var(--color-muted);
-      font-weight: 600;
-      font-size: 12px;
+      font-weight: 700;
+      font-size: 11.5px;
       text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .table tbody tr:hover {
-      background: var(--color-bg);
+      background: #f8fafc;
     }
 
-    .text-overdue {
-      color: var(--color-danger);
-      font-weight: 600;
-      font-size: 12px;
-    }
-
-    .status-banner {
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-      font-size: 13px;
+    /* ---------- MODAL POPUP ---------- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(2px);
       display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 150;
+      padding: 16px;
     }
 
-    .status-banner.is-visible {
-      display: block;
+    .modal-backdrop.is-open {
+      display: flex;
     }
 
-    .status-banner.success {
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
+    .modal {
+      background: #ffffff;
+      width: 100%;
+      max-width: 560px;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
-    .status-banner.error {
-      background: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--color-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--color-border);
     }
 
     .toast {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
-      padding: 10px 16px;
-      border-radius: var(--radius);
-      color: #fff;
-      font-size: 14px;
-      z-index: 200;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      right: 18px;
+      bottom: 18px;
+      padding: 11px 18px;
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 500;
+      z-index: 250;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
     }
 
-    .toast-success {
-      background: var(--color-success);
-    }
-
-    .toast-error {
-      background: var(--color-danger);
-    }
-
-    .toast-info {
-      background: #0284c7;
-    }
+    .toast-success { background: #15803d; }
+    .toast-error { background: #dc2626; }
+    .toast-info { background: #163b65; }
 
     @media (max-width: 768px) {
-      .form-grid-2,
-      .form-grid-3 {
+      .header-inner {
+        height: auto;
+        padding: 10px 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .user-nav {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        width: 100%;
+        justify-content: space-between;
+      }
+      .board-container {
+        padding: 14px 12px 24px;
+      }
+      .project-hero {
+        padding: 16px;
+      }
+      .hero-left {
+        min-width: 0;
+        width: 100%;
+      }
+      .hero-metrics {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .metric-box {
+        min-width: 0;
+      }
+      .workspace-bar {
+        padding: 12px;
+      }
+      .subnav-pills {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .workspace-controls {
+        width: 100%;
+      }
+      .workspace-controls input[type="search"],
+      .workspace-controls .cselect-wrap,
+      .workspace-controls #btn-open-create-task {
+        width: 100% !important;
+      }
+      .kanban-board {
+        grid-template-columns: repeat(4, minmax(265px, 84vw));
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+      .kanban-column {
+        scroll-snap-align: start;
+        min-height: 360px;
+      }
+      .form-grid-2 {
         grid-template-columns: 1fr;
+      }
+      .modal {
+        padding: 18px;
+      }
+      .modal-footer {
+        flex-wrap: wrap;
       }
     }
   </style>
@@ -483,20 +1042,20 @@
     </div>
   </header>
 
-  <main class="container">
-    <div class="page-header">
-      <div>
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <h1 id="project-title" style="margin: 0; font-size: 24px;">Dự án: Student Project Hub</h1>
+  <main class="board-container">
+    <section class="project-hero">
+      <div class="hero-left">
+        <div class="hero-title-row">
+          <h1 id="project-title">Dự án: Student Project Hub</h1>
           <span class="badge badge-active" id="project-status-badge">Đang làm</span>
         </div>
-        <p id="project-desc" style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
-          Nền tảng quản lý tiến độ đồ án và bài tập nhóm dành cho sinh viên ngành CNTT
+        <p id="project-desc" class="hero-desc">
+          Nền tảng quản lý tiến độ đồ án và bài tập nhóm dành cho sinh viên ngành CNTT · Kéo thả thẻ Task giữa các cột để cập nhật trạng thái
         </p>
 
         <div class="project-status-box" id="project-status-controls">
-          <span style="font-size: 13px; font-weight: 600;">Trạng thái dự án:</span>
-          <select id="project-status-select" style="width: 170px; padding: 5px 10px; font-size: 13px;">
+          <span style="font-size: 12.5px; font-weight: 600; color: var(--color-text-sub);">Trạng thái dự án:</span>
+          <select id="project-status-select" style="width: 155px; padding: 5px 10px; font-size: 12.5px;">
             <option value="PLANNING">Lên kế hoạch</option>
             <option value="ACTIVE" selected>Đang làm</option>
             <option value="COMPLETED">Đã hoàn thành</option>
@@ -510,124 +1069,138 @@
         </div>
       </div>
 
-      <div class="project-stats-bar">
-        <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy ( Owner )</strong></span>
-        <span>Tiến độ: <strong id="project-progress-stat">65% (13/20)</strong></span>
-        <span>Quá hạn: <strong id="project-overdue-stat" style="color: var(--color-danger);">1 Task</strong></span>
-        <span>Thành viên: <strong id="total-members-stat">5</strong></span>
-      </div>
-    </div>
+      <div class="hero-metrics">
+        <div class="metric-box" style="min-width: 160px;">
+          <div class="metric-label">Tiến độ hoàn thành</div>
+          <div class="metric-value" id="project-progress-stat">33% (2/6)</div>
+          <div class="mini-progress-track">
+            <div class="mini-progress-fill" id="project-progress-bar" style="width: 33%;"></div>
+          </div>
+        </div>
 
-    <div class="project-subnav">
-      <a href="tasks.html" id="subnav-tasks-link" class="subnav-link active">Danh sách Task</a>
-      <a href="members.html" id="subnav-members-link" class="subnav-link">Thành viên dự án</a>
-      <a href="projects.html" class="subnav-link">Quay lại Danh sách dự án</a>
-    </div>
+        <div class="metric-box">
+          <div class="metric-label">Quá hạn</div>
+          <div class="metric-value" id="project-overdue-stat" style="color: var(--color-danger);">1 Task</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">Thành viên (<span id="total-members-stat">5</span>)</div>
+          <div class="avatar-stack" id="hero-avatar-stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace-bar">
+      <div class="subnav-pills">
+        <a href="tasks.html" id="subnav-tasks-link" class="subnav-pill active">Bảng Kanban Task</a>
+        <a href="members.html" id="subnav-members-link" class="subnav-pill">Thành viên dự án</a>
+        <a href="projects.html" class="subnav-pill">Tất cả dự án</a>
+      </div>
+
+      <div class="workspace-controls">
+        <input
+          type="search"
+          id="search-task-input"
+          placeholder="Tìm theo tiêu đề Task..."
+          style="width: 195px;"
+        >
+        <select id="filter-status-select" style="width: 150px;">
+          <option value="">Tất cả trạng thái</option>
+          <option value="TODO">Cần làm (TODO)</option>
+          <option value="IN_PROGRESS">Đang làm (IN_PROGRESS)</option>
+          <option value="REVIEW">Chờ duyệt (REVIEW)</option>
+          <option value="DONE">Hoàn thành (DONE)</option>
+        </select>
+        <select id="filter-priority-select" style="width: 140px;">
+          <option value="">Tất cả ưu tiên</option>
+          <option value="URGENT">URGENT</option>
+          <option value="HIGH">HIGH</option>
+          <option value="MEDIUM">MEDIUM</option>
+          <option value="LOW">LOW</option>
+        </select>
+        <select id="filter-assignee-select" style="width: 160px;">
+          <option value="">Tất cả người nhận</option>
+        </select>
+
+        <button type="button" class="btn btn-small" id="btn-reset-filters" style="display: none;">
+          Xóa bộ lọc
+        </button>
+
+        <div class="view-switch">
+          <button type="button" class="view-switch-btn active" id="btn-view-kanban">Kanban</button>
+          <button type="button" class="view-switch-btn" id="btn-view-table">Bảng</button>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="btn-open-create-task">+ Tạo Task mới</button>
+      </div>
+    </section>
+
+    <div id="filter-result-summary" style="display: none; margin-bottom: 12px; font-size: 13px; color: var(--color-text-sub); background: #ffffff; border: 1px solid var(--color-border); border-radius: 10px; padding: 8px 14px;"></div>
 
     <div id="status-banner" class="status-banner"></div>
 
-    <div class="card">
-      <h3 style="font-size: 17px; margin: 0 0 6px;">Tạo Task mới</h3>
-      <p style="font-size: 13px; color: var(--color-muted); margin: 0 0 16px;">
-        Nhập thông tin công việc, chọn trạng thái, mức độ ưu tiên, hạn hoàn thành và phân công cho thành viên trong dự án.
-      </p>
-
-      <form id="create-task-form" novalidate>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label for="task-title">Tên nhiệm vụ (Task Title) *</label>
-            <input type="text" id="task-title" placeholder="VD: Xây dựng giao diện danh sách Task">
-            <div class="form-error" id="task-title-error"></div>
+    <section id="kanban-board" class="kanban-board">
+      <div class="kanban-column" data-status="TODO">
+        <div class="kanban-col-header">
+          <div class="kanban-col-title-wrap">
+            <span class="col-dot dot-todo"></span>
+            <span class="kanban-col-title">Cần làm</span>
           </div>
-
-          <div class="form-group">
-            <label for="task-assignee">Người phụ trách (Assignee)</label>
-            <select id="task-assignee">
-              <option value="">-- Chưa phân công --</option>
-              <option value="1">Lê Quang Huy (OWNER)</option>
-              <option value="2">Nguyễn Minh Đức (MEMBER)</option>
-              <option value="3">Lưu Đức Anh (MEMBER)</option>
-              <option value="4">Trần Nhật Long (MEMBER)</option>
-              <option value="5">Hoàng Đức Duy Anh (MEMBER)</option>
-            </select>
+          <div class="kanban-col-right">
+            <span class="kanban-count" data-count-for="TODO">0</span>
+            <button type="button" class="col-quick-add" data-add-status="TODO" title="Thêm nhanh vào cột Cần làm">+</button>
           </div>
         </div>
-
-        <div class="form-grid-3">
-          <div class="form-group">
-            <label for="task-priority">Mức độ ưu tiên (Priority)</label>
-            <select id="task-priority">
-              <option value="LOW">LOW (Thấp)</option>
-              <option value="MEDIUM" selected>MEDIUM (Trung bình)</option>
-              <option value="HIGH">HIGH (Cao)</option>
-              <option value="URGENT">URGENT (Khẩn cấp)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="task-status">Trạng thái ban đầu</label>
-            <select id="task-status">
-              <option value="TODO" selected>TODO (Cần làm)</option>
-              <option value="IN_PROGRESS">IN_PROGRESS (Đang làm)</option>
-              <option value="REVIEW">REVIEW (Chờ duyệt)</option>
-              <option value="DONE">DONE (Đã hoàn thành)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="task-due-date">Hạn hoàn thành (Deadline)</label>
-            <input type="date" id="task-due-date" value="2026-11-20">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="task-desc">Mô tả chi tiết công việc</label>
-          <textarea id="task-desc" rows="3" placeholder="Mô tả yêu cầu đầu ra, tài liệu tham khảo hoặc tiêu chí nghiệm thu..."></textarea>
-        </div>
-
-        <div class="form-actions">
-          <button type="reset" class="btn">Làm mới</button>
-          <button type="submit" class="btn btn-primary" id="btn-create-task">Tạo Task</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="card">
-      <div class="toolbar">
-        <h3 style="font-size: 17px; margin: 0;">Danh sách Task của dự án (<span id="task-count-label">6</span>)</h3>
-
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-          <input
-            type="text"
-            id="search-task-input"
-            placeholder="Tìm theo tên nhiệm vụ..."
-            style="width: 210px;"
-          >
-          <select id="filter-status-select" style="width: 155px;">
-            <option value="">Tất cả trạng thái</option>
-            <option value="TODO">TODO</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="REVIEW">REVIEW</option>
-            <option value="DONE">DONE</option>
-          </select>
-          <select id="filter-priority-select" style="width: 155px;">
-            <option value="">Tất cả độ ưu tiên</option>
-            <option value="URGENT">URGENT</option>
-            <option value="HIGH">HIGH</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="LOW">LOW</option>
-          </select>
-          <select id="filter-assignee-select" style="width: 185px;">
-            <option value="">Tất cả thành viên</option>
-            <option value="1">Lê Quang Huy</option>
-            <option value="2">Nguyễn Minh Đức</option>
-            <option value="3">Lưu Đức Anh</option>
-            <option value="4">Trần Nhật Long</option>
-            <option value="5">Hoàng Đức Duy Anh</option>
-          </select>
-        </div>
+        <div class="kanban-cards" data-dropzone="TODO"></div>
       </div>
 
+      <div class="kanban-column" data-status="IN_PROGRESS">
+        <div class="kanban-col-header">
+          <div class="kanban-col-title-wrap">
+            <span class="col-dot dot-progress"></span>
+            <span class="kanban-col-title">Đang làm</span>
+          </div>
+          <div class="kanban-col-right">
+            <span class="kanban-count" data-count-for="IN_PROGRESS">0</span>
+            <button type="button" class="col-quick-add" data-add-status="IN_PROGRESS" title="Thêm nhanh vào cột Đang làm">+</button>
+          </div>
+        </div>
+        <div class="kanban-cards" data-dropzone="IN_PROGRESS"></div>
+      </div>
+
+      <div class="kanban-column" data-status="REVIEW">
+        <div class="kanban-col-header">
+          <div class="kanban-col-title-wrap">
+            <span class="col-dot dot-review"></span>
+            <span class="kanban-col-title">Chờ duyệt</span>
+          </div>
+          <div class="kanban-col-right">
+            <span class="kanban-count" data-count-for="REVIEW">0</span>
+            <button type="button" class="col-quick-add" data-add-status="REVIEW" title="Thêm nhanh vào cột Chờ duyệt">+</button>
+          </div>
+        </div>
+        <div class="kanban-cards" data-dropzone="REVIEW"></div>
+      </div>
+
+      <div class="kanban-column" data-status="DONE">
+        <div class="kanban-col-header">
+          <div class="kanban-col-title-wrap">
+            <span class="col-dot dot-done"></span>
+            <span class="kanban-col-title">Hoàn thành</span>
+          </div>
+          <div class="kanban-col-right">
+            <span class="kanban-count" data-count-for="DONE">0</span>
+            <button type="button" class="col-quick-add" data-add-status="DONE" title="Thêm nhanh vào cột Hoàn thành">+</button>
+          </div>
+        </div>
+        <div class="kanban-cards" data-dropzone="DONE"></div>
+      </div>
+    </section>
+
+    <section id="table-view-card" class="table-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0; font-size: 16px;">Danh sách Task (<span id="task-count-label">0</span>)</h3>
+      </div>
       <div class="table-wrap">
         <table class="table">
           <thead>
@@ -641,103 +1214,82 @@
               <th>Thao tác</th>
             </tr>
           </thead>
-          <tbody id="tasks-tbody">
-            <tr>
-              <td>#T-01</td>
-              <td>
-                <strong>Phân tích SRS và thiết kế CSDL PostgreSQL</strong>
-                <div style="font-size: 12px; color: var(--color-muted);">Chuẩn hóa 9 bảng dữ liệu và sơ đồ ERD</div>
-              </td>
-              <td>Hoàng Đức Duy Anh</td>
-              <td><span class="badge priority-high">HIGH</span></td>
-              <td><span class="badge badge-done">DONE</span></td>
-              <td>05/11/2026</td>
-              <td>
-                <button type="button" class="btn btn-small">Chi tiết</button>
-              </td>
-            </tr>
-            <tr>
-              <td>#T-02</td>
-              <td>
-                <strong>Xây dựng khung cơ sở Frontend HTML/CSS/JS</strong>
-                <div style="font-size: 12px; color: var(--color-muted);">Thiết lập style.css, layout.js và cấu hình Axios</div>
-              </td>
-              <td>Nguyễn Minh Đức</td>
-              <td><span class="badge priority-high">HIGH</span></td>
-              <td><span class="badge badge-done">DONE</span></td>
-              <td>08/11/2026</td>
-              <td>
-                <button type="button" class="btn btn-small">Chi tiết</button>
-              </td>
-            </tr>
-            <tr>
-              <td>#T-03</td>
-              <td>
-                <strong>Xây dựng API xác thực JWT và phân quyền dự án</strong>
-                <div style="font-size: 12px; color: var(--color-muted);">Đăng nhập, đăng ký và kiểm tra vai trò Owner/Member</div>
-              </td>
-              <td>Lê Quang Huy</td>
-              <td><span class="badge priority-urgent">URGENT</span></td>
-              <td><span class="badge badge-review">REVIEW</span></td>
-              <td>12/11/2026</td>
-              <td>
-                <button type="button" class="btn btn-small btn-primary">Duyệt DONE</button>
-                <button type="button" class="btn btn-small">Trả lại</button>
-              </td>
-            </tr>
-            <tr>
-              <td>#T-04</td>
-              <td>
-                <strong>Lập trình giao diện trang Danh sách dự án và Thành viên</strong>
-                <div style="font-size: 12px; color: var(--color-muted);">Hiển thị danh sách thành viên, form mời và bộ lọc</div>
-              </td>
-              <td>Lưu Đức Anh</td>
-              <td><span class="badge priority-medium">MEDIUM</span></td>
-              <td><span class="badge badge-in-progress">IN_PROGRESS</span></td>
-              <td>15/11/2026</td>
-              <td>
-                <button type="button" class="btn btn-small">Gửi REVIEW</button>
-                <button type="button" class="btn btn-small">Sửa</button>
-              </td>
-            </tr>
-            <tr>
-              <td>#T-05</td>
-              <td>
-                <strong>Xây dựng API CRUD Task và kiểm tra State Machine</strong>
-                <div style="font-size: 12px; color: var(--color-muted);">Ràng buộc chuyển trạng thái TODO sang IN_PROGRESS, REVIEW, DONE</div>
-              </td>
-              <td>Trần Nhật Long</td>
-              <td><span class="badge priority-high">HIGH</span></td>
-              <td><span class="badge badge-in-progress">IN_PROGRESS</span></td>
-              <td>16/11/2026</td>
-              <td>
-                <button type="button" class="btn btn-small">Gửi REVIEW</button>
-                <button type="button" class="btn btn-small">Sửa</button>
-              </td>
-            </tr>
-            <tr>
-              <td>#T-06</td>
-              <td>
-                <strong>Viết kịch bản kiểm thử tích hợp API & phân quyền</strong>
-                <div style="font-size: 12px; color: var(--color-muted);">Kiểm thử 25 test case P0 trong tài liệu SRS</div>
-              </td>
-              <td>Hoàng Đức Duy Anh</td>
-              <td><span class="badge priority-urgent">URGENT</span></td>
-              <td><span class="badge badge-todo">TODO</span></td>
-              <td>
-                <div>09/11/2026</div>
-                <div class="text-overdue">Quá hạn</div>
-              </td>
-              <td>
-                <button type="button" class="btn btn-small">Bắt đầu</button>
-                <button type="button" class="btn btn-small btn-danger">Xóa</button>
-              </td>
-            </tr>
-          </tbody>
+          <tbody id="tasks-tbody"></tbody>
         </table>
       </div>
-    </div>
+    </section>
   </main>
+
+  <div class="modal-backdrop" id="task-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="task-modal-heading">Tạo Task mới</h3>
+        <button type="button" class="modal-close" id="btn-close-task-modal" aria-label="Đóng">&times;</button>
+      </div>
+
+      <form id="task-form" novalidate>
+        <input type="hidden" id="editing-task-id" value="">
+
+        <div class="form-group">
+          <label for="task-title">Tên nhiệm vụ (Task Title) *</label>
+          <input type="text" id="task-title" placeholder="VD: Xây dựng bảng Kanban kéo thả cho Task">
+          <div class="form-error" id="task-title-error"></div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="task-assignee">Người phụ trách (Assignee)</label>
+            <select id="task-assignee">
+              <option value="">-- Chưa phân công --</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="task-status">Trạng thái cột</label>
+            <select id="task-status">
+              <option value="TODO">Cần làm (TODO)</option>
+              <option value="IN_PROGRESS">Đang làm (IN_PROGRESS)</option>
+              <option value="REVIEW">Chờ duyệt (REVIEW)</option>
+              <option value="DONE">Hoàn thành (DONE)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="task-priority">Mức độ ưu tiên (Priority)</label>
+            <select id="task-priority">
+              <option value="LOW">LOW (Thấp)</option>
+              <option value="MEDIUM" selected>MEDIUM (Trung bình)</option>
+              <option value="HIGH">HIGH (Cao)</option>
+              <option value="URGENT">URGENT (Khẩn cấp)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="task-due-date">Hạn hoàn thành (Deadline)</label>
+            <input type="date" id="task-due-date" value="2026-11-24">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="task-desc">Mô tả chi tiết công việc</label>
+          <textarea id="task-desc" rows="3" maxlength="2000" placeholder="Mô tả yêu cầu đầu ra, tài liệu tham khảo hoặc tiêu chí nghiệm thu..."></textarea>
+          <div class="form-error" id="task-desc-error"></div>
+        </div>
+
+        <div class="modal-footer">
+          <div>
+            <button type="button" class="btn btn-danger btn-small" id="btn-delete-in-modal" style="display: none;">Xóa Task</button>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn" id="btn-cancel-task-modal">Hủy bỏ</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-task">Tạo Task</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <footer id="app-footer">
     <div class="container">
@@ -750,6 +1302,7 @@
   <script src="../js/api.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/layout.js"></script>
+  <script src="../js/custom-select.js"></script>
   <script src="../js/pages/tasks.js"></script>
 </body>
 </html>
