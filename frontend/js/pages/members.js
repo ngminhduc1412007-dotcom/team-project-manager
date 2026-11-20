@@ -321,15 +321,17 @@ function renderMembers() {
     return;
   }
 
+  const ownerCount = membersList.filter((item) => normalizeProjectRole(item.role) === "OWNER").length;
+
   membersTbody.innerHTML = filtered
     .map((m, idx) => {
       const roleUpper = normalizeProjectRole(m.role);
-      const isPrimaryOwner = Number(m.id) === 1 && roleUpper === "OWNER";
+      const isProtectedOwner = roleUpper === "OWNER" && (Number(m.id) === 1 || ownerCount <= 1);
       const name = safeEscape(getMemberName(m));
       const email = safeEscape(getMemberEmail(m));
       const joinedDate = safeDate(m.joined_at);
 
-      const actionHtml = isPrimaryOwner
+      const actionHtml = isProtectedOwner
         ? '<span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span>'
         : '<button type="button" class="btn btn-small btn-danger btn-remove-member" data-id="' +
           m.id +
@@ -389,10 +391,291 @@ function validateEmail(email) {
   return "";
 }
 
+const fallbackUserDirectory = [
+  { id: 1, full_name: "Lê Quang Huy", email: "huy.lq@ptit.edu.vn", role: "STUDENT" },
+  { id: 2, full_name: "Nguyễn Minh Đức", email: "duc.nm@ptit.edu.vn", role: "STUDENT" },
+  { id: 3, full_name: "Lưu Đức Anh", email: "anh.ld@ptit.edu.vn", role: "STUDENT" },
+  { id: 4, full_name: "Trần Nhật Long", email: "long.tn@ptit.edu.vn", role: "STUDENT" },
+  { id: 5, full_name: "Hoàng Đức Duy Anh", email: "duyanh.hd@ptit.edu.vn", role: "STUDENT" },
+  { id: 6, full_name: "Phạm Quỳnh Chi", email: "chi.pq@ptit.edu.vn", role: "STUDENT" },
+  { id: 7, full_name: "Đặng Quốc Duy", email: "duy.dq@ptit.edu.vn", role: "STUDENT" },
+  { id: 8, full_name: "Trần Thị Minh Tâm", email: "tam.ttm@ptit.edu.vn", role: "STUDENT" },
+  { id: 9, full_name: "Vũ Đình Trọng", email: "trong.vd@ptit.edu.vn", role: "STUDENT" },
+  { id: 10, full_name: "TS. Vũ Hoàng Anh", email: "giangvien.hd@ptit.edu.vn", role: "LECTURER" }
+];
+
+const SUGGESTION_COLORS = [
+  "#1d4ed8",
+  "#0f766e",
+  "#7c3aed",
+  "#c2410c",
+  "#0369a1",
+  "#15803d"
+];
+
+const autocompleteWrap = document.getElementById("user-autocomplete-wrap");
+const suggestionsMenu = document.getElementById("user-suggestions-menu");
+const selectedUserChip = document.getElementById("selected-user-chip");
+const selectedUserText = document.getElementById("selected-user-text");
+const btnClearSelectedUser = document.getElementById("btn-clear-selected-user");
+
+let suggestedUsers = [];
+let activeSuggestionIndex = -1;
+let selectedSuggestedUser = null;
+let searchUserTimer = null;
+let latestSearchSeq = 0;
+
+function getSuggestionInitials(name) {
+  const parts = String(name || "?").trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getSuggestionColor(text) {
+  let hash = 0;
+  const s = String(text || "");
+  for (let i = 0; i < s.length; i++) {
+    hash = s.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return SUGGESTION_COLORS[Math.abs(hash) % SUGGESTION_COLORS.length];
+}
+
+function highlightMatch(text, keyword) {
+  const safeText = safeEscape(text);
+  const kw = String(keyword || "").trim();
+  if (!kw) return safeText;
+  const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return safeText.replace(new RegExp("(" + escapedKw + ")", "gi"), "<mark>$1</mark>");
+}
+
+function isEmailAlreadyInProject(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  return membersList.some((m) => getMemberEmail(m).toLowerCase() === normalized);
+}
+
+function closeSuggestionsMenu() {
+  if (suggestionsMenu) suggestionsMenu.classList.remove("is-open");
+  activeSuggestionIndex = -1;
+}
+
+function setSelectedSuggestedUser(userObj) {
+  selectedSuggestedUser = userObj;
+  if (!userObj) {
+    if (selectedUserChip) selectedUserChip.classList.remove("is-visible");
+    if (selectedUserText) selectedUserText.textContent = "";
+    return;
+  }
+  if (emailInput) {
+    emailInput.value = userObj.email;
+    emailInput.classList.remove("is-invalid");
+  }
+  if (emailError) emailError.classList.remove("is-visible");
+  if (selectedUserText) {
+    selectedUserText.textContent = "Đã chọn: " + (userObj.full_name || userObj.email) + " (" + userObj.email + ")";
+  }
+  if (selectedUserChip) selectedUserChip.classList.add("is-visible");
+  closeSuggestionsMenu();
+}
+
+function renderSuggestions(users, keyword, isLoading) {
+  if (!suggestionsMenu) return;
+
+  if (isLoading) {
+    suggestionsMenu.innerHTML = '<div class="autocomplete-state">Đang tìm kiếm người dùng...</div>';
+    suggestionsMenu.classList.add("is-open");
+    return;
+  }
+
+  suggestedUsers = users;
+  activeSuggestionIndex = -1;
+
+  if (!users || users.length === 0) {
+    suggestionsMenu.innerHTML =
+      '<div class="autocomplete-state">Không tìm thấy người dùng phù hợp với "' +
+      safeEscape(keyword) +
+      '".</div>';
+    suggestionsMenu.classList.add("is-open");
+    return;
+  }
+
+  suggestionsMenu.innerHTML = users
+    .map((u, idx) => {
+      const email = u.email || "";
+      const fullName = u.full_name || email.split("@")[0];
+      const alreadyIn = isEmailAlreadyInProject(email);
+      const badgeHtml = alreadyIn
+        ? '<span class="badge badge-viewer">Đã trong dự án</span>'
+        : '<span class="badge badge-member">Chọn</span>';
+
+      return (
+        '<button type="button" class="autocomplete-item" data-suggest-idx="' +
+        idx +
+        '"' +
+        (alreadyIn ? " disabled" : "") +
+        ">" +
+        '<div class="autocomplete-user">' +
+        '<span class="autocomplete-avatar" style="background: ' +
+        getSuggestionColor(fullName) +
+        ';">' +
+        safeEscape(getSuggestionInitials(fullName)) +
+        "</span>" +
+        '<div class="autocomplete-info">' +
+        '<div class="autocomplete-name">' +
+        highlightMatch(fullName, keyword) +
+        "</div>" +
+        '<div class="autocomplete-email">' +
+        highlightMatch(email, keyword) +
+        "</div>" +
+        "</div>" +
+        "</div>" +
+        badgeHtml +
+        "</button>"
+      );
+    })
+    .join("");
+
+  suggestionsMenu.classList.add("is-open");
+}
+
+function updateActiveSuggestionHighlight() {
+  if (!suggestionsMenu) return;
+  const items = suggestionsMenu.querySelectorAll(".autocomplete-item");
+  items.forEach((el, i) => {
+    el.classList.toggle("is-active", i === activeSuggestionIndex);
+    if (i === activeSuggestionIndex) {
+      el.scrollIntoView({ block: "nearest" });
+    }
+  });
+}
+
+async function fetchUserSuggestions(keyword) {
+  const kw = String(keyword || "").trim();
+  const seq = ++latestSearchSeq;
+
+  if (!kw) {
+    renderSuggestions(fallbackUserDirectory.slice(0, 6), "", false);
+    return;
+  }
+
+  renderSuggestions([], kw, true);
+
+  let apiUsers = null;
+  if (typeof api !== "undefined" && api.get) {
+    const searchEndpoints = [
+      { path: "/users/search", params: { q: kw, email: kw, search: kw, limit: 8 } },
+      { path: "/users", params: { search: kw, email: kw, q: kw, page_size: 8 } }
+    ];
+
+    for (const ep of searchEndpoints) {
+      try {
+        const res = await api.get(ep.path, ep.params);
+        const raw = res?.data?.items || res?.data || res;
+        if (Array.isArray(raw)) {
+          apiUsers = raw;
+          break;
+        }
+      } catch (err) {
+        // Thử endpoint kế tiếp hoặc fallback khi backend chưa hỗ trợ
+      }
+    }
+  }
+
+  if (seq !== latestSearchSeq) return;
+
+  if (Array.isArray(apiUsers)) {
+    renderSuggestions(apiUsers, kw, false);
+    return;
+  }
+
+  const lowerKw = kw.toLowerCase();
+  const localMatches = fallbackUserDirectory.filter(
+    (u) =>
+      u.email.toLowerCase().includes(lowerKw) ||
+      u.full_name.toLowerCase().includes(lowerKw)
+  );
+  renderSuggestions(localMatches, kw, false);
+}
+
+if (btnClearSelectedUser) {
+  btnClearSelectedUser.addEventListener("click", () => {
+    setSelectedSuggestedUser(null);
+    if (emailInput) {
+      emailInput.value = "";
+      emailInput.focus();
+    }
+  });
+}
+
+if (suggestionsMenu) {
+  suggestionsMenu.addEventListener("mousedown", (e) => {
+    const item = e.target.closest(".autocomplete-item");
+    if (!item || item.disabled) return;
+    e.preventDefault();
+    const idx = Number(item.dataset.suggestIdx);
+    const chosen = suggestedUsers[idx];
+    if (chosen) setSelectedSuggestedUser(chosen);
+  });
+}
+
+document.addEventListener("click", (e) => {
+  if (autocompleteWrap && !autocompleteWrap.contains(e.target)) {
+    closeSuggestionsMenu();
+  }
+});
+
 if (emailInput) {
+  emailInput.addEventListener("focus", () => {
+    fetchUserSuggestions(emailInput.value);
+  });
+
   emailInput.addEventListener("input", () => {
     emailInput.classList.remove("is-invalid");
     if (emailError) emailError.classList.remove("is-visible");
+
+    if (
+      selectedSuggestedUser &&
+      emailInput.value.trim().toLowerCase() !== selectedSuggestedUser.email.toLowerCase()
+    ) {
+      setSelectedSuggestedUser(null);
+    }
+
+    clearTimeout(searchUserTimer);
+    searchUserTimer = setTimeout(() => {
+      fetchUserSuggestions(emailInput.value);
+    }, 250);
+  });
+
+  emailInput.addEventListener("keydown", (e) => {
+    if (!suggestionsMenu || !suggestionsMenu.classList.contains("is-open")) return;
+    const enabledIndexes = suggestedUsers
+      .map((u, idx) => (!isEmailAlreadyInProject(u.email) ? idx : -1))
+      .filter((idx) => idx !== -1);
+
+    if (e.key === "Escape") {
+      closeSuggestionsMenu();
+      return;
+    }
+
+    if (enabledIndexes.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const pos = enabledIndexes.indexOf(activeSuggestionIndex);
+      activeSuggestionIndex = enabledIndexes[(pos + 1) % enabledIndexes.length];
+      updateActiveSuggestionHighlight();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const pos = enabledIndexes.indexOf(activeSuggestionIndex);
+      activeSuggestionIndex =
+        enabledIndexes[(pos - 1 + enabledIndexes.length) % enabledIndexes.length];
+      updateActiveSuggestionHighlight();
+    } else if (e.key === "Enter" && activeSuggestionIndex >= 0) {
+      e.preventDefault();
+      const chosen = suggestedUsers[activeSuggestionIndex];
+      if (chosen && !isEmailAlreadyInProject(chosen.email)) {
+        setSelectedSuggestedUser(chosen);
+      }
+    }
   });
 }
 
@@ -420,7 +703,6 @@ if (addMemberForm) {
 
     try {
       let createdMember = null;
-      // Backend schema nhận role ('admin', 'member', 'viewer'), trong đó 'admin' trong dự án có quyền như 'owner'
       const apiRolePayload = selectedRole === "owner" ? "admin" : selectedRole;
 
       if (typeof api !== "undefined" && api.post) {
@@ -442,19 +724,28 @@ if (addMemberForm) {
       }
 
       if (!createdMember || !createdMember.id) {
-        const displayName = email
-          .split("@")[0]
-          .replace(/[._-]/g, " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
+        const matchedSuggested =
+          selectedSuggestedUser && selectedSuggestedUser.email.toLowerCase() === email
+            ? selectedSuggestedUser
+            : fallbackUserDirectory.find((u) => u.email.toLowerCase() === email);
+
+        const displayName = matchedSuggested
+          ? matchedSuggested.full_name
+          : email
+              .split("@")[0]
+              .replace(/[._-]/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+
+        const newUserId = matchedSuggested ? matchedSuggested.id : Date.now();
 
         createdMember = {
           id: Date.now(),
           project_id: currentProjectId,
-          user_id: Date.now(),
+          user_id: newUserId,
           role: selectedRole === "owner" ? "owner" : selectedRole,
           joined_at: new Date().toISOString(),
           user: {
-            id: Date.now(),
+            id: newUserId,
             full_name: displayName,
             email
           }
@@ -464,6 +755,8 @@ if (addMemberForm) {
       membersList.push(createdMember);
       saveStoredMembers(membersList);
       emailInput.value = "";
+      setSelectedSuggestedUser(null);
+      closeSuggestionsMenu();
       renderMembers();
       notifyResult("Thêm thành viên " + email + " (" + normalizeProjectRole(selectedRole) + ") vào dự án thành công!", "success");
     } catch (err) {
@@ -512,6 +805,12 @@ if (deleteModal) {
   });
 }
 
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && deleteModal && deleteModal.classList.contains("is-open")) {
+    closeDeleteModal();
+  }
+});
+
 if (btnConfirmDelete) {
   btnConfirmDelete.addEventListener("click", async () => {
     if (!pendingDeleteMember) return;
@@ -539,6 +838,9 @@ if (btnConfirmDelete) {
       saveStoredMembers(membersList);
       closeDeleteModal();
       renderMembers();
+      if (suggestionsMenu && suggestionsMenu.classList.contains("is-open") && emailInput) {
+        fetchUserSuggestions(emailInput.value);
+      }
       notifyResult("Đã xóa thành viên " + targetName + " khỏi dự án.", "success");
     } catch (err) {
       closeDeleteModal();
