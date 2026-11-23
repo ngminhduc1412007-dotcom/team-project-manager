@@ -27,6 +27,7 @@ def check_task_permission(
     task: Task,
     current_user: Union[User, int],
     action_desc: str = "thay đổi trạng thái công việc",
+    allow_viewer: bool = False,
 ) -> None:
     """
     Kiểm tra phân quyền thao tác trên công việc:
@@ -36,6 +37,7 @@ def check_task_permission(
        - Quản trị viên dự án (Admin): Có quyền sửa/đổi trạng thái công việc.
        - Thành viên dự án (Member): Có quyền cập nhật trạng thái/tiến độ công việc khi kéo thả.
        - Người xem (Viewer): Chỉ có quyền đọc (Read-only), KHÔNG được phép thay đổi hay kéo thả.
+         Nếu allow_viewer=True thì Viewer được phép (dùng cho thao tác xem).
     4. Người dùng không thuộc dự án: Bị từ chối quyền truy cập (403 Forbidden).
     """
     if isinstance(current_user, User):
@@ -66,9 +68,10 @@ def check_task_permission(
     role_str = str(role.value if hasattr(role, "value") else role).strip().lower()
 
     if role_str == ProjectMemberRole.VIEWER.value or role_str == "viewer":
-        raise ForbiddenException(
-            message=f"Thành viên có vai trò Người xem (Viewer) không có quyền {action_desc}."
-        )
+        if not allow_viewer:
+            raise ForbiddenException(
+                message=f"Thành viên có vai trò Người xem (Viewer) không có quyền {action_desc}."
+            )
 
     # Các vai trò hợp lệ: owner, admin, member
     return
@@ -127,8 +130,10 @@ def create_task_service(
 
 
 # Lấy danh sách công việc có phân trang, lọc và tìm kiếm.
+# Chỉ trả về task thuộc dự án mà current_user là thành viên (hoặc Admin hệ thống xem tất cả).
 def get_tasks_service(
     db: Session,
+    current_user_id: int,
     project_id: Optional[int] = None,
     assignee_id: Optional[int] = None,
     task_status: Optional[str] = None,
@@ -139,10 +144,38 @@ def get_tasks_service(
     page: int = 1,
     page_size: int = 10,
 ) -> Tuple[List[Task], int]:
+    # Kiểm tra nếu user là Admin hệ thống → xem tất cả task
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    is_system_admin = current_user and getattr(current_user, "role", None) in (
+        UserRole.ADMIN, "ADMIN", "admin",
+    )
+
     query = db.query(Task).options(joinedload(Task.assignee))
 
+    # Nếu có project_id cụ thể: kiểm tra user thuộc dự án đó
     if project_id is not None:
+        if not is_system_admin and not is_user_in_project(db=db, project_id=project_id, user_id=current_user_id):
+            raise ForbiddenException(message="Bạn không thuộc dự án này, không có quyền xem công việc.")
         query = query.filter(Task.project_id == project_id)
+    elif not is_system_admin:
+        # Không truyền project_id: chỉ lấy task thuộc các dự án mà user là thành viên
+        from app.models.project_members import ProjectMember
+        member_project_ids = (
+            db.query(ProjectMember.project_id)
+            .filter(ProjectMember.user_id == current_user_id)
+            .subquery()
+        )
+        owner_project_ids = (
+            db.query(Project.id)
+            .filter(Project.owner_id == current_user_id)
+            .subquery()
+        )
+        query = query.filter(
+            or_(
+                Task.project_id.in_(member_project_ids),
+                Task.project_id.in_(owner_project_ids),
+            )
+        )
 
     if assignee_id is not None:
         query = query.filter(Task.assignee_id == assignee_id)
