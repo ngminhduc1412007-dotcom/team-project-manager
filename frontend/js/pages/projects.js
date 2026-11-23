@@ -295,8 +295,22 @@ const queryState = {
 // 3. Các phần tử DOM
 const grid = document.getElementById("project-grid");
 const emptyState = document.getElementById("empty-state");
+const emptyIcon = document.getElementById("empty-icon");
 const emptyTitle = document.getElementById("empty-title");
 const emptyDesc = document.getElementById("empty-desc");
+const emptyActions = document.getElementById("empty-actions");
+const btnEmptyClearFilter = document.getElementById("btn-empty-clear-filter");
+
+// Loading & Error State DOM
+const loadingState = document.getElementById("loading-state");
+const loadingText = document.getElementById("loading-text");
+const errorState = document.getElementById("error-state");
+const errorIcon = document.getElementById("error-icon");
+const errorTitle = document.getElementById("error-title");
+const errorDesc = document.getElementById("error-desc");
+const btnRetryLoad = document.getElementById("btn-retry-load");
+const btnUseMockData = document.getElementById("btn-use-mock-data");
+
 const searchInput = document.getElementById("search-input");
 const filterGroup = document.getElementById("filter-group");
 const myFilterGroup = document.getElementById("my-filter-group");
@@ -496,6 +510,119 @@ function runMockEngine(params) {
   };
 }
 
+// 4.1. Quản lý trạng thái Đang tải (Loading State)
+function setLoading(isLoading, message) {
+  if (!loadingState) return;
+  if (isLoading) {
+    loadingState.style.display = "block";
+    if (loadingText) loadingText.textContent = message || "Đang tải danh sách đồ án...";
+    if (grid) grid.style.display = "none";
+    if (emptyState) emptyState.style.display = "none";
+    if (errorState) errorState.style.display = "none";
+    if (paginationWrapper) paginationWrapper.style.display = "none";
+  } else {
+    loadingState.style.display = "none";
+  }
+}
+
+// 4.2. Quản lý trạng thái Báo lỗi API (Error State)
+function setError(hasError, title, desc, allowMock = true) {
+  if (!errorState) return;
+  if (hasError) {
+    setLoading(false);
+    if (grid) grid.style.display = "none";
+    if (emptyState) emptyState.style.display = "none";
+    if (paginationWrapper) paginationWrapper.style.display = "none";
+    errorState.style.display = "block";
+    if (errorTitle) errorTitle.textContent = title || "Không thể tải danh sách dự án";
+    if (errorDesc) errorDesc.textContent = desc || "Đã xảy ra lỗi khi kết nối với máy chủ API.";
+    if (btnUseMockData) {
+      btnUseMockData.style.display = allowMock ? "inline-flex" : "none";
+    }
+  } else {
+    errorState.style.display = "none";
+  }
+}
+
+// 4.3. Quản lý trạng thái Rỗng thân thiện (Friendly Empty State)
+function renderFriendlyEmptyState() {
+  setLoading(false);
+  setError(false);
+  if (grid) {
+    grid.innerHTML = "";
+    grid.style.display = "none";
+  }
+  if (paginationWrapper) paginationWrapper.style.display = "none";
+  if (!emptyState) return;
+  emptyState.style.display = "block";
+
+  if (queryState.search) {
+    if (emptyIcon) emptyIcon.textContent = "🔍";
+    if (emptyTitle) emptyTitle.textContent = 'Không tìm thấy dự án khớp với "' + escapeHtml(queryState.search) + '"';
+    if (emptyDesc) emptyDesc.textContent = "Vui lòng kiểm tra lại chính tả từ khóa hoặc bấm nút Xóa bộ lọc bên dưới để xem toàn bộ đồ án.";
+    if (btnEmptyClearFilter) {
+      btnEmptyClearFilter.style.display = "inline-flex";
+      btnEmptyClearFilter.textContent = "✖️ Xóa từ khóa tìm kiếm";
+      btnEmptyClearFilter.onclick = () => {
+        if (searchInput) searchInput.value = "";
+        queryState.search = "";
+        queryState.page = 1;
+        loadProjects();
+      };
+    }
+  } else if (queryState.my) {
+    if (emptyIcon) emptyIcon.textContent = "👤";
+    if (emptyTitle) emptyTitle.textContent = "Bạn chưa có dự án nào";
+    if (emptyDesc) emptyDesc.textContent = "Bạn hiện chưa tạo hoặc tham gia đề tài đồ án nào. Bấm 'Tất cả dự án' để xem các đồ án khác hoặc tạo mới ngay.";
+    if (btnEmptyClearFilter) {
+      btnEmptyClearFilter.style.display = "inline-flex";
+      btnEmptyClearFilter.textContent = "🌐 Xem tất cả dự án";
+      btnEmptyClearFilter.onclick = () => {
+        queryState.my = false;
+        queryState.owner_id = null;
+        queryState.page = 1;
+        if (myFilterGroup) {
+          myFilterGroup.querySelectorAll(".filter-btn").forEach((b) => {
+            b.classList.toggle("active", b.dataset.my === "false");
+          });
+        }
+        loadProjects();
+      };
+    }
+  } else if (queryState.status && queryState.status !== "ALL") {
+    let statusLabel = "này";
+    const st = queryState.status.toUpperCase();
+    if (st === "ACTIVE" || st === "IN_PROGRESS") statusLabel = "Đang thực hiện";
+    else if (st === "PLANNING") statusLabel = "Lập kế hoạch";
+    else if (st === "COMPLETED") statusLabel = "Đã hoàn thành";
+
+    if (emptyIcon) emptyIcon.textContent = "📋";
+    if (emptyTitle) emptyTitle.textContent = 'Không có dự án nào ở trạng thái "' + statusLabel + '"';
+    if (emptyDesc) emptyDesc.textContent = "Hiện tại chưa có đồ án nào thuộc danh mục trạng thái này. Bạn có thể chọn xem tất cả hoặc tạo dự án mới.";
+    if (btnEmptyClearFilter) {
+      btnEmptyClearFilter.style.display = "inline-flex";
+      btnEmptyClearFilter.textContent = "🔄 Xem tất cả trạng thái";
+      btnEmptyClearFilter.onclick = () => {
+        queryState.status = "ALL";
+        queryState.page = 1;
+        if (filterGroup) {
+          filterGroup.querySelectorAll(".filter-btn").forEach((b) => {
+            b.classList.toggle("active", b.dataset.status === "ALL");
+          });
+        }
+        loadProjects();
+      };
+    }
+  } else {
+    if (emptyIcon) emptyIcon.textContent = "🚀";
+    if (emptyTitle) emptyTitle.textContent = "Chưa có dự án nào trong hệ thống";
+    if (emptyDesc) emptyDesc.textContent = "Hiện tại chưa có đồ án / đề tài nào được khởi tạo. Hãy bấm nút bên dưới để tạo đồ án đầu tiên!";
+    if (btnEmptyClearFilter) {
+      btnEmptyClearFilter.style.display = "none";
+    }
+  }
+}
+
 // 5. Tải danh sách dự án (Gọi API backend hoặc fallback Mock Engine)
 async function loadProjects() {
   let statusParam = undefined;
@@ -516,39 +643,67 @@ async function loadProjects() {
     status: statusParam,
   };
 
+  setLoading(true, "Đang nạp dữ liệu danh sách đồ án...");
+  setError(false);
+
   try {
     if (typeof api !== "undefined" && api.get) {
       const res = await api.get("/projects", params);
+      setLoading(false);
       if (res && res.data && Array.isArray(res.data.items) && res.data.meta) {
-        renderProjectList(res.data.items);
-        renderPagination(res.data.meta);
+        if (res.data.items.length === 0) {
+          renderFriendlyEmptyState();
+        } else {
+          renderProjectList(res.data.items);
+          renderPagination(res.data.meta);
+        }
         return;
       }
     }
   } catch (err) {
+    setLoading(false);
     // Nếu backend trả về 404: Không tìm thấy dự án phù hợp với từ khóa
     if (err && err.status === 404) {
-      renderProjectList([]);
+      renderFriendlyEmptyState();
       return;
     }
     // Nếu backend trả về 401: Yêu cầu đăng nhập
     if (err && err.status === 401) {
       console.warn("[Projects] Yêu cầu đăng nhập để truy cập dữ liệu thật:", err.message);
       if (!auth.getToken()) {
-        grid.innerHTML = "";
-        emptyState.style.display = "block";
-        paginationWrapper.style.display = "none";
-        emptyTitle.textContent = "Yêu cầu đăng nhập";
-        emptyDesc.innerHTML = 'Vui lòng <a href="login.html" style="color: var(--color-primary); font-weight: bold; text-decoration: underline;">đăng nhập</a> để xem danh sách dự án của bạn.';
+        setError(
+          true,
+          "Yêu cầu đăng nhập tài khoản",
+          "Phiên làm việc đã hết hạn hoặc bạn chưa đăng nhập. Vui lòng đăng nhập lại để tiếp tục quản lý dự án.",
+          false
+        );
+        showToast("Vui lòng đăng nhập để xem danh sách dự án!", "warning");
         return;
       }
     }
+
+    // Lỗi máy chủ hoặc mất kết nối mạng
+    const rawError = (err && (err.message || (err.data && (err.data.detail || err.data.message)))) || "Lỗi mạng hoặc máy chủ không phản hồi";
+    console.error("[Projects API Error]:", err);
+    showToast("Lỗi API: " + rawError, "error");
+    setError(
+      true,
+      "Không thể tải danh sách dự án từ máy chủ API",
+      "Máy chủ phản hồi lỗi: \"" + rawError + "\". Hãy kiểm tra backend đang chạy trên cổng 8000 hoặc dùng chế độ ngoại tuyến bên dưới.",
+      true
+    );
+    return;
   }
 
-  // Chạy Mock Engine nếu backend chưa kết nối hoặc chưa có dữ liệu
+  // Chạy Mock Engine nếu api không khả dụng
+  setLoading(false);
   const result = runMockEngine(params);
-  renderProjectList(result.items);
-  renderPagination(result.meta);
+  if (result.items.length === 0) {
+    renderFriendlyEmptyState();
+  } else {
+    renderProjectList(result.items);
+    renderPagination(result.meta);
+  }
 }
 
 // 6. Render danh sách thẻ dự án
@@ -556,25 +711,15 @@ function renderProjectList(items) {
   currentLoadedProjects = items || [];
 
   if (!items || items.length === 0) {
-    grid.innerHTML = "";
-    emptyState.style.display = "block";
-    paginationWrapper.style.display = "none";
-
-    if (queryState.search) {
-      emptyTitle.textContent = 'Không tìm thấy dự án phù hợp với "' + escapeHtml(queryState.search) + '"';
-      emptyDesc.textContent = "Vui lòng thử tìm với từ khóa khác hoặc bấm nút Tạo dự án mới.";
-    } else if (queryState.my) {
-      emptyTitle.textContent = "Bạn chưa có dự án nào";
-      emptyDesc.textContent = "Bấm nút 'Tất cả dự án' để xem các dự án khác hoặc bấm Tạo dự án mới bên dưới.";
-    } else {
-      emptyTitle.textContent = "Chưa có dự án nào";
-      emptyDesc.textContent = "Hiện chưa có dự án nào trong danh mục này.";
-    }
+    renderFriendlyEmptyState();
     return;
   }
 
-  emptyState.style.display = "none";
-  paginationWrapper.style.display = "flex";
+  setError(false);
+  setLoading(false);
+  if (emptyState) emptyState.style.display = "none";
+  if (grid) grid.style.display = "grid";
+  if (paginationWrapper) paginationWrapper.style.display = "flex";
 
   grid.innerHTML = items.map((p) => {
     const effectiveStatus = getEffectiveProjectStatus(p);
@@ -1143,6 +1288,43 @@ if (grid) {
       updateDeleteModeUI();
       renderProjectList(currentLoadedProjects);
     }
+  });
+}
+
+// Bắt sự kiện Thử lại và Xem dữ liệu ngoại tuyến khi gặp lỗi API
+if (btnRetryLoad) {
+  btnRetryLoad.addEventListener("click", () => {
+    loadProjects();
+  });
+}
+
+if (btnUseMockData) {
+  btnUseMockData.addEventListener("click", () => {
+    setError(false);
+    let statusParam = undefined;
+    if (queryState.status && queryState.status !== "ALL") {
+      statusParam = queryState.status.toLowerCase();
+      if (statusParam === "active") statusParam = "in_progress";
+    }
+    const params = {
+      search: queryState.search || undefined,
+      name: queryState.search || undefined,
+      page: queryState.page,
+      page_size: queryState.page_size,
+      sort_by: queryState.sort_by,
+      sort_order: queryState.sort_order,
+      my: queryState.my ? true : undefined,
+      owner_id: queryState.owner_id || undefined,
+      status: statusParam,
+    };
+    const result = runMockEngine(params);
+    if (result.items.length === 0) {
+      renderFriendlyEmptyState();
+    } else {
+      renderProjectList(result.items);
+      renderPagination(result.meta);
+    }
+    showToast("Đã chuyển sang chế độ dữ liệu ngoại tuyến (Offline Demo)", "info");
   });
 }
 

@@ -129,15 +129,42 @@
           </div>
         </div>
 
+        <!-- Trạng thái Đang tải (Loading State) -->
+        <div id="loading-state" class="loading-box" style="display: none;">
+          <div class="spinner" aria-hidden="true"></div>
+          <div class="loading-text" id="loading-text">Đang tải danh sách đồ án...</div>
+          <div class="loading-subtext">Hệ thống đang kết nối máy chủ API, vui lòng chờ trong giây lát</div>
+        </div>
+
+        <!-- Trạng thái Báo lỗi API (Error State) -->
+        <div id="error-state" class="error-box" style="display: none;">
+          <div class="error-icon" id="error-icon">⚠️</div>
+          <div class="error-title" id="error-title">Không thể tải danh sách dự án</div>
+          <div class="error-desc" id="error-desc">
+            Đã xảy ra lỗi khi kết nối với máy chủ API. Vui lòng kiểm tra lại kết nối mạng hoặc bật server backend.
+          </div>
+          <div class="error-actions">
+            <button type="button" class="btn btn-primary" id="btn-retry-load" style="font-weight: 600;">
+              🔄 Thử lại ngay
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-use-mock-data" style="font-weight: 600; background: #fff;">
+              📋 Xem dữ liệu ngoại tuyến (Offline Demo)
+            </button>
+          </div>
+        </div>
+
         <!-- Lưới thẻ dự án (Project Cards) -->
         <div id="project-grid" class="project-grid"></div>
 
-        <!-- Trạng thái rỗng (Empty State) -->
+        <!-- Trạng thái rỗng thân thiện (Friendly Empty State) -->
         <div id="empty-state" class="empty-box" style="display: none;">
-          <div class="empty-icon">📁</div>
+          <div class="empty-icon" id="empty-icon">📂</div>
           <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
           <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
-          <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
+          <div class="empty-actions" id="empty-actions">
+            <button type="button" id="btn-empty-create" class="btn btn-primary" style="font-weight: 600;">+ Tạo dự án mới</button>
+            <button type="button" id="btn-empty-clear-filter" class="btn btn-outline" style="display: none; font-weight: 600;">✖️ Xóa bộ lọc</button>
+          </div>
         </div>
 
         <!-- Thanh phân trang (Pagination) -->
