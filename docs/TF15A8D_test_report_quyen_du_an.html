@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Kiểm Thử Quyền Trên Dự Án (TF15A8D) - PTIT</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 32px 16px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      padding: 40px;
+    }
+    .header {
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+    .badge-task {
+      display: inline-block;
+      background: #eff6ff;
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 26px; color: #1e293b; margin-bottom: 12px; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      background: #f1f5f9;
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .meta-item strong { color: #334155; }
+    h2 { font-size: 20px; color: #1e293b; margin: 32px 0 16px 0; border-left: 4px solid var(--primary); padding-left: 12px; }
+    .card-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+    }
+    tr:hover { background: #f8fafc; }
+    .status-pass {
+      display: inline-block;
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .status-fixed {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .badge-owner {
+      background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 2px 6px; border-radius: 4px; font-weight: 600;
+    }
+    .badge-member {
+      background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; font-weight: 500;
+    }
+    .print-btn {
+      float: right;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; padding: 0; max-width: 100%; }
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="print-btn" onclick="window.print()">🖨️ In Báo Cáo / Lưu PDF</button>
+      <div class="badge-task">TASK TF15A8D · SPRINT 3</div>
+      <h1>BÁO CÁO KIỂM THỬ QUYỀN TRÊN DỰ ÁN</h1>
+      <p style="color: var(--text-muted); font-size: 15px;">
+        Hệ thống Quản lý Đồ án Sinh viên PTIT — Kiểm thử tính năng phân quyền: Chủ dự án được sửa/xóa, thành viên khác chỉ được xem.
+      </p>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item"><strong>Người thực hiện:</strong> Lưu Đức Anh (HN1683)</div>
+      <div class="meta-item"><strong>Mã Task:</strong> TF15A8D</div>
+      <div class="meta-item"><strong>Phân hệ:</strong> Trang Quản lý Dự án & API Projects</div>
+      <div class="meta-item"><strong>Kết quả chung:</strong> <span class="status-pass">14 / 14 TEST CASES PASS (100%)</span></div>
+    </div>
+
+    <h2>1. Mục tiêu và Quy tắc Phân quyền (Business Rules)</h2>
+    <div class="card-box">
+      <ul style="padding-left: 20px; line-height: 1.8; font-size: 14px;">
+        <li><strong class="badge-owner">👑 Chủ dự án (Owner / Admin):</strong> Có toàn quyền sửa thông tin dự án, đổi trạng thái (Planning, Active, Completed), xóa dự án đơn lẻ hoặc xóa hàng loạt, thêm và xóa thành viên trong đồ án.</li>
+        <li><strong class="badge-member">👁️ Thành viên khác (Member / Viewer):</strong> <strong>Chỉ được xem</strong> thông tin, danh sách task và thành viên; <strong>bị khóa</strong> dropdown đổi trạng thái; <strong>không hiển thị nút xóa</strong>; bị chặn 403 Forbidden nếu gọi API trực tiếp.</li>
+      </ul>
+    </div>
+
+    <h2>2. Bảng Kịch bản Kiểm thử Phân quyền (Test Cases)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã TC</th>
+          <th>Hạng mục kiểm thử</th>
+          <th>Vai trò</th>
+          <th>Bước thực hiện</th>
+          <th>Kết quả mong đợi</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>TC-01</strong></td>
+          <td>Đổi trạng thái dự án</td>
+          <td><span class="badge-owner">Owner</span></td>
+          <td>Chọn trạng thái mới trong dropdown trên thẻ dự án</td>
+          <td>Dropdown hoạt động, gọi API PATCH thành công, cập nhật Badge và Toast</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-02</strong></td>
+          <td>Xóa dự án đơn lẻ</td>
+          <td><span class="badge-owner">Owner</span></td>
+          <td>Bấm nút "🗑️ Xóa" trên thẻ -> Bấm "Xác nhận xóa"</td>
+          <td>Modal cảnh báo mở, gọi API DELETE thành công, thẻ bị xóa khỏi UI</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-03</strong></td>
+          <td>Chọn xóa nhiều dự án</td>
+          <td><span class="badge-owner">Owner</span></td>
+          <td>Bật chế độ chọn xóa, tích chọn các dự án do mình làm chủ -> Bấm Xóa</td>
+          <td>Modal hiển thị đúng tên dự án, xóa thành công hàng loạt</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-04</strong></td>
+          <td>Cập nhật thông tin dự án</td>
+          <td><span class="badge-owner">Owner</span></td>
+          <td>Gửi request PATCH /projects/{id} cập nhật tên, mô tả</td>
+          <td>Backend xác thực quyền Owner thành công, cập nhật DB và trả HTTP 200</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-05</strong></td>
+          <td>Quản lý thành viên</td>
+          <td><span class="badge-owner">Owner</span></td>
+          <td>Vào members.html thêm/xóa thành viên trong đồ án</td>
+          <td>Được phép thêm và xóa thành viên thường, bảo vệ Owner cuối cùng</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-06</strong></td>
+          <td>Hiển thị nhãn vai trò</td>
+          <td><span class="badge-member">Member</span></td>
+          <td>Đăng nhập tài khoản Member và xem thẻ dự án tham gia</td>
+          <td>Hiển thị nhãn "👁️ Thành viên" rõ ràng, xem đủ deadline và tiến độ</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-07</strong></td>
+          <td>Khóa dropdown trạng thái</td>
+          <td><span class="badge-member">Member</span></td>
+          <td>Thành viên thường rê chuột vào ô đổi trạng thái</td>
+          <td>Dropdown bị disabled (mờ đi), tooltip: "Chỉ chủ sở hữu mới có quyền đổi trạng thái"</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-08</strong></td>
+          <td>Khóa nút xóa dự án</td>
+          <td><span class="badge-member">Member</span></td>
+          <td>Thành viên thường quan sát hàng nút thao tác trên thẻ</td>
+          <td>Không có nút xóa đỏ, hiển thị nhãn "🔒 Chỉ xem", không thể thao tác xóa</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-09</strong></td>
+          <td>Chặn đổi trạng thái qua script</td>
+          <td><span class="badge-member">Member</span></td>
+          <td>Cố tình gọi handleQuickStatusChange(id, 'COMPLETED') qua Console</td>
+          <td>Hệ thống kiểm tra quyền, từ chối và hiển thị Toast đỏ cảnh báo</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-10</strong></td>
+          <td>Chặn mở modal xóa qua script</td>
+          <td><span class="badge-member">Member</span></td>
+          <td>Cố tình gọi openSingleDeleteModal(id, name) của dự án không phải chủ</td>
+          <td>Hệ thống từ chối mở modal, hiển thị Toast lỗi quyền hạn</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-11</strong></td>
+          <td>Bảo vệ Backend API (Chặn 403)</td>
+          <td><span class="badge-member">Member</span></td>
+          <td>Gửi request PATCH/DELETE trực tiếp tới /projects/{id}</td>
+          <td>Backend _require_owner_or_admin từ chối, trả về HTTP 403 Forbidden</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-12</strong></td>
+          <td>Chặn chọn xóa trong Batch</td>
+          <td><span class="badge-member">Member</span></td>
+          <td>Cố tình chọn dự án người khác làm chủ trong chế độ chọn xóa</td>
+          <td>openBatchDeleteModal phát hiện dự án không thuộc sở hữu, từ chối xóa</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-13</strong></td>
+          <td>Toàn quyền Quản trị viên</td>
+          <td><span class="badge-owner">Admin</span></td>
+          <td>Admin đăng nhập xem và quản trị tất cả các dự án</td>
+          <td>Admin có quyền đổi trạng thái và xóa mọi dự án để kiểm duyệt</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-14</strong></td>
+          <td>Responsive Mobile phân quyền</td>
+          <td>Tất cả</td>
+          <td>Kiểm tra hiển thị nhãn và nút trên màn hình điện thoại 360px</td>
+          <td>Layout co giãn chuẩn, nhãn và nút "🔒 Chỉ xem" ngay ngắn không tràn dòng</td>
+          <td><span class="status-pass">PASS</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. Bảng Lỗi Đã Ghi Nhận & Đã Sửa (Bug Log)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã Bug</th>
+          <th>Mức độ</th>
+          <th>Mô tả lỗi phát hiện</th>
+          <th>Nguyên nhân</th>
+          <th>Cách đã xử lý</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>BUG-01</strong></td>
+          <td>Cao</td>
+          <td>Thành viên thường vẫn click đổi được dropdown trạng thái</td>
+          <td>Hàm canUserChangeProjectStatus có dòng return true mặc định</td>
+          <td>Sửa hàm: chỉ trả về true khi là Owner hoặc Admin</td>
+          <td><span class="status-fixed">ĐÃ SỬA</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-02</strong></td>
+          <td>Cao</td>
+          <td>Nút xóa hiển thị cho mọi thành viên trên thẻ dự án</td>
+          <td>Thiếu điều kiện kiểm tra quyền trước khi render nút xóa</td>
+          <td>Bổ sung logic: nếu là Member thì thay nút xóa bằng nhãn 🔒 Chỉ xem</td>
+          <td><span class="status-fixed">ĐÃ SỬA</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-03</strong></td>
+          <td>Trung bình</td>
+          <td>Thẻ dự án thiếu nhãn vai trò trực quan của tài khoản đang đăng nhập</td>
+          <td>Chỉ hiển thị tên người tạo mà không có badge vai trò người xem</td>
+          <td>Bổ sung badge 👑 Chủ sở hữu hoặc 👁️ Thành viên trên header thẻ</td>
+          <td><span class="status-fixed">ĐÃ SỬA</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-04</strong></td>
+          <td>Trung bình</td>
+          <td>Chế độ xóa hàng loạt không kiểm tra quyền từng dự án</td>
+          <td>openBatchDeleteModal chỉ lọc ID mà không kiểm tra owner_id</td>
+          <td>Bổ sung kiểm tra quyền sở hữu toàn bộ danh sách chọn trước khi mở modal</td>
+          <td><span class="status-fixed">ĐÃ SỬA</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. Kết Luận Kiểm Thử</h2>
+    <div class="card-box" style="background: #f0fdf4; border-color: #bbf7d0;">
+      <p style="color: #166534; font-size: 15px; font-weight: 500;">
+        ✅ <strong>Đánh giá chung:</strong> Phân hệ Quản lý Dự án đã hoàn thành kiểm thử và vận hành chính xác 100% cơ chế phân quyền 2 lớp (Frontend & Backend API). Chủ dự án có toàn quyền sửa/xóa; các thành viên khác chỉ được xem dữ liệu, đảm bảo tính toàn vẹn và an toàn tuyệt đối cho đồ án sinh viên.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

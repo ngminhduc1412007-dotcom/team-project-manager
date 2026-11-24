@@ -372,17 +372,17 @@ function getEffectiveMemberCount(p) {
 
 function canUserChangeProjectStatus(p) {
   const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
-  if (!currentUser) return true;
+  if (!currentUser) return false;
   const sysRole = String(currentUser.role || currentUser.system_role || "").toLowerCase();
-  if (sysRole === "admin" || sysRole === "owner") return true;
-  if (Number(p.owner_id) === Number(currentUser.id)) return true;
-  return true;
+  if (sysRole === "admin") return true;
+  if (p && Number(p.owner_id) === Number(currentUser.id)) return true;
+  return false;
 }
 
 async function handleQuickStatusChange(projectId, newStatus) {
-  const target = localProjects.find((item) => Number(item.id) === Number(projectId));
+  const target = currentLoadedProjects.find((item) => Number(item.id) === Number(projectId)) || localProjects.find((item) => Number(item.id) === Number(projectId));
   if (target && !canUserChangeProjectStatus(target)) {
-    showToast("Chỉ Owner và Admin mới có quyền đổi trạng thái dự án.", "error");
+    showToast("Bạn không có quyền: Chỉ chủ dự án (Owner) mới được đổi trạng thái dự án này!", "error");
     loadProjects();
     return;
   }
@@ -606,14 +606,21 @@ function renderProjectList(items) {
         'onclick="openSingleDeleteModal(' + p.id + ', \'' + escapeHtml(p.name).replace(/'/g, "\\'") + '\')" title="Xóa dự án này">' +
         '🗑️ Xóa' +
         '</button>'
-        : '';
+        : '<span class="badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-size: 11px; padding: 6px 10px;" title="Chỉ chủ dự án mới có quyền xóa">🔒 Chỉ xem</span>';
+
+    const roleBadge = canEditStatus
+        ? '<span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 11px; font-weight: 600;">👑 Chủ sở hữu</span>'
+        : '<span class="badge" style="background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; font-size: 11px;">👁️ Thành viên</span>';
 
     return (
       '<article class="project-card" data-id="' + p.id + '" style="' + cardStyle + '">' +
       checkboxHtml +
       '<div class="project-card-header" style="' + headerPaddingStyle + '">' +
       '<h3 class="project-title">' + escapeHtml(p.name) + '</h3>' +
+      '<div style="display: flex; gap: 4px; align-items: center;">' +
+      roleBadge +
       getBadge(effectiveStatus) +
+      '</div>' +
       '</div>' +
       '<p class="project-desc">' + escapeHtml(p.description || "Chưa có mô tả.") + '</p>' +
       '<div class="project-meta">' +
@@ -626,7 +633,7 @@ function renderProjectList(items) {
       '</div>' +
       '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px;">' +
       '<span style="color: var(--color-muted);">Đổi trạng thái (Owner/Admin):</span>' +
-      '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled") + '>' +
+      '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled title=\"Chỉ chủ sở hữu (Owner) mới có quyền đổi trạng thái\"") + '>' +
       '<option value="PLANNING"' + (effectiveStatus === "PLANNING" ? " selected" : "") + '>Lên kế hoạch</option>' +
       '<option value="ACTIVE"' + (effectiveStatus === "ACTIVE" ? " selected" : "") + '>Đang làm</option>' +
       '<option value="COMPLETED"' + (effectiveStatus === "COMPLETED" ? " selected" : "") + '>Đã hoàn thành</option>' +
@@ -973,6 +980,11 @@ function updateDeleteModeUI() {
 }
 
 function openSingleDeleteModal(id, name) {
+  const target = currentLoadedProjects.find(item => item.id === id) || localProjects.find(item => item.id === id);
+  if (target && !canUserChangeProjectStatus(target)) {
+    showToast("Bạn không có quyền: Chỉ chủ dự án (Owner) mới được xóa dự án này!", "error");
+    return;
+  }
   selectedProjectIds.clear();
   selectedProjectIds.add(id);
   if (deleteModalQuestion) {
@@ -991,9 +1003,24 @@ function openBatchDeleteModal() {
     return;
   }
   const selectedList = [];
+  const nonOwnedList = [];
   for (const id of selectedProjectIds) {
     const p = currentLoadedProjects.find(item => item.id === id) || localProjects.find(item => item.id === id);
-    if (p) selectedList.push(p);
+    if (p) {
+      if (!canUserChangeProjectStatus(p)) {
+        nonOwnedList.push(p.name);
+      } else {
+        selectedList.push(p);
+      }
+    }
+  }
+  if (nonOwnedList.length > 0) {
+    showToast('Chỉ chủ sở hữu mới có quyền xóa. Bạn không phải là chủ của ' + nonOwnedList.length + ' dự án đã chọn!', "error");
+    return;
+  }
+  if (selectedList.length === 0) {
+    showToast("Bạn không phải là chủ sở hữu của bất kỳ dự án nào đã chọn!", "error");
+    return;
   }
   if (deleteModalQuestion) {
     deleteModalQuestion.textContent = 'Bạn có chắc chắn muốn xóa ' + selectedList.length + ' dự án đã chọn không?';
