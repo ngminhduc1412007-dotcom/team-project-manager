@@ -19,24 +19,15 @@ def get_password_strength_error(password: object) -> Optional[str]:
     if len(password) > 100:
         return "Mật khẩu mới không được vượt quá 100 ký tự."
 
-    missing = []
-    if len(password) < 8:
-        missing.append("tối thiểu 8 ký tự")
-    if not any(c.isupper() for c in password):
-        missing.append("ít nhất 1 chữ cái viết hoa (A-Z)")
-    if not any(c.islower() for c in password):
-        missing.append("ít nhất 1 chữ cái viết thường (a-z)")
-    if not any(c.isdigit() for c in password):
-        missing.append("ít nhất 1 chữ số (0-9)")
-    if not any(not c.isalnum() and not c.isspace() for c in password):
-        missing.append("ít nhất 1 ký tự đặc biệt (vd: @, #, $, !, ...)")
-
-    if missing:
-        return (
-            "Mật khẩu mới quá yếu ("
-            + ", ".join(missing)
-            + "). Vui lòng nhập lại mật khẩu khác khỏe hơn."
-        )
+    is_strong = (
+        len(password) >= 8
+        and any(c.isupper() for c in password)
+        and any(c.islower() for c in password)
+        and any(c.isdigit() for c in password)
+        and any(not c.isalnum() and not c.isspace() for c in password)
+    )
+    if not is_strong:
+        return "Mật khẩu mới quá yếu vui lòng chọn mật khẩu mạnh hơn!"
     return None
 
 
