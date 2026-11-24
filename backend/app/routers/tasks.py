@@ -17,6 +17,7 @@ from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundException
 from app.core.response import create_response, paginated_response
 from app.crud.tasks import (
+    check_task_permission,
     create_task_service,
     delete_task_service,
     get_task_by_id_service,
@@ -95,6 +96,7 @@ def list_tasks(
 ):
     items, total = get_tasks_service(
         db=db,
+        current_user_id=current_user.id,
         project_id=project_id,
         assignee_id=assignee_id,
         task_status=task_status,
@@ -132,6 +134,14 @@ def get_task(
     current_user: User = Depends(get_current_user),
 ):
     task = get_task_by_id_service(db=db, task_id=task_id)
+    # Kiểm tra phân quyền: chỉ thành viên dự án hoặc Admin hệ thống mới được xem
+    check_task_permission(
+        db=db,
+        task=task,
+        current_user=current_user,
+        action_desc="xem chi tiết công việc",
+        allow_viewer=True,
+    )
     task_data = TaskResponse.model_validate(task).model_dump()
     return create_response(
         request=request,
