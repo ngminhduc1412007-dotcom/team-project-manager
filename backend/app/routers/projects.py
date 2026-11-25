@@ -150,7 +150,7 @@ def get_project_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    project = get_project_by_id(db=db, project_id=project_id)
+    project = get_project_by_id(db=db, project_id=project_id, current_user=current_user)
     project_data = ProjectDetailResponse.model_validate(project).model_dump()
     return create_response(
         request=request,
@@ -298,7 +298,7 @@ def list_project_members_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    members = get_project_members(db=db, project_id=project_id)
+    members = get_project_members(db=db, project_id=project_id, current_user=current_user)
     serialized = [ProjectMemberResponse.model_validate(m).model_dump() for m in members]
     return create_response(
         request=request,
