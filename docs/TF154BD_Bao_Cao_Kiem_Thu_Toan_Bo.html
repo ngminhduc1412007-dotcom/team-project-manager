@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Kiểm Thử Toàn Bộ Chức Năng (TF154BD) - PTIT</title>
+  <style>
+    :root {
+      --primary: #163b65;
+      --accent: #2563eb;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      padding: 28px 16px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+      padding: 36px;
+    }
+    .header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+    .badge-task {
+      display: inline-block;
+      background: #eef4fb;
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 12.5px;
+      margin-bottom: 10px;
+    }
+    h1 { font-size: 25px; color: #0f172a; margin-bottom: 8px; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 16px 18px;
+      border-radius: 10px;
+      font-size: 13.5px;
+    }
+    h2 {
+      font-size: 19px;
+      color: var(--primary);
+      margin: 28px 0 14px;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 11px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 700;
+    }
+    tr:hover { background: #f8fafc; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .pass { background: #dcfce7; color: #166534; }
+    .fixed { background: #e0f2fe; color: #0369a1; }
+    .logged { background: #fef3c7; color: #92400e; }
+    .high { background: #fee2e2; color: #b91c1c; }
+    .medium { background: #ffedd5; color: #c2410c; }
+    .low { background: #f1f5f9; color: #475569; }
+    .print-btn {
+      float: right;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .summary-box {
+      margin-top: 22px;
+      padding: 16px 20px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      color: #166534;
+      font-size: 14px;
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .container { box-shadow: none; padding: 0; max-width: 100%; }
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="print-btn" onclick="window.print()">🖨️ In Báo Cáo / Lưu PDF</button>
+      <div class="badge-task">TASK TF154BD · SPRINT 3 (19/11 – 25/11)</div>
+      <h1>BÁO CÁO KIỂM THỬ TOÀN BỘ CHỨC NĂNG & TEST CHÉO MODULE</h1>
+      <p style="color: var(--muted); font-size: 14.5px;">
+        Student Project Hub (PTIT) — Test chéo các module Auth, Profile, Projects, Tasks (Kanban), Members và Layout Responsive; ghi lỗi (bước tái hiện, mức độ) và sửa lỗi thuộc phần mình.
+      </p>
+    </div>
+
+    <div class="meta-grid">
+      <div><strong>Người thực hiện:</strong> Lưu Đức Anh (HN1683)</div>
+      <div><strong>Mã Task:</strong> TF154BD</div>
+      <div><strong>Test Cases:</strong> <span class="pill pass">12 / 12 PASS</span></div>
+      <div><strong>Bug Log:</strong> <span class="pill fixed">3 Đã sửa (Projects)</span> · <span class="pill logged">3 Test chéo</span></div>
+    </div>
+
+    <h2>1. Bảng Test Case Chéo Toàn Hệ Thống</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã TC</th>
+          <th>Module test chéo</th>
+          <th>Thiết bị</th>
+          <th>Nội dung & Bước kiểm thử</th>
+          <th>Kết quả thực tế</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>TC-01</strong></td>
+          <td>Auth (<code>login.js</code>)</td>
+          <td>Desktop & Mobile</td>
+          <td>Validate bỏ trống, sai email, mật khẩu &lt; 8 ký tự trên form Đăng nhập / Đăng ký</td>
+          <td>Chặn submit, hiện lỗi inline tiếng Việt rõ ràng</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-02</strong></td>
+          <td>Auth Guard (<code>utils.js</code>)</td>
+          <td>Desktop 1366px</td>
+          <td>Xóa token truy cập trực tiếp <code>projects.html</code> rồi đăng nhập lại</td>
+          <td>Đẩy về <code>login.html</code> và điều hướng quay lại đúng luồng</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-03</strong></td>
+          <td>Profile (<code>profile.js</code>)</td>
+          <td>Desktop & Mobile</td>
+          <td>Sửa Họ tên, Bio, Avatar URL và kiểm tra đồng bộ thẻ tóm tắt</td>
+          <td>Đếm ký tự realtime, lưu và đồng bộ giao diện mượt</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-04</strong></td>
+          <td>Profile (<code>profile.js</code>)</td>
+          <td>Desktop 1366px</td>
+          <td>Kiểm tra thanh độ mạnh mật khẩu và xác nhận mật khẩu không khớp</td>
+          <td>Client chặn không khớp tốt; ghi nhận BUG-04 đồng bộ độ mạnh Backend</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-05</strong></td>
+          <td>Projects (<code>projects.js</code>)</td>
+          <td>Desktop & Mobile</td>
+          <td>Tìm kiếm debounce 300ms, lọc trạng thái, sắp xếp, phân trang 6/trang</td>
+          <td>Tìm lọc chính xác, nút Trước/Sau disabled đúng trang biên</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-06</strong></td>
+          <td>Projects (<code>projects.js</code>)</td>
+          <td>Desktop 1366px</td>
+          <td>Test phân quyền: Member thường xem dự án của người khác tạo</td>
+          <td>Phát hiện BUG-01, BUG-02 → Đã sửa khóa quyền chặt chẽ</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-07</strong></td>
+          <td>Projects (<code>projects.js</code>)</td>
+          <td>Desktop & Mobile</td>
+          <td>Test Tạo dự án với Deadline &lt; StartDate và Xóa có Modal xác nhận</td>
+          <td>Phát hiện BUG-03 → Đã bổ sung validate ngày hợp lệ</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-08</strong></td>
+          <td>Tasks Kanban (<code>tasks.js</code>)</td>
+          <td>Desktop 1366px</td>
+          <td>Kéo thả thẻ Task giữa 4 cột trạng thái và kiểm tra % tiến độ</td>
+          <td>Kéo thả mượt, số đếm cột & % tiến độ cập nhật chuẩn</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-09</strong></td>
+          <td>Tasks View (<code>tasks.js</code>)</td>
+          <td>Desktop & Mobile</td>
+          <td>Tìm tên Task, lọc ưu tiên, chuyển chế độ xem Bảng, Xóa bộ lọc</td>
+          <td>Dữ liệu Kanban và Table View đồng bộ tức thì</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-10</strong></td>
+          <td>Members (<code>members.js</code>)</td>
+          <td>Desktop & Mobile</td>
+          <td>Gõ email nhận gợi ý autocomplete, chặn thêm trùng, thêm thành viên mới</td>
+          <td>Dropdown highlight chuẩn, chặn trùng và thêm thành công</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-11</strong></td>
+          <td>Members (<code>members.js</code>)</td>
+          <td>Desktop 1366px</td>
+          <td>Kiểm tra bảo vệ Owner cuối cùng và ẩn nút xóa với vai trò Member</td>
+          <td>Dòng Owner khóa xóa, Member thường ẩn nút thao tác</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-12</strong></td>
+          <td>Layout (<code>layout.js</code>)</td>
+          <td>Mobile 360×800</td>
+          <td>Mở menu hamburger ☰ trên 360px, chuyển tab giữ <code>project_id</code></td>
+          <td>Menu mobile gọn gàng; ghi nhận BUG-06 xóa session khi logout</td>
+          <td><span class="pill pass">PASS</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Bảng Ghi Nhận Lỗi Chung (Bước Tái Hiện, Mức Độ & Sửa Lỗi)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã Bug</th>
+          <th>Module</th>
+          <th>Mức độ</th>
+          <th>Mô tả & Bước tái hiện</th>
+          <th>Trạng thái xử lý</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>BUG-01</strong></td>
+          <td>Projects<br><em>(Phần mình)</em></td>
+          <td><span class="pill high">Cao (High)</span></td>
+          <td><strong>Lỗi:</strong> Member thường vẫn sửa trạng thái & thấy nút Xóa.<br><strong>Tái hiện:</strong> Đăng nhập Member thường → tab Tất cả dự án → xem dự án của Owner khác thấy dropdown không bị khóa.</td>
+          <td><span class="pill fixed">ĐÃ SỬA (projects.js)</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-02</strong></td>
+          <td>Projects<br><em>(Phần mình)</em></td>
+          <td><span class="pill high">Cao (High)</span></td>
+          <td><strong>Lỗi:</strong> API đổi trạng thái trả lỗi nhưng UI nuốt lỗi và báo Toast xanh.<br><strong>Tái hiện:</strong> Gọi <code>handleQuickStatusChange</code> khi API trả 403/500 → khối catch bỏ qua lỗi.</td>
+          <td><span class="pill fixed">ĐÃ SỬA (projects.js)</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-03</strong></td>
+          <td>Projects<br><em>(Phần mình)</em></td>
+          <td><span class="pill medium">Trung bình</span></td>
+          <td><strong>Lỗi:</strong> Tạo dự án cho phép chọn <code>Deadline &lt; StartDate</code>.<br><strong>Tái hiện:</strong> Mở Modal Tạo → Start 2026-12-10, Deadline 2026-11-01 → không báo lỗi client.</td>
+          <td><span class="pill fixed">ĐÃ SỬA (projects.js)</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-04</strong></td>
+          <td>Profile<br><em>(Test chéo)</em></td>
+          <td><span class="pill medium">Trung bình</span></td>
+          <td><strong>Lỗi:</strong> Nhãn hướng dẫn mật khẩu mới (tối thiểu 6 ký tự) chưa nêu quy tắc độ mạnh mới của Backend.<br><strong>Tái hiện:</strong> Nhập mật khẩu yếu 6 ký tự ở <code>profile.html</code> → Backend từ chối.</td>
+          <td><span class="pill logged">Đã ghi vào bảng chung</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-05</strong></td>
+          <td>Members<br><em>(Test chéo)</em></td>
+          <td><span class="pill medium">Trung bình</span></td>
+          <td><strong>Lỗi:</strong> Dự án mới ở chế độ offline nạp danh sách mẫu mặc định Owner là Lê Quang Huy.<br><strong>Tái hiện:</strong> User khác tạo dự án mới khi tắt server → vào tab Thành viên.</td>
+          <td><span class="pill logged">Đã ghi vào bảng chung</span></td>
+        </tr>
+        <tr>
+          <td><strong>BUG-06</strong></td>
+          <td>Layout<br><em>(Test chéo)</em></td>
+          <td><span class="pill low">Thấp (Low)</span></td>
+          <td><strong>Lỗi:</strong> <code>sessionStorage.sph_active_project_id</code> không bị xóa khi Đăng xuất.<br><strong>Tái hiện:</strong> User A xem <code>project_id=2</code> → Đăng xuất → User B đăng nhập → bấm tab Nhiệm vụ.</td>
+          <td><span class="pill logged">Đã ghi vào bảng chung</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="summary-box">
+      ✅ <strong>Kết luận nghiệm thu:</strong> Đã hoàn thành test chéo toàn bộ 5 phân hệ (Auth, Profile, Projects, Tasks Kanban, Members) và khung Layout Responsive trên Desktop & Mobile (`360px`). Toàn bộ 3 lỗi thuộc phần Dự án (<strong>BUG-01, BUG-02, BUG-03</strong>) đã được sửa triệt để và kiểm tra cú pháp thành công.
+    </div>
+  </div>
+</body>
+</html>
