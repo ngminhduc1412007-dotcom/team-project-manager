@@ -8,55 +8,10 @@
   <link rel="stylesheet" href="../css/style.css">
   <style>
     :root {
-      --color-primary: #163b65;
-      --color-primary-dark: #0f2947;
-      --color-primary-soft: #eef4fb;
-      --color-accent: #2fa84f;
-      --color-danger: #dc2626;
-      --color-success: #16a34a;
-      --color-warning: #d97706;
-      --color-text: #0f172a;
-      --color-text-sub: #475569;
-      --color-muted: #64748b;
-      --color-border: #e2e8f0;
-      --color-bg: #f1f5f9;
-      --color-card: #ffffff;
-      --radius: 10px;
-      --radius-lg: 14px;
-      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
-      --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-      --shadow-md: 0 10px 24px -6px rgba(15, 23, 42, 0.12), 0 4px 10px -4px rgba(15, 23, 42, 0.06);
       --col-todo: #2563eb;
       --col-progress: #f59e0b;
       --col-review: #7c3aed;
       --col-done: #10b981;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      color: var(--color-text);
-      background: var(--color-bg);
-      line-height: 1.5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    a {
-      color: var(--color-primary);
-      text-decoration: none;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 16px;
     }
 
     .board-container {
@@ -65,80 +20,6 @@
       margin: 0 auto;
       padding: 20px 20px 32px;
       flex: 1;
-    }
-
-    #app-header {
-      background: var(--color-card);
-      border-bottom: 1px solid var(--color-border);
-      position: sticky;
-      top: 0;
-      z-index: 60;
-    }
-
-    .header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      height: 68px;
-      max-width: 1380px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--color-primary);
-      text-decoration: none;
-    }
-
-    .nav {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .nav a {
-      padding: 6px 14px;
-      border-radius: 8px;
-      color: var(--color-muted);
-      font-size: 14px;
-      text-decoration: none;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .nav a:hover {
-      background: var(--color-bg);
-      color: var(--color-text);
-      text-decoration: none;
-    }
-
-    .nav a.active {
-      background: var(--color-primary-soft);
-      color: var(--color-primary);
-      font-weight: 600;
-    }
-
-    .user-nav {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-left: 12px;
-      padding-left: 12px;
-      border-left: 1px solid var(--color-border);
-      font-size: 13px;
-      color: var(--color-muted);
-    }
-
-    #app-footer {
-      padding: 16px 0;
-      text-align: center;
-      color: var(--color-muted);
-      font-size: 13px;
-      border-top: 1px solid var(--color-border);
-      background: var(--color-card);
     }
 
     .project-hero {
@@ -262,49 +143,6 @@
       margin-left: 0;
     }
 
-    .workspace-bar {
-      background: var(--color-card);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 12px 16px;
-      margin-bottom: 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      box-shadow: var(--shadow-xs);
-    }
-
-    .subnav-pills {
-      display: inline-flex;
-      background: var(--color-bg);
-      padding: 4px;
-      border-radius: 10px;
-      gap: 4px;
-    }
-
-    .subnav-pill {
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--color-text-sub);
-      text-decoration: none;
-      transition: all 0.15s ease;
-    }
-
-    .subnav-pill:hover {
-      color: var(--color-text);
-      text-decoration: none;
-    }
-
-    .subnav-pill.active {
-      background: #ffffff;
-      color: var(--color-primary);
-      box-shadow: var(--shadow-xs);
-    }
-
     .workspace-controls {
       display: flex;
       align-items: center;
@@ -338,169 +176,10 @@
       box-shadow: var(--shadow-xs);
     }
 
-    input,
-    textarea,
-    select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      font: inherit;
-      font-size: 13.5px;
-      background: #ffffff;
-      color: var(--color-text);
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px rgba(22, 59, 101, 0.12);
-    }
-
-    input.is-invalid {
-      border-color: var(--color-danger);
-      background: #fef2f2;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--color-text);
-    }
-
-    .form-error {
-      color: var(--color-danger);
-      font-size: 12px;
-      margin-top: 4px;
-      display: none;
-    }
-
-    .form-error.is-visible {
-      display: block;
-    }
-
-    .form-grid-2 {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 14px;
-    }
-
-    .form-grid-2 > .form-group {
-      min-width: 0;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      background: var(--color-card);
-      color: var(--color-text);
-      font: inherit;
-      font-size: 13.5px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.15s ease;
-    }
-
-    .btn:hover {
-      background: var(--color-bg);
-      text-decoration: none;
-    }
-
-    .btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background: var(--color-primary);
-      border-color: var(--color-primary);
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .btn-primary:hover {
-      background: var(--color-primary-dark);
-      color: #ffffff;
-    }
-
-    .btn-danger {
-      color: var(--color-danger);
-      border-color: #fca5a5;
-      background: #ffffff;
-    }
-
-    .btn-danger:hover {
-      background: #fef2f2;
-    }
-
-    .btn-small {
-      padding: 5px 10px;
-      font-size: 12px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 9px;
-      border-radius: 999px;
-      font-size: 11.5px;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-
-    .badge-active { background: #dcfce7; color: #166534; }
-    .badge-planning { background: #e0f2fe; color: #075985; }
-    .badge-completed { background: #e2e8f0; color: #334155; }
-
-    .badge-todo { background: #eff6ff; color: #1d4ed8; }
-    .badge-in-progress { background: #fffbeb; color: #b45309; }
-    .badge-review { background: #f5f3ff; color: #6d28d9; }
-    .badge-done { background: #ecfdf5; color: #047857; }
-
     .priority-low { background: #f1f5f9; color: #475569; }
     .priority-medium { background: #e0f2fe; color: #0369a1; }
     .priority-high { background: #fff7ed; color: #c2410c; }
     .priority-urgent { background: #fef2f2; color: #b91c1c; }
-
-    .status-banner {
-      padding: 10px 16px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      font-weight: 500;
-      display: none;
-    }
-
-    .status-banner.is-visible {
-      display: block;
-    }
-
-    .status-banner.success {
-      background: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-    }
-
-    .status-banner.error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
 
     /* ---------- KANBAN BOARD KIỂU TRELLO NÂNG CẤP ---------- */
     .kanban-board {
@@ -836,142 +515,20 @@
       display: block;
     }
 
-    .table-wrap {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13.5px;
-    }
-
-    .table th,
-    .table td {
-      padding: 12px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--color-border);
-      vertical-align: middle;
-    }
-
-    .table th {
-      background: #f8fafc;
-      color: var(--color-muted);
-      font-weight: 700;
-      font-size: 11.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-
-    .table tbody tr:hover {
-      background: #f8fafc;
-    }
-
-    /* ---------- MODAL POPUP ---------- */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.5);
-      backdrop-filter: blur(2px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 150;
-      padding: 16px;
-    }
-
-    .modal-backdrop.is-open {
-      display: flex;
-    }
-
-    .modal {
-      background: #ffffff;
-      width: 100%;
+    #task-modal .modal {
       max-width: 560px;
       border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
       max-height: 90vh;
       overflow-y: auto;
     }
 
-    .modal-header {
-      display: flex;
+    #task-modal .modal-footer {
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    .modal-close {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: transparent;
-      border: none;
-      font-size: 22px;
-      line-height: 1;
-      cursor: pointer;
-      color: var(--color-muted);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-close:hover {
-      background: var(--color-bg);
-      color: var(--color-text);
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-top: 20px;
       padding-top: 14px;
       border-top: 1px solid var(--color-border);
     }
 
-    .toast {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      padding: 11px 18px;
-      border-radius: 10px;
-      color: #ffffff;
-      font-size: 13.5px;
-      font-weight: 500;
-      z-index: 250;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
-    }
-
-    .toast-success { background: #15803d; }
-    .toast-error { background: #dc2626; }
-    .toast-info { background: #163b65; }
-
     @media (max-width: 768px) {
-      .header-inner {
-        height: auto;
-        padding: 10px 14px;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-      .user-nav {
-        margin-left: 0;
-        padding-left: 0;
-        border-left: none;
-        width: 100%;
-        justify-content: space-between;
-      }
       .board-container {
         padding: 14px 12px 24px;
       }
@@ -993,10 +550,6 @@
       .workspace-bar {
         padding: 12px;
       }
-      .subnav-pills {
-        width: 100%;
-        overflow-x: auto;
-      }
       .workspace-controls {
         width: 100%;
       }
@@ -1014,33 +567,11 @@
         scroll-snap-align: start;
         min-height: 360px;
       }
-      .form-grid-2 {
-        grid-template-columns: 1fr;
-      }
-      .modal {
-        padding: 18px;
-      }
-      .modal-footer {
-        flex-wrap: wrap;
-      }
     }
   </style>
 </head>
 <body data-root="../">
-  <header id="app-header">
-    <div class="container header-inner">
-      <a href="../index.html" class="brand">Student Project Management System</a>
-      <nav class="nav">
-        <a href="../index.html">Trang chủ</a>
-        <a href="projects.html" class="active">Dự án của tôi</a>
-        <a href="members.html">Thành viên</a>
-        <div class="user-nav">
-          <span>Xin chào, <strong>Lê Quang Huy ( Owner )</strong></span>
-          <button type="button" class="btn btn-small btn-danger">Đăng xuất</button>
-        </div>
-      </nav>
-    </div>
-  </header>
+  <header id="app-header"></header>
 
   <main class="board-container">
     <section class="project-hero">
@@ -1282,11 +813,7 @@
     </div>
   </div>
 
-  <footer id="app-footer">
-    <div class="container">
-      © 2026 Student Project Management System · Nhóm thực tập sinh viên CNTT PTIT
-    </div>
-  </footer>
+  <footer id="app-footer"></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
   <script src="../js/config.js"></script>

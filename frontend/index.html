@@ -20,18 +20,32 @@
       
       <div id="home-auth-banner"></div>
 
-      <div style="display: flex; gap: 8px; margin-top: 14px;">
+      <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
         <button id="btn-recheck" class="btn">Kiểm tra lại kết nối</button>
         <a href="pages/projects.html" class="btn btn-primary">Xem Dự án của tôi</a>
       </div>
     </section>
 
     <section class="card">
-      <h2>Các chức năng chính của hệ thống</h2>
-      <ul>
-        <li><a href="pages/projects.html"><strong>Dự án của tôi:</strong> Xem danh sách đồ án nhóm, theo dõi tiến độ %, tạo dự án mới</a></li>
-        <li><a href="pages/login.html"><strong>Đăng nhập / Đăng ký:</strong> Xác thực và tạo tài khoản thành viên nhóm</a></li>
-      </ul>
+      <h2>Các phân hệ chính của hệ thống</h2>
+      <div class="feature-grid">
+        <a href="pages/projects.html" class="feature-tile">
+          <span class="feature-tile-title">📁 Quản lý Dự án</span>
+          <span class="feature-tile-desc">Xem danh sách đồ án nhóm, tìm kiếm, phân trang, theo dõi tiến độ và tạo dự án mới.</span>
+        </a>
+        <a href="pages/tasks.html" class="feature-tile">
+          <span class="feature-tile-title">📋 Bảng Kanban Nhiệm vụ</span>
+          <span class="feature-tile-desc">Quản lý Task theo 4 trạng thái, kéo thả thẻ trực quan, lọc theo người phụ trách và độ ưu tiên.</span>
+        </a>
+        <a href="pages/members.html" class="feature-tile">
+          <span class="feature-tile-title">👥 Thành viên Dự án</span>
+          <span class="feature-tile-desc">Tìm gợi ý theo email, thêm hoặc xóa thành viên và phân quyền Owner / Member / Viewer.</span>
+        </a>
+        <a href="pages/profile.html" class="feature-tile">
+          <span class="feature-tile-title">👤 Hồ sơ & Bảo mật</span>
+          <span class="feature-tile-desc">Cập nhật thông tin cá nhân, ảnh đại diện và đổi mật khẩu tài khoản an toàn.</span>
+        </a>
+      </div>
     </section>
   </main>
 
