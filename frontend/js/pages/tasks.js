@@ -134,6 +134,8 @@ const subnavMembersLink = document.getElementById("subnav-members-link");
 if (subnavTasksLink) subnavTasksLink.href = "tasks.html?project_id=" + currentProjectId;
 if (subnavMembersLink) subnavMembersLink.href = "members.html?project_id=" + currentProjectId;
 
+const projectTitleEl = document.getElementById("project-title");
+const projectDescEl = document.getElementById("project-desc");
 const projectStatusBadge = document.getElementById("project-status-badge");
 const projectStatusSelect = document.getElementById("project-status-select");
 const btnUpdateProjectStatus = document.getElementById("btn-update-project-status");
@@ -178,6 +180,7 @@ const taskDueDateInput = document.getElementById("task-due-date");
 const taskDescInput = document.getElementById("task-desc");
 const taskDescError = document.getElementById("task-desc-error");
 
+let projectMeta = null;
 let projectMembers = [];
 let tasksList = [];
 let apiFilteredTasks = null;
@@ -281,20 +284,38 @@ function saveStoredTasks(list) {
 }
 
 function isCurrentUserOwnerOrAdmin() {
-  const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
-  if (!currentUser) return true;
+  const isAuthenticated =
+    typeof auth !== "undefined" && typeof auth.isAuthenticated === "function"
+      ? auth.isAuthenticated()
+      : false;
+  const currentUser =
+    typeof auth !== "undefined" && typeof auth.getUser === "function"
+      ? auth.getUser()
+      : null;
 
-  const sysRole = String(currentUser.role || currentUser.system_role || "").toLowerCase();
-  if (sysRole === "admin" || sysRole === "owner") return true;
+  // Chế độ demo cục bộ khi chưa đăng nhập backend
+  if (!isAuthenticated || !currentUser) return true;
+
+  const sysRole = String(currentUser.role || currentUser.system_role || "").trim().toUpperCase();
+  if (sysRole === "ADMIN") return true;
+
+  const userId = currentUser.id != null ? Number(currentUser.id) : null;
+  if (projectMeta && projectMeta.owner_id != null && userId != null && Number(projectMeta.owner_id) === userId) {
+    return true;
+  }
 
   const email = String(currentUser.email || "").toLowerCase();
   const matchedMember = projectMembers.find(
-    (m) => getMemberEmail(m).toLowerCase() === email || getMemberUserId(m) === Number(currentUser.id)
+    (m) =>
+      (email && getMemberEmail(m).toLowerCase() === email) ||
+      (userId != null && getMemberUserId(m) === userId)
   );
   if (matchedMember) {
     return normalizeProjectRole(matchedMember.role) === "OWNER";
   }
-  return true;
+
+  // Người dùng đã đăng nhập nhưng không phải Owner/Admin -> không có quyền đổi trạng thái dự án
+  return false;
 }
 
 function normalizeProjectStatus(status) {
@@ -835,6 +856,7 @@ async function moveTaskToStatus(taskId, targetStatus) {
   if (oldStatus === nextStatus) return;
 
   task.status = nextStatus;
+  apiFilteredTasks = null;
   saveStoredTasks(tasksList);
   renderAllViews();
 
@@ -979,6 +1001,12 @@ if (taskModal) {
   });
 }
 
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && taskModal && taskModal.classList.contains("is-open")) {
+    closeTaskModal();
+  }
+});
+
 document.querySelectorAll(".col-quick-add").forEach((btn) => {
   btn.addEventListener("click", () => {
     openCreateTaskModal(btn.dataset.addStatus || "TODO");
@@ -1053,6 +1081,24 @@ if (taskForm) {
       if (editingId) {
         const existing = tasksList.find((t) => Number(t.id) === editingId);
         if (existing) {
+          try {
+            if (typeof api !== "undefined" && api.patch) {
+              await api.patch("/tasks/" + existing.id, {
+                title,
+                description: description || null,
+                assignee_id: assigneeId,
+                priority: priority.toLowerCase(),
+                status: mapStatusToBackend(status) || "todo",
+                due_date: dueDate || null
+              });
+            }
+          } catch (apiErr) {
+            if (apiErr && apiErr.status && apiErr.status !== 0 && apiErr.status !== 404) {
+              notifyResult(apiErr.data?.message || apiErr.message || "Không thể cập nhật Task.", "error");
+              return;
+            }
+          }
+
           existing.title = title;
           existing.assignee_id = assigneeId;
           existing.assignee_name = assigneeName;
@@ -1060,6 +1106,7 @@ if (taskForm) {
           existing.priority = priority;
           existing.due_date = dueDate;
           existing.description = description;
+          apiFilteredTasks = null;
           saveStoredTasks(tasksList);
           closeTaskModal();
           renderAllViews();
@@ -1069,7 +1116,7 @@ if (taskForm) {
       }
 
       const nextNum = tasksList.length + 1;
-      const newTask = {
+      let newTask = {
         id: Date.now(),
         code: "#T-" + String(nextNum).padStart(2, "0"),
         title,
@@ -1083,7 +1130,7 @@ if (taskForm) {
 
       try {
         if (typeof api !== "undefined" && api.post) {
-          await api.post("/tasks", {
+          const createdRes = await api.post("/tasks", {
             project_id: currentProjectId,
             title,
             description: description || null,
@@ -1092,10 +1139,23 @@ if (taskForm) {
             status: mapStatusToBackend(status) || "todo",
             due_date: dueDate || null
           });
+          const createdData = createdRes?.data || createdRes;
+          if (createdData && createdData.id) {
+            newTask = normalizeTaskFromApi(createdData);
+            if (!newTask.assignee_name && assigneeName !== "Chưa phân công") {
+              newTask.assignee_name = assigneeName;
+            }
+          }
         }
-      } catch (err) {}
+      } catch (apiErr) {
+        if (apiErr && apiErr.status && apiErr.status !== 0 && apiErr.status !== 404) {
+          notifyResult(apiErr.data?.message || apiErr.message || "Không thể tạo Task mới.", "error");
+          return;
+        }
+      }
 
       tasksList.unshift(newTask);
+      apiFilteredTasks = null;
       saveStoredTasks(tasksList);
       closeTaskModal();
       renderAllViews();
@@ -1112,19 +1172,33 @@ if (taskForm) {
 }
 
 if (btnDeleteInModal) {
-  btnDeleteInModal.addEventListener("click", () => {
+  btnDeleteInModal.addEventListener("click", async () => {
     const editingId = editingTaskIdInput.value ? Number(editingTaskIdInput.value) : null;
     if (!editingId) return;
     const target = tasksList.find((t) => Number(t.id) === editingId);
     if (!target) return;
 
-    if (confirm('Bạn có chắc muốn xóa "' + target.title + '" khỏi bảng không?')) {
-      tasksList = tasksList.filter((t) => Number(t.id) !== editingId);
-      saveStoredTasks(tasksList);
-      closeTaskModal();
-      renderAllViews();
-      notifyResult("Đã xóa " + (target.code || "Task") + " khỏi dự án.", "success");
+    if (!confirm('Bạn có chắc muốn xóa "' + target.title + '" khỏi bảng không?')) {
+      return;
     }
+
+    try {
+      if (typeof api !== "undefined" && api.delete) {
+        await api.delete("/tasks/" + target.id);
+      }
+    } catch (apiErr) {
+      if (apiErr && apiErr.status && apiErr.status !== 0 && apiErr.status !== 404) {
+        notifyResult(apiErr.data?.message || apiErr.message || "Không thể xóa Task (chỉ chủ dự án mới có quyền xóa).", "error");
+        return;
+      }
+    }
+
+    tasksList = tasksList.filter((t) => Number(t.id) !== editingId);
+    apiFilteredTasks = null;
+    saveStoredTasks(tasksList);
+    closeTaskModal();
+    renderAllViews();
+    notifyResult("Đã xóa " + (target.code || "Task") + " khỏi dự án.", "success");
   });
 }
 
@@ -1201,11 +1275,36 @@ window.addEventListener("storage", (e) => {
   }
 });
 
+async function syncProjectDetails() {
+  if (typeof api === "undefined" || !api.get) return;
+  try {
+    const res = await api.get("/projects/" + currentProjectId);
+    const data = res?.data || res;
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      projectMeta = data;
+      const projName = data.name || data.title;
+      if (projectTitleEl && projName) {
+        projectTitleEl.textContent = "Dự án: " + projName;
+      }
+      if (projectDescEl && data.description) {
+        projectDescEl.textContent = data.description;
+      }
+      if (data.status) {
+        renderProjectStatusUI(data.status);
+      }
+    }
+  } catch (err) {
+    // Fallback dữ liệu cục bộ nếu backend chưa chạy
+  }
+}
+
 async function initTasksPage() {
   setupColumnDropzones();
   const savedStatus = localStorage.getItem(STATUS_STORAGE_KEY) || "ACTIVE";
   renderProjectStatusUI(savedStatus);
+  await syncProjectDetails();
   await syncProjectMembers();
+  renderProjectStatusUI(projectMeta?.status || localStorage.getItem(STATUS_STORAGE_KEY) || "ACTIVE");
   tasksList = loadStoredTasks();
   await loadTasksWithFilters();
 }
