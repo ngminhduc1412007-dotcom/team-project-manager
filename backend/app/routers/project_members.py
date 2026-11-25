@@ -63,7 +63,7 @@ def list_project_members(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    members = get_project_members(db=db, project_id=project_id)
+    members = get_project_members(db=db, project_id=project_id, current_user=current_user)
     serialized = [ProjectMemberResponse.model_validate(m).model_dump() for m in members]
     return create_response(
         request=request,
