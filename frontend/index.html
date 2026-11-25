@@ -11,27 +11,64 @@
   <header id="app-header"></header>
 
   <main class="container">
-    <section class="card">
+    <section class="home-hero">
+      <span class="home-hero-badge">Student Project Hub · PTIT</span>
       <h1>Student Project Management System</h1>
-      <p>Nền tảng quản lý đồ án và bài tập nhóm dành cho sinh viên CNTT PTIT.</p>
-      <p>Địa chỉ API Backend: <code id="api-url"></code> <span class="muted">(cấu hình trong <code>js/config.js</code>)</span></p>
-      
-      <div id="health-status" class="status status-loading">Đang kiểm tra kết nối Backend...</div>
-      
-      <div id="home-auth-banner"></div>
-
-      <div style="display: flex; gap: 8px; margin-top: 14px;">
-        <button id="btn-recheck" class="btn">Kiểm tra lại kết nối</button>
+      <p class="home-hero-desc">
+        Nền tảng quản lý đồ án và bài tập nhóm dành cho sinh viên CNTT PTIT — theo dõi dự án, bảng Kanban kéo thả nhiệm vụ, quản lý thành viên theo vai trò và cập nhật hồ sơ cá nhân trên một giao diện thống nhất.
+      </p>
+      <div class="home-hero-actions">
         <a href="pages/projects.html" class="btn btn-primary">Xem Dự án của tôi</a>
+        <a href="pages/tasks.html" class="btn">Mở Bảng Kanban Task</a>
+        <a href="pages/members.html" class="btn">Thành viên dự án</a>
+        <a href="pages/profile.html" class="btn">Hồ sơ cá nhân</a>
       </div>
     </section>
 
     <section class="card">
-      <h2>Các chức năng chính của hệ thống</h2>
-      <ul>
-        <li><a href="pages/projects.html"><strong>Dự án của tôi:</strong> Xem danh sách đồ án nhóm, theo dõi tiến độ %, tạo dự án mới</a></li>
-        <li><a href="pages/login.html"><strong>Đăng nhập / Đăng ký:</strong> Xác thực và tạo tài khoản thành viên nhóm</a></li>
-      </ul>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+        <h2 style="margin: 0; font-size: 18px;">Trạng thái hệ thống & Tài khoản</h2>
+        <button id="btn-recheck" type="button" class="btn btn-small">Kiểm tra lại kết nối</button>
+      </div>
+      <p style="margin: 0 0 10px; font-size: 13.5px; color: var(--color-text-sub);">
+        Địa chỉ API Backend: <code id="api-url"></code> <span class="muted">(cấu hình trong <code>js/config.js</code>)</span>
+      </p>
+
+      <div id="health-status" class="status status-loading">Đang kiểm tra kết nối Backend...</div>
+      <div id="home-auth-banner"></div>
+    </section>
+
+    <section style="margin-bottom: 20px;">
+      <h2 style="font-size: 18px; margin-bottom: 14px;">Các phân hệ chính của hệ thống</h2>
+      <div class="home-feature-grid">
+        <a href="pages/projects.html" class="home-feature-card">
+          <span class="home-feature-tag">Dự án</span>
+          <h3>Dự án của tôi</h3>
+          <p>Xem danh sách đồ án nhóm, tìm kiếm, lọc trạng thái, sắp xếp, phân trang, tạo mới và xóa dự án.</p>
+          <span class="home-feature-cta">Mở danh sách dự án &rarr;</span>
+        </a>
+
+        <a href="pages/tasks.html" class="home-feature-card">
+          <span class="home-feature-tag">Kanban</span>
+          <h3>Quản lý Nhiệm vụ (Task)</h3>
+          <p>Bảng Kanban kéo thả trực quan 4 cột, chế độ bảng, lọc theo trạng thái/ưu tiên/người nhận và tìm theo tiêu đề.</p>
+          <span class="home-feature-cta">Mở bảng Kanban &rarr;</span>
+        </a>
+
+        <a href="pages/members.html" class="home-feature-card">
+          <span class="home-feature-tag">Phân quyền</span>
+          <h3>Thành viên & Vai trò</h3>
+          <p>Quản lý danh sách thành viên, gợi ý tìm người dùng theo email và hiển thị/ẩn thao tác theo quyền OWNER/MEMBER/VIEWER.</p>
+          <span class="home-feature-cta">Quản lý thành viên &rarr;</span>
+        </a>
+
+        <a href="pages/profile.html" class="home-feature-card">
+          <span class="home-feature-tag">Tài khoản</span>
+          <h3>Hồ sơ cá nhân & Bảo mật</h3>
+          <p>Cập nhật thông tin sinh viên, ảnh đại diện, giới thiệu bản thân và đổi mật khẩu có kiểm tra độ mạnh.</p>
+          <span class="home-feature-cta">Mở hồ sơ cá nhân &rarr;</span>
+        </a>
+      </div>
     </section>
   </main>
 
@@ -46,4 +83,3 @@
   <script src="js/pages/home.js"></script>
 </body>
 </html>
-

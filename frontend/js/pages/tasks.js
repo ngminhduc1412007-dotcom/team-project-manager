@@ -153,9 +153,11 @@ const tasksTbody = document.getElementById("tasks-tbody");
 const taskCountLabel = document.getElementById("task-count-label");
 
 const searchTaskInput = document.getElementById("search-task-input");
+const filterStatusSelect = document.getElementById("filter-status-select");
 const filterPrioritySelect = document.getElementById("filter-priority-select");
 const filterAssigneeSelect = document.getElementById("filter-assignee-select");
 const btnResetFilters = document.getElementById("btn-reset-filters");
+const filterResultSummary = document.getElementById("filter-result-summary");
 
 const taskModal = document.getElementById("task-modal");
 const taskModalHeading = document.getElementById("task-modal-heading");
@@ -178,6 +180,10 @@ const taskDescError = document.getElementById("task-desc-error");
 
 let projectMembers = [];
 let tasksList = [];
+let apiFilteredTasks = null;
+let lastFilterSource = "local";
+let filterSearchTimer = null;
+let latestFilterSeq = 0;
 let currentView = "kanban";
 let draggedTaskId = null;
 
@@ -521,21 +527,114 @@ function resolveAssigneeName(task) {
   return task.assignee_name || "Chưa phân công";
 }
 
-function getFilteredTasks() {
-  const kw = (searchTaskInput?.value || "").trim().toLowerCase();
-  const priorityFilter = (filterPrioritySelect?.value || "").toUpperCase();
-  const assigneeFilter = filterAssigneeSelect?.value || "";
+function mapStatusToBackend(status) {
+  const s = String(status || "").toUpperCase();
+  if (s === "TODO") return "todo";
+  if (s === "IN_PROGRESS" || s === "REVIEW") return "in_progress";
+  if (s === "DONE") return "done";
+  if (s === "CANCELLED") return "cancelled";
+  return undefined;
+}
 
-  return tasksList.filter((t) => {
+function normalizeTaskFromApi(raw) {
+  const rawStatus = String(raw.status || "todo").toUpperCase();
+  const normalizedStatus =
+    rawStatus === "CANCELLED" ? "TODO" : rawStatus;
+  const rawPriority = String(raw.priority || "medium").toUpperCase();
+  const assigneeName =
+    (raw.assignee && (raw.assignee.full_name || raw.assignee.email)) ||
+    raw.assignee_name ||
+    "";
+
+  return {
+    id: raw.id,
+    code: raw.code || "#T-" + String(raw.id).padStart(2, "0"),
+    title: raw.title || "",
+    description: raw.description || "",
+    assignee_id: raw.assignee_id || (raw.assignee && raw.assignee.id) || null,
+    assignee_name: assigneeName,
+    priority: rawPriority,
+    status: normalizedStatus,
+    due_date: raw.due_date ? String(raw.due_date).slice(0, 10) : ""
+  };
+}
+
+function getActiveFilterValues() {
+  return {
+    search: (searchTaskInput?.value || "").trim(),
+    status: (filterStatusSelect?.value || "").toUpperCase(),
+    priority: (filterPrioritySelect?.value || "").toUpperCase(),
+    assignee_id: filterAssigneeSelect?.value ? Number(filterAssigneeSelect.value) : null
+  };
+}
+
+function getFilteredTasks() {
+  const filters = getActiveFilterValues();
+  const sourceList = Array.isArray(apiFilteredTasks) ? apiFilteredTasks : tasksList;
+  const kw = filters.search.toLowerCase();
+
+  return sourceList.filter((t) => {
     const matchSearch =
       !kw ||
       String(t.title || "").toLowerCase().includes(kw) ||
       String(t.code || "").toLowerCase().includes(kw) ||
       String(t.description || "").toLowerCase().includes(kw);
-    const matchPriority = !priorityFilter || String(t.priority || "").toUpperCase() === priorityFilter;
-    const matchAssignee = !assigneeFilter || Number(t.assignee_id) === Number(assigneeFilter);
-    return matchSearch && matchPriority && matchAssignee;
+    const matchStatus = !filters.status || String(t.status || "").toUpperCase() === filters.status;
+    const matchPriority = !filters.priority || String(t.priority || "").toUpperCase() === filters.priority;
+    const matchAssignee = !filters.assignee_id || Number(t.assignee_id) === filters.assignee_id;
+    return matchSearch && matchStatus && matchPriority && matchAssignee;
   });
+}
+
+async function loadTasksWithFilters() {
+  const filters = getActiveFilterValues();
+  const seq = ++latestFilterSeq;
+
+  const params = {
+    project_id: currentProjectId,
+    page: 1,
+    page_size: 100
+  };
+  if (filters.search) params.search = filters.search;
+  if (filters.status) params.status = mapStatusToBackend(filters.status);
+  if (filters.priority) params.priority = filters.priority.toLowerCase();
+  if (filters.assignee_id) params.assignee_id = filters.assignee_id;
+
+  const hasToken = typeof auth !== "undefined" && auth.getToken ? Boolean(auth.getToken()) : false;
+
+  if (hasToken && typeof api !== "undefined" && api.get) {
+    try {
+      const res = await api.get("/tasks", params);
+      if (seq !== latestFilterSeq) return;
+      const rawItems = res?.data?.items || res?.data || res;
+      if (Array.isArray(rawItems)) {
+        const normalized = rawItems.map(normalizeTaskFromApi);
+        const isUnfiltered = !filters.search && !filters.status && !filters.priority && !filters.assignee_id;
+        if (isUnfiltered) {
+          tasksList = normalized;
+          saveStoredTasks(tasksList);
+          apiFilteredTasks = null;
+        } else {
+          apiFilteredTasks = normalized;
+        }
+        lastFilterSource = "api";
+        renderAllViews();
+        return;
+      }
+    } catch (apiErr) {
+      if (seq !== latestFilterSeq) return;
+      if (apiErr && apiErr.status === 404) {
+        apiFilteredTasks = [];
+        lastFilterSource = "api";
+        renderAllViews();
+        return;
+      }
+    }
+  }
+
+  apiFilteredTasks = null;
+  lastFilterSource = "local";
+  renderAllViews();
 }
 
 function updateHeroStats() {
@@ -625,11 +724,17 @@ function buildKanbanCardHtml(task) {
 }
 
 function renderKanbanBoard(filtered) {
+  const statusFilter = (filterStatusSelect?.value || "").toUpperCase();
+
   COLUMNS.forEach((col) => {
+    const colEl = document.querySelector('.kanban-column[data-status="' + col.key + '"]');
     const colTasks = filtered.filter((t) => String(t.status || "TODO").toUpperCase() === col.key);
     const countEl = document.querySelector('[data-count-for="' + col.key + '"]');
     const dropzoneEl = document.querySelector('[data-dropzone="' + col.key + '"]');
 
+    if (colEl) {
+      colEl.style.opacity = statusFilter && statusFilter !== col.key ? "0.45" : "1";
+    }
     if (countEl) countEl.textContent = String(colTasks.length);
     if (!dropzoneEl) return;
 
@@ -693,16 +798,29 @@ function renderTableView(filtered) {
 }
 
 function renderAllViews() {
+  const filters = getActiveFilterValues();
   const hasActiveFilter = Boolean(
-    (searchTaskInput?.value || "").trim() ||
-    (filterPrioritySelect?.value || "") ||
-    (filterAssigneeSelect?.value || "")
+    filters.search || filters.status || filters.priority || filters.assignee_id
   );
   if (btnResetFilters) {
     btnResetFilters.style.display = hasActiveFilter ? "inline-flex" : "none";
   }
 
   const filtered = getFilteredTasks();
+
+  if (filterResultSummary) {
+    if (hasActiveFilter) {
+      filterResultSummary.style.display = "block";
+      const sourceLabel = lastFilterSource === "api" ? "API GET /api/tasks" : "Bộ lọc cục bộ";
+      filterResultSummary.innerHTML =
+        filtered.length > 0
+          ? "Tìm thấy <strong>" + filtered.length + "</strong> công việc phù hợp (" + sourceLabel + ")."
+          : "Không tìm thấy công việc nào khớp với điều kiện lọc hiện tại (" + sourceLabel + ").";
+    } else {
+      filterResultSummary.style.display = "none";
+    }
+  }
+
   updateHeroStats();
   renderKanbanBoard(filtered);
   renderTableView(filtered);
@@ -965,13 +1083,14 @@ if (taskForm) {
 
       try {
         if (typeof api !== "undefined" && api.post) {
-          await api.post("/projects/" + currentProjectId + "/tasks", {
+          await api.post("/tasks", {
+            project_id: currentProjectId,
             title,
             description: description || null,
             assignee_id: assigneeId,
             priority: priority.toLowerCase(),
-            status: status === "REVIEW" ? "in_progress" : status.toLowerCase(),
-            deadline: dueDate || null
+            status: mapStatusToBackend(status) || "todo",
+            due_date: dueDate || null
           });
         }
       } catch (err) {}
@@ -1044,19 +1163,31 @@ function setViewMode(mode) {
 if (btnViewKanban) btnViewKanban.addEventListener("click", () => setViewMode("kanban"));
 if (btnViewTable) btnViewTable.addEventListener("click", () => setViewMode("table"));
 
-/* ---------- BỘ LỌC & ĐỒNG BỘ LOCALSTORAGE ---------- */
-[searchTaskInput, filterPrioritySelect, filterAssigneeSelect].forEach((el) => {
+/* ---------- BỘ LỌC & TÌM KIẾM TASK (NỐI API GET /tasks) ---------- */
+if (searchTaskInput) {
+  searchTaskInput.addEventListener("input", () => {
+    clearTimeout(filterSearchTimer);
+    filterSearchTimer = setTimeout(() => {
+      loadTasksWithFilters();
+    }, 300);
+  });
+}
+
+[filterStatusSelect, filterPrioritySelect, filterAssigneeSelect].forEach((el) => {
   if (!el) return;
-  const eventName = el.tagName === "INPUT" ? "input" : "change";
-  el.addEventListener(eventName, renderAllViews);
+  el.addEventListener("change", () => {
+    loadTasksWithFilters();
+  });
 });
 
 if (btnResetFilters) {
   btnResetFilters.addEventListener("click", () => {
     if (searchTaskInput) searchTaskInput.value = "";
+    if (filterStatusSelect) filterStatusSelect.value = "";
     if (filterPrioritySelect) filterPrioritySelect.value = "";
     if (filterAssigneeSelect) filterAssigneeSelect.value = "";
-    renderAllViews();
+    apiFilteredTasks = null;
+    loadTasksWithFilters();
   });
 }
 
@@ -1076,7 +1207,7 @@ async function initTasksPage() {
   renderProjectStatusUI(savedStatus);
   await syncProjectMembers();
   tasksList = loadStoredTasks();
-  renderAllViews();
+  await loadTasksWithFilters();
 }
 
 initTasksPage();
