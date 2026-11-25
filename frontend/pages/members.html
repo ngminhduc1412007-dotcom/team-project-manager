@@ -68,7 +68,80 @@
       color: var(--color-muted);
     }
 
+    .badge-admin {
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+
+    .badge-self {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #0369a1;
+      vertical-align: middle;
+    }
+
+    .role-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .role-breakdown {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .demo-role-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 6px 10px;
+      border: 1px dashed #cbd5e1;
+      border-radius: var(--radius);
+      background: #ffffff;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
     .demo-role-bar.is-visible {
+      display: flex;
+    }
+
+    .permission-notice {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      border-radius: var(--radius);
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-size: 13.5px;
+    }
+
+    .permission-notice.is-visible {
+      display: flex;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .page-header {
       display: flex;
     }
 
@@ -315,6 +388,22 @@
     }
 
     @media (max-width: 768px) {
+      .header-inner {
+        height: auto;
+        padding: 10px 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .user-nav {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        width: 100%;
+        justify-content: space-between;
+      }
+      .card {
+        padding: 16px;
+      }
       .project-stats-bar {
         align-items: flex-start;
         width: 100%;
@@ -325,9 +414,8 @@
       .demo-role-bar .cselect-wrap {
         width: 100% !important;
       }
-      .project-subnav .subnav-pills {
-        width: 100%;
-        overflow-x: auto;
+      .project-subnav {
+        flex-wrap: wrap;
       }
       .autocomplete-wrap {
         min-width: 0;
@@ -344,6 +432,12 @@
       .toolbar > div {
         width: 100%;
       }
+      .modal {
+        padding: 18px;
+      }
+      .modal-footer {
+        flex-wrap: wrap;
+      }
     }
   </style>
 </head>
@@ -351,56 +445,53 @@
   <header id="app-header"></header>
 
   <main class="container">
-    <section class="project-hero-card">
-      <div class="members-hero-inner">
-        <div>
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <h1 id="project-title" style="margin: 0; font-size: 22px; letter-spacing: -0.02em;">Dự án: Student Project Hub</h1>
-            <span class="badge badge-active" id="project-status-badge">Đang làm</span>
-          </div>
-          <p id="project-desc" style="margin: 4px 0 0; color: var(--color-text-sub); font-size: 13.5px;">
-            Quản lý danh sách thành viên, thêm thành viên qua API và phân quyền vai trò trong dự án
-          </p>
+    <div class="page-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h1 id="project-title" style="margin: 0; font-size: 24px;">Dự án: Student Project Hub</h1>
+          <span class="badge badge-active" id="project-status-badge">Đang làm</span>
+        </div>
+        <p id="project-desc" style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
+          Quản lý danh sách thành viên, thêm thành viên qua API và phân quyền vai trò trong dự án
+        </p>
 
-          <div class="project-status-box" id="project-status-controls">
-            <span style="font-size: 13px; font-weight: 600; color: var(--color-text-sub);">Trạng thái dự án:</span>
-            <span id="project-status-editor" style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <select id="project-status-select" style="width: 170px; padding: 5px 10px; font-size: 13px;">
-                <option value="PLANNING">Lên kế hoạch</option>
-                <option value="ACTIVE" selected>Đang làm</option>
-                <option value="COMPLETED">Đã hoàn thành</option>
-              </select>
-              <button type="button" class="btn btn-small btn-primary" id="btn-update-project-status">
-                Đổi trạng thái
-              </button>
-            </span>
-            <span id="project-status-role-hint" style="font-size: 12px; color: var(--color-muted);">
-              (Chỉ Owner và Admin được đổi)
-            </span>
-          </div>
+        <div class="project-status-box" id="project-status-controls">
+          <span style="font-size: 13px; font-weight: 600;">Trạng thái dự án:</span>
+          <span id="project-status-editor" style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <select id="project-status-select" style="width: 170px; padding: 5px 10px; font-size: 13px;">
+              <option value="PLANNING">Lên kế hoạch</option>
+              <option value="ACTIVE" selected>Đang làm</option>
+              <option value="COMPLETED">Đã hoàn thành</option>
+            </select>
+            <button type="button" class="btn btn-small btn-primary" id="btn-update-project-status">
+              Đổi trạng thái
+            </button>
+          </span>
+          <span id="project-status-role-hint" style="font-size: 12px; color: var(--color-muted);">
+            (Chỉ Owner và Admin được đổi)
+          </span>
         </div>
 
-        <div class="project-stats-bar">
-          <div class="role-summary-row">
-            <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy</strong></span>
-            <span>Vai trò của bạn: <span class="badge badge-owner" id="current-user-role-badge">OWNER</span></span>
-            <span>Thành viên: <strong id="total-members-stat">5</strong></span>
-          </div>
-          <div class="role-breakdown" id="role-breakdown-summary">
-            <span>1 OWNER</span>
-            <span>&middot;</span>
-            <span>4 MEMBER</span>
-            <span>&middot;</span>
-            <span>0 VIEWER</span>
-          </div>
-          <div class="demo-role-bar" id="demo-role-bar">
-            <label for="demo-role-switcher" style="margin: 0; font-weight: 600; color: var(--color-text);">Xem thử quyền:</label>
-            <select id="demo-role-switcher" style="width: 155px; padding: 4px 8px; font-size: 12.5px;">
-              <option value="OWNER">OWNER (Chủ dự án)</option>
-              <option value="MEMBER">MEMBER (Thành viên)</option>
-              <option value="VIEWER">VIEWER (Chỉ xem)</option>
-            </select>
-          </div>
+      <div class="project-stats-bar">
+        <div class="role-summary-row">
+          <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy</strong></span>
+          <span>Vai trò của bạn: <span class="badge badge-owner" id="current-user-role-badge">OWNER</span></span>
+          <span>Thành viên: <strong id="total-members-stat">5</strong></span>
+        </div>
+        <div class="role-breakdown" id="role-breakdown-summary">
+          <span>1 OWNER</span>
+          <span>&middot;</span>
+          <span>4 MEMBER</span>
+          <span>&middot;</span>
+          <span>0 VIEWER</span>
+        </div>
+        <div class="demo-role-bar" id="demo-role-bar">
+          <label for="demo-role-switcher" style="font-weight: 600; color: var(--color-text);">Xem thử quyền:</label>
+          <select id="demo-role-switcher" style="width: 150px; padding: 4px 8px; font-size: 12.5px;">
+            <option value="OWNER">OWNER (Chủ dự án)</option>
+            <option value="MEMBER">MEMBER (Thành viên)</option>
+            <option value="VIEWER">VIEWER (Chỉ xem)</option>
+          </select>
         </div>
       </div>
     </section>
