@@ -1,10 +1,8 @@
-// Layout chung: tự động nạp header, menu responsive và footer thống nhất cho toàn bộ trang
+// Layout chung: tự động nạp header tối giản thẩm mỹ và footer thống nhất cho toàn bộ trang
 const MENU = [
   { href: "index.html", label: "Trang chủ" },
   { href: "pages/projects.html", label: "Dự án của tôi" },
   { href: "pages/tasks.html", label: "Nhiệm vụ" },
-  { href: "pages/members.html", label: "Thành viên" },
-  { href: "pages/profile.html", label: "Hồ sơ" },
   { href: "pages/login.html", label: "Đăng nhập" },
 ];
 
@@ -43,12 +41,13 @@ function renderLayout() {
   const safeEsc = typeof escapeHtml === "function" ? escapeHtml : (v) => String(v || "");
 
   const links = MENU.map(function (item) {
+    // Khi đã đăng nhập: chỉ giữ Trang chủ, Dự án của tôi, Nhiệm vụ (ẩn Đăng nhập)
     if (isLoggedIn && item.href === "pages/login.html") {
       return "";
     }
 
     let targetHref = root + item.href;
-    if (activeProjectId && (item.href === "pages/tasks.html" || item.href === "pages/members.html")) {
+    if (activeProjectId && item.href === "pages/tasks.html") {
       targetHref += "?project_id=" + encodeURIComponent(activeProjectId);
     }
 
@@ -72,11 +71,14 @@ function renderLayout() {
   if (isLoggedIn) {
     const displayName = (user && (user.full_name || user.email)) || "Sinh viên";
     const initials = getUserInitials(displayName);
+    const isProfilePage = currentPath.endsWith("/pages/profile.html");
     userSection =
       '<div class="user-nav">' +
       '<a href="' +
       root +
-      'pages/profile.html" class="user-profile-link" title="Xem và chỉnh sửa hồ sơ cá nhân">' +
+      'pages/profile.html" class="user-profile-link' +
+      (isProfilePage ? " is-active" : "") +
+      '" title="Hồ sơ cá nhân & Bảo mật">' +
       '<span class="user-avatar-chip">' +
       safeEsc(initials) +
       "</span>" +
@@ -84,7 +86,7 @@ function renderLayout() {
       safeEsc(displayName) +
       "</span>" +
       "</a>" +
-      '<button type="button" class="btn btn-small btn-danger btn-logout" id="btn-logout" onclick="auth.logout()" title="Đăng xuất khỏi tài khoản">Đăng xuất</button>' +
+      '<button type="button" class="btn btn-small btn-logout" id="btn-logout" onclick="auth.logout()" title="Đăng xuất khỏi tài khoản">Đăng xuất</button>' +
       "</div>";
   }
 
@@ -111,7 +113,9 @@ function renderLayout() {
       "</svg>" +
       "</button>" +
       '<nav class="nav" id="main-nav" aria-label="Điều hướng chính">' +
+      '<div class="nav-links-group">' +
       links +
+      "</div>" +
       userSection +
       "</nav>" +
       "</div>";
@@ -150,7 +154,6 @@ function renderLayout() {
   const footer = document.getElementById("app-footer");
   if (footer) {
     const tasksHref = root + "pages/tasks.html" + (activeProjectId ? "?project_id=" + encodeURIComponent(activeProjectId) : "");
-    const membersHref = root + "pages/members.html" + (activeProjectId ? "?project_id=" + encodeURIComponent(activeProjectId) : "");
     footer.innerHTML =
       '<div class="container footer-inner">' +
       "<div>© " +
@@ -160,10 +163,8 @@ function renderLayout() {
       " · Nhóm thực tập sinh viên CNTT PTIT</div>" +
       '<div class="footer-links">' +
       '<a href="' + root + 'index.html">Trang chủ</a>' +
-      '<a href="' + root + 'pages/projects.html">Dự án</a>' +
+      '<a href="' + root + 'pages/projects.html">Dự án của tôi</a>' +
       '<a href="' + tasksHref + '">Nhiệm vụ</a>' +
-      '<a href="' + membersHref + '">Thành viên</a>' +
-      '<a href="' + root + 'pages/profile.html">Hồ sơ</a>' +
       "</div>" +
       "</div>";
   }

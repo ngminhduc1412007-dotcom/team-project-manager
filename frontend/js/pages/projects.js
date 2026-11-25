@@ -360,14 +360,115 @@ function getEffectiveProjectStatus(p) {
 }
 
 function getEffectiveMemberCount(p) {
+  return getProjectMembersList(p).length || p.members || 1;
+}
+
+const MEMBER_AVATAR_COLORS = ["#163b65", "#2563eb", "#0891b2", "#059669", "#7c3aed", "#d97706"];
+
+const DEMO_TEAM_POOL = [
+  { id: 101, full_name: "Lê Quang Huy", email: "huy.lq@ptit.edu.vn", role: "member" },
+  { id: 102, full_name: "Nguyễn Minh Đức", email: "duc.nm@ptit.edu.vn", role: "member" },
+  { id: 103, full_name: "Lưu Đức Anh", email: "anh.ld@ptit.edu.vn", role: "member" },
+  { id: 104, full_name: "Trần Nhật Long", email: "long.tn@ptit.edu.vn", role: "member" },
+  { id: 105, full_name: "Hoàng Đức Duy Anh", email: "duyanh.hd@ptit.edu.vn", role: "member" },
+];
+
+function getMemberInitials(name) {
+  const parts = String(name || "SV").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "SV";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getMemberAvatarColor(key) {
+  const str = String(key || "0");
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return MEMBER_AVATAR_COLORS[hash % MEMBER_AVATAR_COLORS.length];
+}
+
+function getProjectMembersList(p) {
+  if (!p) return [];
   try {
     const raw = localStorage.getItem("sph_members_project_" + p.id);
     if (raw) {
       const arr = JSON.parse(raw);
-      if (Array.isArray(arr) && arr.length > 0) return arr.length;
+      if (Array.isArray(arr) && arr.length > 0) {
+        return arr.map((m) => ({
+          id: m.user_id || m.id,
+          full_name: (m.user && (m.user.full_name || m.user.email)) || m.full_name || m.email || "Thành viên",
+          email: (m.user && m.user.email) || m.email || "",
+          role: String(m.role || "member").toLowerCase(),
+        }));
+      }
     }
   } catch (e) { }
-  return p.members || 1;
+
+  if (Array.isArray(p.members) && p.members.length > 0) {
+    return p.members.map((m) => ({
+      id: m.user_id || (m.user && m.user.id) || m.id,
+      full_name: (m.user && (m.user.full_name || m.user.email)) || m.full_name || m.email || "Thành viên",
+      email: (m.user && m.user.email) || m.email || "",
+      role: String(m.role || "member").toLowerCase(),
+    }));
+  }
+
+  const targetCount = typeof p.members === "number" && p.members > 0 ? p.members : 1;
+  const ownerName = (p.owner && (p.owner.full_name || p.owner.email)) || "Chủ dự án";
+  const result = [{
+    id: p.owner_id || (p.owner && p.owner.id) || 1,
+    full_name: ownerName,
+    email: (p.owner && p.owner.email) || "",
+    role: "owner",
+  }];
+
+  let offset = (Number(p.id) || 1) % DEMO_TEAM_POOL.length;
+  for (let i = 0; i < DEMO_TEAM_POOL.length && result.length < targetCount; i++) {
+    const candidate = DEMO_TEAM_POOL[(offset + i) % DEMO_TEAM_POOL.length];
+    if (candidate.full_name.toLowerCase() !== ownerName.toLowerCase()) {
+      result.push({ ...candidate });
+    }
+  }
+  return result;
+}
+
+function renderProjectMembersStrip(p) {
+  const list = getProjectMembersList(p);
+  const roleLabel = { owner: "Chủ dự án", admin: "Quản trị", member: "Thành viên", viewer: "Chỉ xem" };
+  const maxVisible = 3;
+  const visible = list.slice(0, maxVisible);
+  const remain = list.length - visible.length;
+
+  const avatarsHtml = list.slice(0, 4).map((m) => {
+    const bg = getMemberAvatarColor(m.full_name + m.id);
+    const title = escapeHtml(m.full_name) + " (" + (roleLabel[m.role] || "Thành viên") + ")";
+    return '<span class="project-member-avatar" style="background:' + bg + ';" title="' + title + '">' +
+      escapeHtml(getMemberInitials(m.full_name)) +
+      '</span>';
+  }).join("");
+
+  const namesHtml = visible.map((m) => {
+    const isOwnerRole = m.role === "owner";
+    return '<span class="project-member-pill' + (isOwnerRole ? " is-owner" : "") + '" title="' +
+      escapeHtml(m.full_name) + " (" + (roleLabel[m.role] || "Thành viên") + ")" + '">' +
+      escapeHtml(m.full_name) +
+      '</span>';
+  }).join("") + (remain > 0 ? '<span class="project-member-more">+' + remain + ' khác</span>' : "");
+
+  return (
+    '<div class="project-members-box">' +
+    '<div class="project-members-head">' +
+    '<span>Thành viên đang làm (' + list.length + ')</span>' +
+    '<a href="members.html?project_id=' + p.id + '" class="project-members-manage">Quản lý &rarr;</a>' +
+    '</div>' +
+    '<div class="project-members-row">' +
+    '<div class="project-avatar-stack">' + avatarsHtml + '</div>' +
+    '<div class="project-member-names">' + namesHtml + '</div>' +
+    '</div>' +
+    '</div>'
+  );
 }
 
 function canUserChangeProjectStatus(p) {
@@ -608,6 +709,8 @@ function renderProjectList(items) {
         '</button>'
         : '';
 
+    const membersStripHtml = renderProjectMembersStrip(p);
+
     return (
       '<article class="project-card" data-id="' + p.id + '" style="' + cardStyle + '">' +
       checkboxHtml +
@@ -620,10 +723,11 @@ function renderProjectList(items) {
       '<span>🎯 Deadline: <strong>' + deadlineText + '</strong></span>' +
       '<span>👥 ' + memberCount + ' thành viên</span>' +
       '</div>' +
-      '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 6px;">' +
+      '<div class="project-meta" style="font-size: 11px; color: var(--color-muted); margin-bottom: 8px;">' +
       '<span>👤 Chủ sở hữu: ' + escapeHtml(ownerName) + '</span>' +
       '<span>📅 Tạo: ' + createdText + '</span>' +
       '</div>' +
+      membersStripHtml +
       '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 12px;">' +
       '<span style="color: var(--color-muted);">Đổi trạng thái (Owner/Admin):</span>' +
       '<select onchange="handleQuickStatusChange(' + p.id + ', this.value)" style="width: 145px; padding: 4px 8px; font-size: 12px;" ' + (canEditStatus ? "" : "disabled") + '>' +
