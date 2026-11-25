@@ -1,4 +1,11 @@
-"""Router quản lý thành viên dự án (Project Members)."""
+"""Router quản lý thành viên dự án (Project Members).
+
+Phân quyền:
+    - **Xem** danh sách thành viên: mọi người dùng đã đăng nhập.
+    - **Thêm** thành viên: chỉ chủ dự án (owner) → vi phạm trả 403.
+    - **Xóa** thành viên: chỉ chủ dự án hoặc Admin hệ thống → vi phạm trả 403.
+    - **Đổi vai trò**: chỉ chủ dự án hoặc Admin hệ thống → vi phạm trả 403.
+"""
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
@@ -35,6 +42,11 @@ def add_project_member(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """Thêm thành viên mới vào dự án theo email.
+
+    Chỉ chủ dự án mới có quyền; thành viên thường gọi endpoint này sẽ
+    nhận HTTP 403 Forbidden.
+    """
     member = add_project_member_by_email(
         db=db,
         project_id=project_id,
@@ -93,6 +105,11 @@ def remove_project_member_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """Xóa thành viên khỏi dự án.
+
+    Chỉ chủ dự án hoặc Admin hệ thống mới có quyền xóa; thành viên thường
+    gọi endpoint này sẽ nhận HTTP 403 Forbidden. Không cho phép xóa chủ dự án.
+    """
     result = remove_project_member(
         db=db,
         project_id=project_id,
@@ -128,6 +145,11 @@ def update_project_member_role_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """Đổi vai trò thành viên trong dự án (owner, member, viewer).
+
+    Chỉ chủ dự án hoặc Admin hệ thống mới có quyền; thành viên thường
+    gọi endpoint này sẽ nhận HTTP 403 Forbidden.
+    """
     updated_member = update_project_member_role(
         db=db,
         project_id=project_id,

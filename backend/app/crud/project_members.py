@@ -15,8 +15,12 @@ from app.schemas.project_members import ProjectMemberRole
 from app.schemas.users import UserRole
 
 
-# Kiểm tra người dùng có thuộc dự án hay không (là chủ dự án hoặc thành viên).
 def is_user_in_project(db: Session, project_id: int, user_id: int) -> bool:
+    """Kiểm tra người dùng có thuộc dự án hay không.
+
+    Trả ``True`` nếu *user_id* là chủ sở hữu (``Project.owner_id``) hoặc
+    có bản ghi trong bảng ``project_members`` với *project_id* tương ứng.
+    """
     # 1. Kiểm tra nếu người dùng là chủ sở hữu dự án
     is_owner = (
         db.query(Project.id)
@@ -38,8 +42,14 @@ def is_user_in_project(db: Session, project_id: int, user_id: int) -> bool:
     return is_member is not None
 
 
-# Lấy vai trò của người dùng trong dự án ('owner', 'admin', 'member', 'viewer' hoặc None nếu không thuộc dự án).
 def get_user_project_role(db: Session, project_id: int, user_id: int) -> Optional[str]:
+    """Lấy vai trò của người dùng trong dự án.
+
+    Returns:
+        ``"owner"`` nếu là chủ dự án, giá trị enum role (``"member"``,
+        ``"viewer"`` …) nếu là thành viên, hoặc ``None`` nếu không thuộc
+        dự án.
+    """
     is_owner = (
         db.query(Project.id)
         .filter(Project.id == project_id, Project.owner_id == user_id)
@@ -61,8 +71,13 @@ def get_user_project_role(db: Session, project_id: int, user_id: int) -> Optiona
     return member.role.value if hasattr(member.role, "value") else str(member.role)
 
 
-# Xác thực dự án tồn tại và người dùng có thuộc dự án không; raise 404/403 nếu vi phạm.
 def verify_user_in_project(db: Session, project_id: int, user_id: int) -> Project:
+    """Xác thực dự án tồn tại và người dùng thuộc dự án.
+
+    Raises:
+        HTTPException 404: Dự án không tồn tại.
+        HTTPException 403: Người dùng không thuộc dự án.
+    """
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(
@@ -79,7 +94,6 @@ def verify_user_in_project(db: Session, project_id: int, user_id: int) -> Projec
     return project
 
 
-# Thêm thành viên vào dự án theo Email (chỉ chủ dự án được thêm, chặn trùng, chặn user không tồn tại).
 def add_project_member_by_email(
     db: Session,
     project_id: int,
@@ -87,6 +101,17 @@ def add_project_member_by_email(
     role: Union[ProjectMemberRole, str] = ProjectMemberRole.MEMBER,
     current_user_id: int = 0,
 ) -> ProjectMember:
+    """Thêm thành viên vào dự án theo email.
+
+    **Phân quyền:** chỉ chủ dự án (owner) mới được phép thêm thành viên.
+    Thành viên thường (member/viewer) gọi hàm này sẽ nhận ``403 Forbidden``.
+
+    Raises:
+        NotFoundException: Dự án hoặc người dùng (email) không tồn tại.
+        ForbiddenException: Người gọi không phải chủ dự án → **403**.
+        BadRequestException: Tài khoản bị vô hiệu hóa.
+        ConflictException: Người dùng đã là chủ sở hữu hoặc thành viên.
+    """
     # 1. Kiểm tra dự án tồn tại
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -190,7 +215,15 @@ def _check_project_permission(
     current_user: Union[User, int],
     action_desc: str = "thực hiện thao tác này",
 ) -> None:
-    """Kiểm tra quyền: Chủ dự án hoặc Admin hệ thống mới có quyền thực hiện."""
+    """Kiểm tra quyền thao tác quản lý thành viên.
+
+    Cho phép nếu người dùng là **chủ dự án** (``Project.owner_id``) hoặc
+    **Admin hệ thống** (``UserRole.ADMIN``). Mọi vai trò khác (member,
+    viewer) đều bị từ chối với ``403 Forbidden``.
+
+    Raises:
+        ForbiddenException: Người dùng không có quyền → **403**.
+    """
     if isinstance(current_user, User):
         user = current_user
     else:
@@ -208,13 +241,26 @@ def _check_project_permission(
         )
 
 
-# Xóa thành viên khỏi dự án (chỉ chủ dự án hoặc Admin hệ thống; không được xóa chủ dự án).
 def remove_project_member(
     db: Session,
     project_id: int,
     user_id: int,
     current_user: Union[User, int],
 ) -> dict:
+    """Xóa thành viên khỏi dự án.
+
+    **Phân quyền:** chỉ chủ dự án hoặc Admin hệ thống mới được xóa.
+    Thành viên thường (member/viewer) gọi hàm này sẽ nhận ``403 Forbidden``.
+    Không cho phép xóa chủ dự án (trả 400).
+
+    Nếu thành viên bị xóa đang được gán task, ``assignee_id`` của các task
+    đó sẽ được đặt về ``None``.
+
+    Raises:
+        NotFoundException: Dự án hoặc thành viên không tồn tại.
+        ForbiddenException: Người gọi không phải owner/admin → **403**.
+        BadRequestException: Cố xóa chủ dự án → **400**.
+    """
     # 1. Kiểm tra dự án tồn tại
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -261,8 +307,6 @@ def remove_project_member(
         raise
 
 
-# Đổi vai trò thành viên trong dự án: chỉ có thể đổi thành owner, member, viewer;
-# admin là quyền của admin hệ thống có thể truy cập tất cả.
 def update_project_member_role(
     db: Session,
     project_id: int,
@@ -270,6 +314,21 @@ def update_project_member_role(
     role: Union[ProjectMemberRole, str],
     current_user: Union[User, int],
 ) -> ProjectMember:
+    """Đổi vai trò thành viên trong dự án.
+
+    **Phân quyền:** chỉ chủ dự án hoặc Admin hệ thống mới được đổi vai trò.
+    Thành viên thường (member/viewer) gọi hàm này sẽ nhận ``403 Forbidden``.
+
+    Vai trò hợp lệ: ``owner``, ``member``, ``viewer``.
+    Giá trị ``admin`` bị từ chối vì đó là vai trò cấp hệ thống.
+    Khi đổi thành ``owner``, quyền chủ sở hữu được chuyển giao và chủ cũ
+    trở thành ``member``.
+
+    Raises:
+        NotFoundException: Dự án hoặc thành viên không tồn tại.
+        ForbiddenException: Người gọi không phải owner/admin → **403**.
+        BadRequestException: Vai trò không hợp lệ hoặc vi phạm ràng buộc owner.
+    """
     # 1. Kiểm tra dự án tồn tại
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
