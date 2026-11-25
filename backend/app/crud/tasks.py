@@ -11,9 +11,10 @@ Xử lý quyền và ngoại lệ rõ ràng:
   - 404: Không tìm thấy dự án, công việc hoặc người dùng
   - 403: Không có quyền truy cập dự án hoặc không đủ quyền thực hiện thao tác
 """
-from datetime import date
+from datetime import date, timedelta
 from typing import List, Optional, Tuple
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import (
@@ -22,8 +23,9 @@ from app.core.exceptions import (
     NotFoundException,
 )
 from app.crud.project_members import get_user_project_role
+from app.models.project_members import ProjectMember
 from app.models.projects import Project
-from app.models.tasks import Task
+from app.models.tasks import Task, TaskStatus
 from app.models.users import User
 from app.schemas.tasks import TaskCreate, TaskUpdate
 from app.schemas.users import UserRole
@@ -227,6 +229,92 @@ def get_tasks(
     )
 
     return items, total
+
+
+def get_task_statistics(
+    db: Session,
+    project_id: int,
+    current_user: User,
+) -> dict:
+    """Return project-scoped task statistics to project members only."""
+    project = _get_project_or_404(db, project_id)
+    if get_user_project_role(db, project_id, current_user.id) is None:
+        raise ForbiddenException(message="Bạn không phải thành viên của dự án này.")
+
+    tasks_by_status = {status.value: 0 for status in TaskStatus}
+    for task_status, task_count in (
+        db.query(Task.status, func.count(Task.id))
+        .filter(Task.project_id == project_id)
+        .group_by(Task.status)
+        .all()
+    ):
+        status_value = task_status.value if hasattr(task_status, "value") else str(task_status)
+        tasks_by_status[status_value] = task_count
+
+    project_members = {
+        user_id: full_name
+        for user_id, full_name in (
+            db.query(User.id, User.full_name)
+            .join(ProjectMember, ProjectMember.user_id == User.id)
+            .filter(ProjectMember.project_id == project_id)
+            .all()
+        )
+    }
+    owner = db.query(User.id, User.full_name).filter(User.id == project.owner_id).first()
+    if owner:
+        project_members[owner.id] = owner.full_name
+
+    assigned_counts = dict(
+        db.query(Task.assignee_id, func.count(Task.id))
+        .filter(Task.project_id == project_id)
+        .group_by(Task.assignee_id)
+        .all()
+    )
+    unassigned_task_count = assigned_counts.pop(None, 0)
+    tasks_by_member = [
+        {
+            "member_id": member_id,
+            "member_name": full_name,
+            "task_count": assigned_counts.get(member_id, 0),
+        }
+        for member_id, full_name in sorted(
+            project_members.items(), key=lambda member: member[1].casefold()
+        )
+    ]
+
+    today = date.today()
+    due_soon_tasks = (
+        db.query(Task)
+        .options(joinedload(Task.assignee))
+        .filter(
+            Task.project_id == project_id,
+            Task.due_date.between(today, today + timedelta(days=7)),
+            Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELLED]),
+        )
+        .order_by(Task.due_date.asc(), Task.id.asc())
+        .all()
+    )
+    due_soon = [
+        {
+            "task_id": task.id,
+            "title": task.title,
+            "due_date": task.due_date,
+            "status": task.status,
+            "priority": task.priority,
+            "assignee_id": task.assignee_id,
+            "assignee_name": task.assignee.full_name if task.assignee else "Chưa phân công",
+        }
+        for task in due_soon_tasks
+    ]
+
+    return {
+        "total_tasks": sum(tasks_by_status.values()),
+        "tasks_by_status": tasks_by_status,
+        "tasks_by_member": tasks_by_member,
+        "unassigned_task_count": unassigned_task_count,
+        "due_soon_count": len(due_soon),
+        "due_soon": due_soon,
+    }
 
 
 def get_task_by_id(

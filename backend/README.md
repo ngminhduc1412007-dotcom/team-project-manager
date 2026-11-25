@@ -54,6 +54,10 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 *Lưu ý: Nếu Backend chưa bật, Frontend sẽ tự động chuyển sang chế độ Demo để xem trước giao diện và chức năng.*
 
+### Thống kê Dashboard theo dự án
+
+`GET /api/projects/{project_id}/tasks/statistics` trả về tổng số Task, số lượng theo trạng thái, số lượng được giao cho từng thành viên (kể cả thành viên chưa có Task), số Task chưa phân công và danh sách Task sắp đến hạn. Task sắp đến hạn gồm hạn từ hôm nay đến hết 7 ngày tiếp theo, không gồm trạng thái `done` hoặc `cancelled`. Chỉ chủ dự án và thành viên dự án được xem; người khác nhận `403`.
+
 ## Báo cáo Task bằng MySQL Workbench 8.0
 
 1. Kết nối Workbench tới cùng MySQL server và database mà backend dùng (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_NAME` trong `backend/.env`).

@@ -23,6 +23,7 @@ from app.core.response import create_response, paginated_response
 from app.crud.tasks import (
     create_task,
     delete_task,
+    get_task_statistics,
     get_task_by_id,
     get_tasks,
     update_task,
@@ -124,6 +125,35 @@ def list_tasks_endpoint(
         page=page,
         page_size=page_size,
         message="Lấy danh sách công việc thành công.",
+    )
+
+
+@router.get(
+    "/statistics",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    summary="Thống kê công việc trong dự án",
+    description=(
+        "Trả về số công việc theo trạng thái, theo thành viên và danh sách công việc "
+        "sắp đến hạn trong 7 ngày tới. Chỉ thành viên của dự án được xem."
+    ),
+)
+def task_statistics_endpoint(
+    request: Request,
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    statistics = get_task_statistics(
+        db=db,
+        project_id=project_id,
+        current_user=current_user,
+    )
+    return create_response(
+        request=request,
+        status_code=status.HTTP_200_OK,
+        message="Lấy thống kê công việc thành công.",
+        data=statistics,
     )
 
 
