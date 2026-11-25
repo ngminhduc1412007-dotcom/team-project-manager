@@ -92,9 +92,20 @@ function saveStoredMembers(list) {
 }
 
 let membersList = loadStoredMembers();
+let projectMeta = null;
 let searchKeyword = "";
 let roleFilter = "ALL";
 let pendingDeleteMember = null;
+
+function parseInitialDemoRole() {
+  const paramRole = String(urlParams.get("role") || "").trim().toUpperCase();
+  if (paramRole === "OWNER" || paramRole === "MEMBER" || paramRole === "VIEWER") {
+    return paramRole;
+  }
+  return "OWNER";
+}
+
+let demoRoleOverride = parseInitialDemoRole();
 
 const subnavTasksLink = document.getElementById("subnav-tasks-link");
 const subnavMembersLink = document.getElementById("subnav-members-link");
@@ -102,16 +113,28 @@ if (subnavTasksLink) subnavTasksLink.href = "tasks.html?project_id=" + currentPr
 if (subnavMembersLink) subnavMembersLink.href = "members.html?project_id=" + currentProjectId;
 
 const membersTbody = document.getElementById("members-tbody");
+const membersActionTh = document.getElementById("members-action-th");
 const memberCountLabel = document.getElementById("member-count-label");
 const totalMembersStat = document.getElementById("total-members-stat");
+const roleBreakdownSummary = document.getElementById("role-breakdown-summary");
 const statusBanner = document.getElementById("status-banner");
 
+const projectTitleEl = document.getElementById("project-title");
+const projectDescEl = document.getElementById("project-desc");
 const projectStatusBadge = document.getElementById("project-status-badge");
+const projectStatusControls = document.getElementById("project-status-controls");
+const projectStatusEditor = document.getElementById("project-status-editor");
 const projectStatusSelect = document.getElementById("project-status-select");
 const btnUpdateProjectStatus = document.getElementById("btn-update-project-status");
 const projectStatusRoleHint = document.getElementById("project-status-role-hint");
 const currentUserLabel = document.getElementById("current-user-label");
+const currentUserRoleBadge = document.getElementById("current-user-role-badge");
+const demoRoleBar = document.getElementById("demo-role-bar");
+const demoRoleSwitcher = document.getElementById("demo-role-switcher");
 
+const addMemberCard = document.getElementById("add-member-card");
+const readonlyPermissionNotice = document.getElementById("readonly-permission-notice");
+const readonlyPermissionText = document.getElementById("readonly-permission-text");
 const addMemberForm = document.getElementById("add-member-form");
 const emailInput = document.getElementById("member-email-input");
 const emailError = document.getElementById("member-email-error");
@@ -167,11 +190,48 @@ function normalizeProjectRole(role) {
   return "MEMBER";
 }
 
+function getRoleMeta(role) {
+  const raw = String(role || "MEMBER").trim().toUpperCase();
+  if (raw === "ADMIN") {
+    return {
+      code: "ADMIN",
+      className: "badge badge-admin",
+      title: "Quản trị viên hệ thống (có toàn quyền quản lý)"
+    };
+  }
+  const normalized = normalizeProjectRole(raw);
+  if (normalized === "OWNER") {
+    return {
+      code: "OWNER",
+      className: "badge badge-owner",
+      title: "Chủ dự án (có quyền thêm/xóa thành viên và đổi trạng thái)"
+    };
+  }
+  if (normalized === "VIEWER") {
+    return {
+      code: "VIEWER",
+      className: "badge badge-viewer",
+      title: "Người xem (chỉ xem danh sách thành viên)"
+    };
+  }
+  return {
+    code: "MEMBER",
+    className: "badge badge-member",
+    title: "Thành viên dự án (chỉ xem danh sách thành viên)"
+  };
+}
+
 function getRoleBadge(role) {
-  const normalized = normalizeProjectRole(role);
-  if (normalized === "OWNER") return '<span class="badge badge-owner">OWNER</span>';
-  if (normalized === "VIEWER") return '<span class="badge badge-viewer">VIEWER</span>';
-  return '<span class="badge badge-member">MEMBER</span>';
+  const meta = getRoleMeta(role);
+  return (
+    '<span class="' +
+    meta.className +
+    '" title="' +
+    safeEscape(meta.title) +
+    '">' +
+    meta.code +
+    "</span>"
+  );
 }
 
 function getMemberName(member) {
@@ -187,28 +247,190 @@ function getMemberEmail(member) {
   return "";
 }
 
-// Kiểm tra người dùng hiện tại có phải là Owner hoặc Admin không
+// Xác định ngữ cảnh người dùng hiện tại, vai trò trong dự án và quyền quản lý thành viên
+function getCurrentUserRoleContext() {
+  const isAuthenticated =
+    typeof auth !== "undefined" && typeof auth.isAuthenticated === "function"
+      ? auth.isAuthenticated()
+      : false;
+  const currentUser =
+    typeof auth !== "undefined" && typeof auth.getUser === "function"
+      ? auth.getUser()
+      : null;
+
+  if (isAuthenticated && currentUser) {
+    const displayName = currentUser.full_name || currentUser.name || currentUser.email || "Người dùng";
+    const email = String(currentUser.email || "").toLowerCase();
+    const userId = currentUser.id != null ? Number(currentUser.id) : null;
+    const sysRole = String(currentUser.role || currentUser.system_role || "").trim().toUpperCase();
+
+    if (sysRole === "ADMIN") {
+      return {
+        name: displayName,
+        email,
+        userId,
+        role: "ADMIN",
+        canManage: true,
+        isDemo: false
+      };
+    }
+
+    if (projectMeta && projectMeta.owner_id != null && userId != null && Number(projectMeta.owner_id) === userId) {
+      return {
+        name: displayName,
+        email,
+        userId,
+        role: "OWNER",
+        canManage: true,
+        isDemo: false
+      };
+    }
+
+    const matchedMember = membersList.find((m) => {
+      const mEmail = getMemberEmail(m).toLowerCase();
+      const mUserId = m.user_id != null ? Number(m.user_id) : null;
+      return (email && mEmail === email) || (userId != null && mUserId === userId);
+    });
+
+    if (matchedMember) {
+      const projRole = normalizeProjectRole(matchedMember.role);
+      return {
+        name: displayName,
+        email,
+        userId,
+        role: projRole,
+        canManage: projRole === "OWNER",
+        isDemo: false
+      };
+    }
+
+    // Người dùng đã đăng nhập nhưng không phải Owner/Admin hoặc chưa có vai trò OWNER trong dự án
+    return {
+      name: displayName,
+      email,
+      userId,
+      role: "VIEWER",
+      canManage: false,
+      isDemo: false
+    };
+  }
+
+  // Chế độ xem thử cục bộ (khi chưa đăng nhập tài khoản Backend)
+  const demoProfiles = {
+    OWNER: {
+      name: "Lê Quang Huy",
+      email: "huy.lq@ptit.edu.vn",
+      userId: 1,
+      role: "OWNER",
+      canManage: true,
+      isDemo: true
+    },
+    MEMBER: {
+      name: "Nguyễn Minh Đức",
+      email: "duc.nm@ptit.edu.vn",
+      userId: 2,
+      role: "MEMBER",
+      canManage: false,
+      isDemo: true
+    },
+    VIEWER: {
+      name: "Người xem dự án",
+      email: "viewer@ptit.edu.vn",
+      userId: null,
+      role: "VIEWER",
+      canManage: false,
+      isDemo: true
+    }
+  };
+
+  return demoProfiles[demoRoleOverride] || demoProfiles.OWNER;
+}
+
+// Kiểm tra người dùng hiện tại có quyền quản lý (OWNER / ADMIN) không
 function isCurrentUserOwnerOrAdmin() {
-  const currentUser = (typeof auth !== "undefined" && auth.getUser) ? auth.getUser() : null;
-  if (!currentUser) {
-    // Mặc định tài khoản mẫu trên trang là Lê Quang Huy (Owner)
+  return getCurrentUserRoleContext().canManage;
+}
+
+function canManageMembers() {
+  return isCurrentUserOwnerOrAdmin();
+}
+
+function isSameAsCurrentUser(member, ctx) {
+  if (!ctx) return false;
+  const mEmail = getMemberEmail(member).toLowerCase();
+  if (ctx.email && mEmail && mEmail === ctx.email) return true;
+  if (ctx.userId != null && member.user_id != null && Number(member.user_id) === Number(ctx.userId)) {
     return true;
   }
+  return false;
+}
 
-  const sysRole = String(currentUser.role || currentUser.system_role || "").toLowerCase();
-  if (sysRole === "admin" || sysRole === "owner") {
-    return true;
+function applyRolePermissionsUI() {
+  const ctx = getCurrentUserRoleContext();
+  const roleMeta = getRoleMeta(ctx.role);
+
+  if (currentUserLabel) {
+    currentUserLabel.textContent = ctx.name;
   }
 
-  const email = String(currentUser.email || "").toLowerCase();
-  const matchedMember = membersList.find(
-    (m) => getMemberEmail(m).toLowerCase() === email || Number(m.user_id) === Number(currentUser.id)
-  );
-  if (matchedMember) {
-    return normalizeProjectRole(matchedMember.role) === "OWNER";
+  if (currentUserRoleBadge) {
+    currentUserRoleBadge.className = roleMeta.className;
+    currentUserRoleBadge.textContent = roleMeta.code;
+    currentUserRoleBadge.title = roleMeta.title;
   }
 
-  return true;
+  if (demoRoleBar) {
+    demoRoleBar.classList.toggle("is-visible", Boolean(ctx.isDemo));
+  }
+  if (demoRoleSwitcher && ctx.isDemo && demoRoleSwitcher.value !== ctx.role) {
+    demoRoleSwitcher.value = ctx.role;
+    demoRoleSwitcher.dispatchEvent(new Event("change", { bubbles: false }));
+  }
+
+  // Ẩn khung và nút thêm thành viên với người không có quyền
+  if (addMemberCard) {
+    addMemberCard.classList.toggle("is-hidden", !ctx.canManage);
+  }
+  if (btnAddMember) {
+    btnAddMember.classList.toggle("is-hidden", !ctx.canManage);
+    btnAddMember.disabled = !ctx.canManage;
+  }
+
+  // Hiện thông báo chế độ chỉ xem khi không có quyền thêm/xóa
+  if (readonlyPermissionNotice) {
+    readonlyPermissionNotice.classList.toggle("is-visible", !ctx.canManage);
+  }
+  if (readonlyPermissionText && !ctx.canManage) {
+    readonlyPermissionText.innerHTML =
+      "Bạn đang xem trang với vai trò " +
+      getRoleBadge(ctx.role) +
+      ". Chỉ <strong>Chủ dự án (OWNER)</strong> hoặc <strong>Quản trị viên (ADMIN)</strong> mới có quyền thêm hoặc xóa thành viên.";
+  }
+
+  // Ẩn cột Thao tác trong bảng khi không có quyền xóa
+  if (membersActionTh) {
+    membersActionTh.classList.toggle("is-hidden", !ctx.canManage);
+  }
+
+  // Ẩn hoặc khóa nút đổi trạng thái dự án theo quyền
+  if (projectStatusEditor) {
+    projectStatusEditor.classList.toggle("is-hidden", !ctx.canManage);
+  }
+  if (projectStatusSelect) {
+    projectStatusSelect.disabled = !ctx.canManage;
+  }
+  if (btnUpdateProjectStatus) {
+    btnUpdateProjectStatus.disabled = !ctx.canManage;
+  }
+  if (projectStatusRoleHint) {
+    projectStatusRoleHint.textContent = ctx.canManage
+      ? "(Quyền Owner / Admin: có thể đổi trạng thái)"
+      : "(Bạn không có quyền đổi trạng thái — chỉ Owner / Admin được phép)";
+  }
+
+  if (!ctx.canManage && deleteModal && deleteModal.classList.contains("is-open")) {
+    closeDeleteModal();
+  }
 }
 
 // Đồng bộ và hiển thị trạng thái dự án (Lên kế hoạch, Đang làm, Đã hoàn thành)
@@ -240,14 +462,7 @@ function renderProjectStatusUI(statusValue) {
     }
   }
 
-  const canChangeStatus = isCurrentUserOwnerOrAdmin();
-  if (projectStatusSelect) projectStatusSelect.disabled = !canChangeStatus;
-  if (btnUpdateProjectStatus) btnUpdateProjectStatus.disabled = !canChangeStatus;
-  if (projectStatusRoleHint) {
-    projectStatusRoleHint.textContent = canChangeStatus
-      ? "(Quyền Owner / Admin: có thể đổi trạng thái)"
-      : "(Chỉ Owner và Admin mới có thể đổi trạng thái)";
-  }
+  applyRolePermissionsUI();
 }
 
 if (btnUpdateProjectStatus) {
@@ -300,6 +515,10 @@ if (btnUpdateProjectStatus) {
 function renderMembers() {
   if (!membersTbody) return;
 
+  applyRolePermissionsUI();
+  const ctx = getCurrentUserRoleContext();
+  const canManage = ctx.canManage;
+
   const filtered = membersList.filter((m) => {
     const roleUpper = normalizeProjectRole(m.role);
     const matchRole = roleFilter === "ALL" || roleUpper === roleFilter;
@@ -315,36 +534,59 @@ function renderMembers() {
   if (memberCountLabel) memberCountLabel.textContent = String(filtered.length);
   if (totalMembersStat) totalMembersStat.textContent = String(membersList.length);
 
-  if (filtered.length === 0) {
-    membersTbody.innerHTML =
-      '<tr><td colspan="6" style="text-align: center; color: var(--color-muted); padding: 24px;">Không tìm thấy thành viên phù hợp.</td></tr>';
-    return;
+  const ownerCount = membersList.filter((item) => normalizeProjectRole(item.role) === "OWNER").length;
+  const memberCount = membersList.filter((item) => normalizeProjectRole(item.role) === "MEMBER").length;
+  const viewerCount = membersList.filter((item) => normalizeProjectRole(item.role) === "VIEWER").length;
+
+  if (roleBreakdownSummary) {
+    roleBreakdownSummary.innerHTML =
+      "<span>" + ownerCount + " OWNER</span>" +
+      "<span>&middot;</span>" +
+      "<span>" + memberCount + " MEMBER</span>" +
+      "<span>&middot;</span>" +
+      "<span>" + viewerCount + " VIEWER</span>";
   }
 
-  const ownerCount = membersList.filter((item) => normalizeProjectRole(item.role) === "OWNER").length;
+  const colSpan = canManage ? 6 : 5;
+  if (filtered.length === 0) {
+    membersTbody.innerHTML =
+      '<tr><td colspan="' +
+      colSpan +
+      '" style="text-align: center; color: var(--color-muted); padding: 24px;">Không tìm thấy thành viên phù hợp.</td></tr>';
+    return;
+  }
 
   membersTbody.innerHTML = filtered
     .map((m, idx) => {
       const roleUpper = normalizeProjectRole(m.role);
-      const isProtectedOwner = roleUpper === "OWNER" && (Number(m.id) === 1 || ownerCount <= 1);
+      const isProtectedOwner =
+        roleUpper === "OWNER" &&
+        (Number(m.id) === 1 ||
+          (projectMeta && Number(m.user_id) === Number(projectMeta.owner_id)) ||
+          ownerCount <= 1);
       const name = safeEscape(getMemberName(m));
       const email = safeEscape(getMemberEmail(m));
       const joinedDate = safeDate(m.joined_at);
+      const selfTag = isSameAsCurrentUser(m, ctx) ? '<span class="badge-self">Bạn</span>' : "";
 
-      const actionHtml = isProtectedOwner
-        ? '<span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span>'
-        : '<button type="button" class="btn btn-small btn-danger btn-remove-member" data-id="' +
-          m.id +
-          '">Xóa khỏi dự án</button>';
+      let actionCellHtml = "";
+      if (canManage) {
+        const actionHtml = isProtectedOwner
+          ? '<span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span>'
+          : '<button type="button" class="btn btn-small btn-danger btn-remove-member" data-id="' +
+            m.id +
+            '">Xóa khỏi dự án</button>';
+        actionCellHtml = "<td>" + actionHtml + "</td>";
+      }
 
       return (
         "<tr>" +
         "<td>" + (idx + 1) + "</td>" +
-        "<td><strong>" + name + "</strong></td>" +
+        "<td><strong>" + name + "</strong>" + selfTag + "</td>" +
         "<td>" + email + "</td>" +
         "<td>" + getRoleBadge(roleUpper) + "</td>" +
         "<td>" + joinedDate + "</td>" +
-        "<td>" + actionHtml + "</td>" +
+        actionCellHtml +
         "</tr>"
       );
     })
@@ -355,8 +597,27 @@ async function loadProjectMembers() {
   const savedStatus = localStorage.getItem(STATUS_STORAGE_KEY) || "ACTIVE";
   renderProjectStatusUI(savedStatus);
 
-  try {
-    if (typeof api !== "undefined" && api.get) {
+  if (typeof api !== "undefined" && api.get) {
+    try {
+      const projectRes = await api.get("/projects/" + currentProjectId);
+      const projectData = projectRes?.data || projectRes;
+      if (projectData && typeof projectData === "object" && !Array.isArray(projectData)) {
+        projectMeta = projectData;
+        if (projectTitleEl && projectData.title) {
+          projectTitleEl.textContent = "Dự án: " + projectData.title;
+        }
+        if (projectDescEl && projectData.description) {
+          projectDescEl.textContent = projectData.description;
+        }
+        if (projectData.status) {
+          renderProjectStatusUI(projectData.status);
+        }
+      }
+    } catch (err) {
+      // Bỏ qua nếu backend chưa bật hoặc không lấy được chi tiết dự án
+    }
+
+    try {
       const res = await api.get("/projects/" + currentProjectId + "/members");
       const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : null;
       if (items && items.length > 0) {
@@ -365,9 +626,9 @@ async function loadProjectMembers() {
         renderMembers();
         return;
       }
+    } catch (err) {
+      // Fallback dữ liệu trong localStorage khi backend chưa bật
     }
-  } catch (err) {
-    // Fallback dữ liệu trong localStorage khi backend chưa bật
   }
 
   saveStoredMembers(membersList);
@@ -682,6 +943,10 @@ if (emailInput) {
 if (addMemberForm) {
   addMemberForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!canManageMembers()) {
+      notifyResult("Bạn không có quyền thêm thành viên vào dự án này.", "error");
+      return;
+    }
     const email = (emailInput?.value || "").trim().toLowerCase();
     const selectedRole = (roleSelect?.value || "member").toLowerCase();
 
@@ -791,6 +1056,10 @@ if (membersTbody) {
   membersTbody.addEventListener("click", (e) => {
     const btn = e.target.closest(".btn-remove-member");
     if (!btn) return;
+    if (!canManageMembers()) {
+      notifyResult("Bạn không có quyền xóa thành viên khỏi dự án này.", "error");
+      return;
+    }
     const memberId = Number(btn.dataset.id);
     const target = membersList.find((m) => Number(m.id) === memberId);
     if (target) openDeleteModal(target);
@@ -813,6 +1082,11 @@ document.addEventListener("keydown", (e) => {
 
 if (btnConfirmDelete) {
   btnConfirmDelete.addEventListener("click", async () => {
+    if (!canManageMembers()) {
+      closeDeleteModal();
+      notifyResult("Bạn không có quyền xóa thành viên khỏi dự án này.", "error");
+      return;
+    }
     if (!pendingDeleteMember) return;
     const target = pendingDeleteMember;
     const targetName = getMemberName(target);
@@ -863,6 +1137,17 @@ if (filterRoleSelect) {
   filterRoleSelect.addEventListener("change", (e) => {
     roleFilter = e.target.value;
     renderMembers();
+  });
+}
+
+if (demoRoleSwitcher) {
+  demoRoleSwitcher.value = demoRoleOverride;
+  demoRoleSwitcher.addEventListener("change", (e) => {
+    const nextRole = String(e.target.value || "OWNER").trim().toUpperCase();
+    if (nextRole === "OWNER" || nextRole === "MEMBER" || nextRole === "VIEWER") {
+      demoRoleOverride = nextRole;
+      renderMembers();
+    }
   });
 }
 

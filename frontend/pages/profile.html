@@ -7,45 +7,9 @@
   <link rel="icon" href="../assets/images/logo.png">
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    :root {
-      --color-primary: #163b65;
-      --color-primary-dark: #0f2947;
-      --color-primary-soft: #eef4fb;
-      --color-accent: #2fa84f;
-      --color-danger: #dc2626;
-      --color-success: #16a34a;
-      --color-warning: #d97706;
-      --color-text: #0f172a;
-      --color-text-sub: #475569;
-      --color-muted: #64748b;
-      --color-border: #e2e8f0;
-      --color-bg: #f1f5f9;
-      --color-card: #ffffff;
-      --radius: 10px;
-      --radius-lg: 14px;
-      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
-      --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
-      color-scheme: light;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      color: var(--color-text);
-      background: var(--color-bg);
-      line-height: 1.5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
     .profile-container {
       width: 100%;
-      max-width: 1120px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 24px 20px 40px;
       flex: 1;
@@ -357,8 +321,23 @@
     }
 
     @media (max-width: 600px) {
+      .profile-container {
+        padding: 16px 14px 32px;
+      }
+      .surface-card {
+        padding: 18px;
+      }
+      .summary-card {
+        padding: 0;
+      }
       .form-grid-2 {
         grid-template-columns: 1fr;
+      }
+      .form-footer-actions {
+        flex-wrap: wrap;
+      }
+      .form-footer-actions .btn {
+        flex: 1 1 auto;
       }
     }
   </style>

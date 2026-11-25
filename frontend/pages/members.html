@@ -7,260 +7,23 @@
   <link rel="icon" href="../assets/images/logo.png">
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    :root {
-      --color-primary: #163b65;
-      --color-primary-dark: #0f2947;
-      --color-accent: #2fa84f;
-      --color-danger: #dc2626;
-      --color-success: #16a34a;
-      --color-warning: #d97706;
-      --color-text: #1f2937;
-      --color-muted: #6b7280;
-      --color-border: #e5e7eb;
-      --color-bg: #f8fafc;
-      --color-card: #ffffff;
-      --radius: 8px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      color: var(--color-text);
-      background: var(--color-bg);
-      line-height: 1.5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    a {
-      color: var(--color-primary);
-      text-decoration: none;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
-
-    main.container {
-      flex: 1;
-      padding-top: 24px;
-      padding-bottom: 24px;
-    }
-
-    #app-header {
-      background: var(--color-card);
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      height: 72px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--color-primary);
-      text-decoration: none;
-    }
-
-    .nav {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .nav a {
-      padding: 6px 14px;
-      border-radius: var(--radius);
-      color: var(--color-muted);
-      font-size: 14px;
-      text-decoration: none;
-    }
-
-    .nav a:hover {
-      background: var(--color-bg);
-      color: var(--color-text);
-    }
-
-    .nav a.active {
-      background: #e8f0f8;
-      color: var(--color-primary);
-      font-weight: 600;
-    }
-
-    .user-nav {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-left: 12px;
-      padding-left: 12px;
-      border-left: 1px solid var(--color-border);
-      font-size: 13px;
-      color: var(--color-muted);
-    }
-
-    #app-footer {
-      padding: 18px 0;
-      text-align: center;
-      color: var(--color-muted);
-      font-size: 13px;
-      border-top: 1px solid var(--color-border);
-      background: var(--color-card);
-    }
-
-    .card {
-      background: var(--color-card);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      padding: 22px;
-      margin-bottom: 20px;
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      font: inherit;
-      font-size: 14px;
-      background: #ffffff;
-    }
-
-    input:focus,
-    select:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px rgba(22, 59, 101, 0.12);
-    }
-
-    input.is-invalid {
-      border-color: var(--color-danger);
-      background: #fef2f2;
-    }
-
-    .form-error {
-      color: var(--color-danger);
-      font-size: 12px;
-      margin-top: 4px;
-      display: none;
-    }
-
-    .form-error.is-visible {
-      display: block;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 8px 16px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      background: var(--color-card);
-      color: var(--color-text);
-      font: inherit;
-      font-size: 14px;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .btn:hover {
-      background: var(--color-bg);
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background: var(--color-primary);
-      border-color: var(--color-primary);
-      color: #fff;
-    }
-
-    .btn-primary:hover {
-      background: var(--color-primary-dark);
-      color: #fff;
-    }
-
-    .btn-danger {
-      color: var(--color-danger);
-      border-color: #fca5a5;
-    }
-
-    .btn-danger-solid {
-      background: var(--color-danger);
-      border-color: var(--color-danger);
-      color: #ffffff;
-    }
-
-    .btn-small {
-      padding: 4px 10px;
-      font-size: 12px;
-    }
-
-    .badge {
+    .badge-self {
       display: inline-block;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 12px;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 11px;
       font-weight: 600;
-    }
-
-    .badge-active {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .badge-planning {
       background: #e0f2fe;
-      color: #075985;
+      color: #0369a1;
+      vertical-align: middle;
     }
 
-    .badge-completed {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    .badge-owner {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-
-    .badge-member {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
-    .badge-viewer {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    .page-header {
+    .members-hero-inner {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 16px;
+      gap: 18px;
       flex-wrap: wrap;
     }
 
@@ -269,44 +32,68 @@
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     .project-subnav {
+      margin-bottom: 18px;
+    }
+
+    .role-summary-row {
       display: flex;
-      gap: 8px;
-      border-bottom: 1px solid var(--color-border);
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-    }
-
-    .subnav-link {
-      padding: 6px 14px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--color-muted);
-      text-decoration: none;
-    }
-
-    .subnav-link:hover {
-      background: var(--color-card);
-      color: var(--color-text);
-    }
-
-    .subnav-link.active {
-      background: var(--color-primary);
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 8px;
       flex-wrap: wrap;
+    }
+
+    .role-breakdown {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .demo-role-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 6px 10px;
+      border: 1px dashed #cbd5e1;
+      border-radius: var(--radius);
+      background: #ffffff;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .demo-role-bar.is-visible {
+      display: flex;
+    }
+
+    .permission-notice {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      border-radius: var(--radius-lg);
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-size: 13.5px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .permission-notice.is-visible {
+      display: flex;
+    }
+
+    .is-hidden {
+      display: none !important;
     }
 
     .project-stats-bar {
@@ -348,15 +135,16 @@
     }
 
     .table th {
-      background: var(--color-bg);
+      background: #f8fafc;
       color: var(--color-muted);
-      font-weight: 600;
-      font-size: 12px;
+      font-weight: 700;
+      font-size: 11.5px;
       text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .table tbody tr:hover {
-      background: var(--color-bg);
+      background: #f8fafc;
     }
 
     .status-banner {
@@ -383,89 +171,11 @@
       border: 1px solid #fecaca;
     }
 
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 16px;
-    }
-
-    .modal-backdrop.is-open {
-      display: flex;
-    }
-
-    .modal {
-      background: var(--color-card);
-      width: 100%;
-      max-width: 440px;
-      border-radius: var(--radius);
-      padding: 22px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      font-size: 17px;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 22px;
-      line-height: 1;
-      cursor: pointer;
-      color: var(--color-muted);
-    }
-
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 20px;
-    }
-
-    .toast {
-      position: fixed;
-      right: 16px;
-      bottom: 16px;
-      padding: 10px 16px;
-      border-radius: var(--radius);
-      color: #fff;
-      font-size: 14px;
-      z-index: 200;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .toast-success {
-      background: var(--color-success);
-    }
-
-    .toast-error {
-      background: var(--color-danger);
-    }
-
-    .toast-info {
-      background: #0284c7;
-    }
-
     .autocomplete-wrap {
       position: relative;
       flex: 1;
       min-width: 260px;
-      max-width: 400px;
+      max-width: 420px;
     }
 
     .autocomplete-menu {
@@ -603,68 +313,115 @@
     .selected-user-clear:hover {
       color: var(--color-danger);
     }
+
+    @media (max-width: 768px) {
+      .project-stats-bar {
+        align-items: flex-start;
+        width: 100%;
+      }
+      .demo-role-bar {
+        width: 100%;
+      }
+      .demo-role-bar .cselect-wrap {
+        width: 100% !important;
+      }
+      .project-subnav .subnav-pills {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .autocomplete-wrap {
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
+        flex: 1 1 100%;
+      }
+      #add-member-form .cselect-wrap,
+      #add-member-form #btn-add-member,
+      .toolbar input,
+      .toolbar .cselect-wrap {
+        width: 100% !important;
+      }
+      .toolbar > div {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body data-root="../">
-  <header id="app-header">
-    <div class="container header-inner">
-      <a href="../index.html" class="brand">Student Project Management System</a>
-      <nav class="nav">
-        <a href="../index.html">Trang chủ</a>
-        <a href="projects.html">Dự án của tôi</a>
-        <a href="members.html" class="active">Thành viên</a>
-        <div class="user-nav">
-          <span>Xin chào, <strong>Lê Quang Huy ( Owner )</strong></span>
-          <button type="button" class="btn btn-small btn-danger">Đăng xuất</button>
-        </div>
-      </nav>
-    </div>
-  </header>
+  <header id="app-header"></header>
 
   <main class="container">
-    <div class="page-header">
-      <div>
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <h1 id="project-title" style="margin: 0; font-size: 24px;">Dự án: Student Project Hub</h1>
-          <span class="badge badge-active" id="project-status-badge">Đang làm</span>
-        </div>
-        <p id="project-desc" style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
-          Quản lý danh sách thành viên, thêm thành viên qua API và phân quyền vai trò trong dự án
-        </p>
-
-        <div class="project-status-box" id="project-status-controls">
-          <span style="font-size: 13px; font-weight: 600;">Trạng thái dự án:</span>
-          <select id="project-status-select" style="width: 170px; padding: 5px 10px; font-size: 13px;">
-            <option value="PLANNING">Lên kế hoạch</option>
-            <option value="ACTIVE" selected>Đang làm</option>
-            <option value="COMPLETED">Đã hoàn thành</option>
-          </select>
-          <button type="button" class="btn btn-small btn-primary" id="btn-update-project-status">
-            Đổi trạng thái
-          </button>
-          <span id="project-status-role-hint" style="font-size: 12px; color: var(--color-muted);">
-            (Chỉ Owner và Admin được đổi)
-          </span>
-        </div>
-      </div>
-
-      <div class="project-stats-bar">
+    <section class="project-hero-card">
+      <div class="members-hero-inner">
         <div>
-          <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy ( Owner )</strong></span>
-          <span style="margin-left: 14px;">Thành viên: <strong id="total-members-stat">5</strong></span>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <h1 id="project-title" style="margin: 0; font-size: 22px; letter-spacing: -0.02em;">Dự án: Student Project Hub</h1>
+            <span class="badge badge-active" id="project-status-badge">Đang làm</span>
+          </div>
+          <p id="project-desc" style="margin: 4px 0 0; color: var(--color-text-sub); font-size: 13.5px;">
+            Quản lý danh sách thành viên, thêm thành viên qua API và phân quyền vai trò trong dự án
+          </p>
+
+          <div class="project-status-box" id="project-status-controls">
+            <span style="font-size: 13px; font-weight: 600; color: var(--color-text-sub);">Trạng thái dự án:</span>
+            <span id="project-status-editor" style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <select id="project-status-select" style="width: 170px; padding: 5px 10px; font-size: 13px;">
+                <option value="PLANNING">Lên kế hoạch</option>
+                <option value="ACTIVE" selected>Đang làm</option>
+                <option value="COMPLETED">Đã hoàn thành</option>
+              </select>
+              <button type="button" class="btn btn-small btn-primary" id="btn-update-project-status">
+                Đổi trạng thái
+              </button>
+            </span>
+            <span id="project-status-role-hint" style="font-size: 12px; color: var(--color-muted);">
+              (Chỉ Owner và Admin được đổi)
+            </span>
+          </div>
+        </div>
+
+        <div class="project-stats-bar">
+          <div class="role-summary-row">
+            <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy</strong></span>
+            <span>Vai trò của bạn: <span class="badge badge-owner" id="current-user-role-badge">OWNER</span></span>
+            <span>Thành viên: <strong id="total-members-stat">5</strong></span>
+          </div>
+          <div class="role-breakdown" id="role-breakdown-summary">
+            <span>1 OWNER</span>
+            <span>&middot;</span>
+            <span>4 MEMBER</span>
+            <span>&middot;</span>
+            <span>0 VIEWER</span>
+          </div>
+          <div class="demo-role-bar" id="demo-role-bar">
+            <label for="demo-role-switcher" style="margin: 0; font-weight: 600; color: var(--color-text);">Xem thử quyền:</label>
+            <select id="demo-role-switcher" style="width: 155px; padding: 4px 8px; font-size: 12.5px;">
+              <option value="OWNER">OWNER (Chủ dự án)</option>
+              <option value="MEMBER">MEMBER (Thành viên)</option>
+              <option value="VIEWER">VIEWER (Chỉ xem)</option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <div class="project-subnav">
-      <a href="tasks.html" id="subnav-tasks-link" class="subnav-link">Danh sách Task</a>
-      <a href="members.html" id="subnav-members-link" class="subnav-link active">Thành viên dự án</a>
-      <a href="projects.html" class="subnav-link">Quay lại Danh sách dự án</a>
+      <div class="subnav-pills">
+        <a href="tasks.html" id="subnav-tasks-link" class="subnav-pill">Bảng Kanban Task</a>
+        <a href="members.html" id="subnav-members-link" class="subnav-pill active">Thành viên dự án</a>
+        <a href="projects.html" class="subnav-pill">Tất cả dự án</a>
+      </div>
     </div>
 
     <div id="status-banner" class="status-banner"></div>
 
-    <div class="card">
+    <div id="readonly-permission-notice" class="permission-notice" role="status">
+      <div id="readonly-permission-text">
+        Bạn đang xem trang với vai trò <span class="badge badge-member">MEMBER</span>. Chỉ Chủ dự án (OWNER) hoặc Quản trị viên (ADMIN) mới có quyền thêm hoặc xóa thành viên.
+      </div>
+    </div>
+
+    <div class="card" id="add-member-card">
       <h3 style="font-size: 16px; margin: 0 0 6px;">Thêm thành viên vào dự án</h3>
       <p style="font-size: 13px; color: var(--color-muted); margin: 0 0 14px;">
         Nhập email tài khoản sinh viên đã đăng ký trên hệ thống để thêm vào dự án.
@@ -727,7 +484,7 @@
               <th>Email</th>
               <th>Vai trò</th>
               <th>Ngày tham gia</th>
-              <th>Thao tác</th>
+              <th id="members-action-th">Thao tác</th>
             </tr>
           </thead>
           <tbody id="members-tbody">
@@ -738,46 +495,6 @@
               <td><span class="badge badge-owner">OWNER</span></td>
               <td>01/09/2026</td>
               <td><span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><strong>Nguyễn Minh Đức</strong></td>
-              <td>duc.nm@ptit.edu.vn</td>
-              <td><span class="badge badge-member">MEMBER</span></td>
-              <td>02/09/2026</td>
-              <td>
-                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
-              </td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td><strong>Lưu Đức Anh</strong></td>
-              <td>anh.ld@ptit.edu.vn</td>
-              <td><span class="badge badge-member">MEMBER</span></td>
-              <td>02/09/2026</td>
-              <td>
-                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
-              </td>
-            </tr>
-            <tr>
-              <td>4</td>
-              <td><strong>Trần Nhật Long</strong></td>
-              <td>long.tn@ptit.edu.vn</td>
-              <td><span class="badge badge-member">MEMBER</span></td>
-              <td>03/09/2026</td>
-              <td>
-                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
-              </td>
-            </tr>
-            <tr>
-              <td>5</td>
-              <td><strong>Hoàng Đức Duy Anh</strong></td>
-              <td>duyanh.hd@ptit.edu.vn</td>
-              <td><span class="badge badge-member">MEMBER</span></td>
-              <td>03/09/2026</td>
-              <td>
-                <button type="button" class="btn btn-small btn-danger">Xóa khỏi dự án</button>
-              </td>
             </tr>
           </tbody>
         </table>
@@ -801,11 +518,7 @@
     </div>
   </div>
 
-  <footer id="app-footer">
-    <div class="container">
-      © 2026 Student Project Management System · Nhóm thực tập sinh viên CNTT PTIT
-    </div>
-  </footer>
+  <footer id="app-footer"></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
   <script src="../js/config.js"></script>
