@@ -88,9 +88,22 @@ def create_task_service(
     if not project:
         raise NotFoundException(message=f"Không tìm thấy dự án với id={data.project_id}.")
 
-    # 2. Kiểm tra phân quyền: Người tạo phải thuộc dự án (chủ sở hữu hoặc thành viên)
-    if not is_user_in_project(db=db, project_id=data.project_id, user_id=current_user_id):
-        raise ForbiddenException(message="Bạn không phải thành viên của dự án này.")
+    # 2. Kiểm tra phân quyền: Người tạo phải thuộc dự án (owner/admin/member) hoặc là Admin hệ thống; chặn Viewer
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    is_system_admin = current_user is not None and getattr(current_user, "role", None) in (
+        UserRole.ADMIN,
+        "ADMIN",
+        "admin",
+    )
+    if not is_system_admin and project.owner_id != current_user_id:
+        role = get_user_project_role(db=db, project_id=data.project_id, user_id=current_user_id)
+        if not role:
+            raise ForbiddenException(message="Bạn không phải thành viên của dự án này.")
+        role_str = str(role.value if hasattr(role, "value") else role).strip().lower()
+        if role_str == ProjectMemberRole.VIEWER.value or role_str == "viewer":
+            raise ForbiddenException(
+                message="Thành viên có vai trò Người xem (Viewer) không có quyền tạo công việc mới."
+            )
 
     # 3. Kiểm tra người được giao (nếu có chỉ định)
     if data.assignee_id is not None:

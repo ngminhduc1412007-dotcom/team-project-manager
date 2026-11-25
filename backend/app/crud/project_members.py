@@ -149,11 +149,31 @@ def add_project_member_by_email(
     )
 
 
-# Lấy danh sách thành viên trong dự án.
-def get_project_members(db: Session, project_id: int) -> List[ProjectMember]:
-    project = db.query(Project.id).filter(Project.id == project_id).first()
+# Lấy danh sách thành viên trong dự án (chỉ thành viên thuộc dự án hoặc Admin hệ thống mới được xem).
+def get_project_members(
+    db: Session,
+    project_id: int,
+    current_user: Optional[Union[User, int]] = None,
+) -> List[ProjectMember]:
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise NotFoundException(message=f"Không tìm thấy dự án với id={project_id}.")
+
+    if current_user is not None:
+        if isinstance(current_user, User):
+            user = current_user
+        else:
+            user = db.query(User).filter(User.id == current_user).first()
+        if not user:
+            raise ForbiddenException(message="Không xác định được danh tính người dùng.")
+
+        is_system_admin = getattr(user, "role", None) in (UserRole.ADMIN, "ADMIN", "admin")
+        if not is_system_admin and not is_user_in_project(
+            db=db, project_id=project_id, user_id=user.id
+        ):
+            raise ForbiddenException(
+                message="Bạn không thuộc dự án này, không có quyền xem danh sách thành viên."
+            )
 
     return (
         db.query(ProjectMember)
