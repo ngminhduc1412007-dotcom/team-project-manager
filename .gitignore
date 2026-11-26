@@ -25,4 +25,5 @@ Thumbs.db
 team-project-manager/
 backend/team-project-manager/
 
-
+# File người dùng tải lên
+uploads/
