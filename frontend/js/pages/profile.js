@@ -339,6 +339,24 @@ if (profileForm) {
 }
 
 /* ---------- VALIDATE & XỬ LÝ FORM ĐỔI MẬT KHẨU ---------- */
+function getPasswordStrengthError(password) {
+  if (!password || !password.trim()) {
+    return "Mật khẩu mới không được để trống hoặc chỉ chứa khoảng trắng.";
+  }
+  if (password.length > 100) {
+    return "Mật khẩu mới không được vượt quá 100 ký tự.";
+  }
+  const hasMinLen = password.length >= 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9\s]/.test(password);
+  if (!hasMinLen || !hasUpper || !hasLower || !hasDigit || !hasSpecial) {
+    return "Mật khẩu mới phải từ 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.";
+  }
+  return "";
+}
+
 function updatePasswordStrength(password) {
   if (!strengthFill || !strengthText) return;
   if (!password) {
@@ -350,26 +368,26 @@ function updatePasswordStrength(password) {
   }
 
   let score = 0;
-  if (password.length >= 6) score++;
-  if (password.length >= 10) score++;
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9\s]/.test(password)) score++;
 
   if (score <= 2) {
     strengthFill.style.width = "33%";
     strengthFill.style.background = "#dc2626";
-    strengthText.textContent = "Độ mạnh mật khẩu: Yếu";
+    strengthText.textContent = "Độ mạnh mật khẩu: Yếu (cần đủ 8+ ký tự, hoa, thường, số, ký tự đặc biệt)";
     strengthText.style.color = "#dc2626";
-  } else if (score <= 3) {
+  } else if (score <= 4) {
     strengthFill.style.width = "66%";
     strengthFill.style.background = "#d97706";
-    strengthText.textContent = "Độ mạnh mật khẩu: Trung bình";
+    strengthText.textContent = "Độ mạnh mật khẩu: Trung bình (cần đủ hoa, thường, số và ký tự đặc biệt)";
     strengthText.style.color = "#d97706";
   } else {
     strengthFill.style.width = "100%";
     strengthFill.style.background = "#16a34a";
-    strengthText.textContent = "Độ mạnh mật khẩu: Mạnh";
+    strengthText.textContent = "Độ mạnh mật khẩu: Mạnh (đạt chuẩn bảo mật)";
     strengthText.style.color = "#16a34a";
   }
 }
@@ -419,14 +437,9 @@ function validatePasswordForm() {
     valid = false;
   }
 
-  if (!newPassword.trim()) {
-    setFieldError(newPasswordInput, newPasswordError, "Mật khẩu mới không được để trống hoặc chỉ chứa khoảng trắng.");
-    valid = false;
-  } else if (newPassword.trim().length < 6) {
-    setFieldError(newPasswordInput, newPasswordError, "Mật khẩu mới phải có độ dài tối thiểu 6 ký tự.");
-    valid = false;
-  } else if (newPassword.length > 100) {
-    setFieldError(newPasswordInput, newPasswordError, "Mật khẩu mới không được vượt quá 100 ký tự.");
+  const strengthErr = getPasswordStrengthError(newPassword);
+  if (strengthErr) {
+    setFieldError(newPasswordInput, newPasswordError, strengthErr);
     valid = false;
   } else if (oldPassword && newPassword === oldPassword) {
     setFieldError(newPasswordInput, newPasswordError, "Mật khẩu mới không được trùng với mật khẩu hiện tại.");

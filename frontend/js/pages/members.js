@@ -603,8 +603,9 @@ async function loadProjectMembers() {
       const projectData = projectRes?.data || projectRes;
       if (projectData && typeof projectData === "object" && !Array.isArray(projectData)) {
         projectMeta = projectData;
-        if (projectTitleEl && projectData.title) {
-          projectTitleEl.textContent = "Dự án: " + projectData.title;
+        const projName = projectData.name || projectData.title;
+        if (projectTitleEl && projName) {
+          projectTitleEl.textContent = "Dự án: " + projName;
         }
         if (projectDescEl && projectData.description) {
           projectDescEl.textContent = projectData.description;
@@ -968,7 +969,7 @@ if (addMemberForm) {
 
     try {
       let createdMember = null;
-      const apiRolePayload = selectedRole === "owner" ? "admin" : selectedRole;
+      const apiRolePayload = selectedRole;
 
       if (typeof api !== "undefined" && api.post) {
         try {
@@ -977,9 +978,6 @@ if (addMemberForm) {
             role: apiRolePayload
           });
           createdMember = res?.data || res;
-          if (createdMember && selectedRole === "owner") {
-            createdMember.role = "owner";
-          }
         } catch (apiErr) {
           if (apiErr && apiErr.status && apiErr.status !== 0) {
             const msg = apiErr.data?.message || apiErr.message || "Không thể thêm thành viên.";
