@@ -24,7 +24,18 @@ class UserBase(BaseModel):
 
 # Schema nhận dữ liệu khi tạo/đăng ký tài khoản người dùng mới.
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=6, max_length=100, description="Mật khẩu chưa băm (tối thiểu 6 ký tự)")
+    password: str = Field(..., min_length=8, max_length=100, description="Mật khẩu chưa băm (tối thiểu 8 ký tự)")
+
+    @field_validator("password", mode="before")
+    @classmethod
+    def validate_password(cls, v):
+        if v is None or not isinstance(v, str) or not v.strip():
+            raise ValueError("Mật khẩu không được để trống hoặc chỉ chứa khoảng trắng.")
+        if len(v.strip()) < 8:
+            raise ValueError("Mật khẩu phải có độ dài tối thiểu 8 ký tự.")
+        if len(v) > 100:
+            raise ValueError("Mật khẩu không được vượt quá 100 ký tự.")
+        return v
 
 
 # Schema cập nhật thông tin người dùng (tất cả các trường đều là tùy chọn).
@@ -35,7 +46,20 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = Field(default=None, max_length=1000, description="Mô tả bản thân mới")
     role: Optional[UserRole] = Field(default=None, description="Vai trò mới")
     is_active: Optional[bool] = Field(default=None, description="Trạng thái kích hoạt tài khoản")
-    password: Optional[str] = Field(default=None, min_length=6, max_length=100, description="Mật khẩu mới nếu muốn đổi")
+    password: Optional[str] = Field(default=None, min_length=8, max_length=100, description="Mật khẩu mới nếu muốn đổi")
+
+    @field_validator("password", mode="before")
+    @classmethod
+    def validate_password(cls, v):
+        if v is None:
+            return None
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("Mật khẩu không được để trống hoặc chỉ chứa khoảng trắng.")
+        if len(v.strip()) < 8:
+            raise ValueError("Mật khẩu phải có độ dài tối thiểu 8 ký tự.")
+        if len(v) > 100:
+            raise ValueError("Mật khẩu không được vượt quá 100 ký tự.")
+        return v
 
 
 # Schema cập nhật thông tin cá nhân của người dùng đang đăng nhập.

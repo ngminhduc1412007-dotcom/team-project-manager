@@ -1,4 +1,4 @@
-﻿Loại,Mã,Phân hệ,Hạng mục / Tiêu đề,Mức độ,Bước tái hiện / Dữ liệu kiểm thử,Kết quả mong đợi,Kết quả thực tế,Trạng thái,Người phụ trách
+Loại,Mã,Phân hệ,Hạng mục / Tiêu đề,Mức độ,Bước tái hiện / Dữ liệu kiểm thử,Kết quả mong đợi,Kết quả thực tế,Trạng thái,Người phụ trách
 Test Case,TC-01,Trang chủ,Kiểm tra kết nối Backend Health,P0,Mở index.html và bấm Kiểm tra lại kết nối,Hiển thị URL API và trạng thái kết nối rõ ràng,Đúng như mong đợi,PASS,Lê Quang Huy
 Test Case,TC-02,Trang chủ,Banner trạng thái chưa đăng nhập,P1,"Xóa localStorage.token, tải lại index.html",Hiển thị thông báo chưa đăng nhập và nút Đăng nhập ngay,Đúng như mong đợi,PASS,Lê Quang Huy
 Test Case,TC-03,Trang chủ,Banner trạng thái đã đăng nhập,P1,Đăng nhập thành công rồi mở index.html,"Hiển thị tên người dùng, nút Vào Dự án và Đăng xuất",Đúng như mong đợi,PASS,Lê Quang Huy
