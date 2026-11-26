@@ -21,9 +21,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_users_email (email)
-    KEY idx_tasks_project_id (project_id),
-    KEY idx_tasks_status (status),
-    KEY idx_tasks_project_status (project_id, status),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. Bảng projects: tên, mô tả, hạn chót, chủ dự án có khóa ngoại tới users(id)
@@ -46,15 +43,10 @@ CREATE TABLE IF NOT EXISTS projects (
     KEY idx_projects_name (name),
     KEY idx_projects_owner_name (owner_id, name),
     CONSTRAINT fk_projects_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE
-    KEY idx_tasks_project_id (project_id),
-    KEY idx_tasks_status (status),
-    KEY idx_tasks_project_status (project_id, status),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Bảng tasks: công việc thuộc dự án, người được giao, độ ưu tiên, trạng thái
 CREATE TABLE IF NOT EXISTS tasks (
-    -- Existing columns...
-
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT NULL,
@@ -65,15 +57,15 @@ CREATE TABLE IF NOT EXISTS tasks (
     project_id INT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_tasks_project_id (project_id),
+    KEY idx_tasks_status (status),
+    KEY idx_tasks_project_status (project_id, status),
     CONSTRAINT fk_tasks_assignee
         FOREIGN KEY (assignee_id) REFERENCES users (id)
         ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_tasks_project
         FOREIGN KEY (project_id) REFERENCES projects (id)
         ON DELETE CASCADE ON UPDATE CASCADE
-    KEY idx_tasks_project_id (project_id),
-    KEY idx_tasks_status (status),
-    KEY idx_tasks_project_status (project_id, status),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Bảng thành viên dự án: liên kết projects <-> users + vai trò
@@ -92,9 +84,6 @@ CREATE TABLE IF NOT EXISTS project_members (
     -- Mỗi user chỉ có 1 vai trò trong 1 project
     CONSTRAINT uq_pm_project_user
         UNIQUE (project_id, user_id)
-    KEY idx_tasks_project_id (project_id),
-    KEY idx_tasks_status (status),
-    KEY idx_tasks_project_status (project_id, status),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. Dữ liệu mẫu (Sample Data)

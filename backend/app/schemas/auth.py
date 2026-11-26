@@ -28,7 +28,7 @@ def _validate_full_name(v: object) -> str:
     return cleaned
 
 
-def _validate_password_strength(v: object, field_label: str = "Mật khẩu", min_len: int = 6) -> str:
+def _validate_password_strength(v: object, field_label: str = "Mật khẩu", min_len: int = 8) -> str:
     """Kiểm tra mật khẩu: không rỗng, không chỉ chứa khoảng trắng, đủ độ dài."""
     if v is None:
         raise ValueError(f"{field_label} không được để trống.")
@@ -46,7 +46,7 @@ def _validate_password_strength(v: object, field_label: str = "Mật khẩu", mi
 # Schema dữ liệu nhận khi gửi yêu cầu đăng ký tài khoản.
 class RegisterRequest(BaseModel):
     email: EmailStr = Field(..., max_length=255, description="Email người dùng")
-    password: str = Field(..., min_length=6, max_length=100, description="Mật khẩu chưa băm (tối thiểu 6 ký tự)")
+    password: str = Field(..., min_length=8, max_length=100, description="Mật khẩu chưa băm (tối thiểu 8 ký tự)")
     full_name: str = Field(..., min_length=1, max_length=100, description="Họ và tên người dùng")
     role: UserRole = Field(default=UserRole.STUDENT, description="Vai trò người dùng (STUDENT, LECTURER, ADMIN)")
 
@@ -58,7 +58,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password", mode="before")
     @classmethod
     def validate_password(cls, v):
-        return _validate_password_strength(v, field_label="Mật khẩu", min_len=6)
+        return _validate_password_strength(v, field_label="Mật khẩu", min_len=8)
 
     @field_validator("full_name", mode="before")
     @classmethod
