@@ -1,20 +1,11 @@
+"""Tầng nghiệp vụ (Service/CRUD) cho quản lý công việc (Tasks).
+
+Xử lý các thao tác tạo, đọc, cập nhật, xóa task và kiểm tra ràng buộc logic.
 """
-CRUD cho Task trong dự án.
-
-Quản lý nghiệp vụ:
-  - Tạo công việc (Create Task)
-  - Xem danh sách và chi tiết công việc (Read Tasks)
-  - Cập nhật công việc (Update Task)
-  - Xóa công việc (Delete Task)
-
-Xử lý quyền và ngoại lệ rõ ràng:
-  - 404: Không tìm thấy dự án, công việc hoặc người dùng
-  - 403: Không có quyền truy cập dự án hoặc không đủ quyền thực hiện thao tác
-"""
-from datetime import date, timedelta
-from typing import List, Optional, Tuple
-
-from sqlalchemy import func
+from datetime import date
+from typing import List, Optional, Tuple, Union
+from fastapi import HTTPException, status
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import (
@@ -22,151 +13,118 @@ from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
-from app.crud.project_members import get_user_project_role
-from app.models.project_members import ProjectMember
+from app.crud.project_members import get_user_project_role, is_user_in_project
 from app.models.projects import Project
-from app.models.tasks import Task, TaskStatus
+from app.models.tasks import Task, TaskPriority, TaskStatus
 from app.models.users import User
-from app.schemas.tasks import TaskCreate, TaskUpdate
+from app.schemas.project_members import ProjectMemberRole
+from app.schemas.tasks import TaskCreate, TaskStatusUpdate, TaskUpdate
 from app.schemas.users import UserRole
 
 
-# ─────────────────────── Helpers xác thực và phân quyền ───────────────────────
-
-def _get_project_or_404(db: Session, project_id: int) -> Project:
-    """Tìm dự án theo id; ném 404 rõ ràng nếu không tìm thấy."""
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise NotFoundException(message=f"Không tìm thấy dự án với id={project_id}.")
-    return project
-
-
-def _get_task_or_404(db: Session, task_id: int, project_id: int) -> Task:
-    """Tìm task theo id trong dự án cụ thể; ném 404 rõ ràng nếu không tìm thấy."""
-    task = (
-        db.query(Task)
-        .options(joinedload(Task.assignee))
-        .filter(Task.id == task_id, Task.project_id == project_id)
-        .first()
-    )
-    if not task:
-        raise NotFoundException(
-            message=f"Không tìm thấy công việc với id={task_id} trong dự án này."
-        )
-    return task
-
-
-def _check_project_membership(db: Session, project_id: int, user: User) -> Optional[str]:
-    """
-    Kiểm tra người dùng có thuộc dự án không.
-    Trả về vai trò trong dự án ('owner', 'admin', 'member', 'viewer').
-    Ném 403 nếu người dùng không thuộc dự án (ngoại trừ ADMIN hệ thống).
-    """
-    # Quản trị viên hệ thống (ADMIN) có quyền trên mọi dự án
-    if getattr(user, "role", None) in (UserRole.ADMIN, "ADMIN"):
-        return "admin"
-
-    role = get_user_project_role(db=db, project_id=project_id, user_id=user.id)
-    if not role:
-        raise ForbiddenException(message="Bạn không phải thành viên của dự án này.")
-    return role
-
-
-def _verify_can_edit(db: Session, project_id: int, user: User) -> None:
-    """
-    Kiểm tra quyền tạo hoặc sửa task.
-    Viewer (Người xem) không được phép tạo hoặc sửa công việc.
-    """
-    role = _check_project_membership(db=db, project_id=project_id, user=user)
-    if role == "viewer":
-        raise ForbiddenException(
-            message="Thành viên với vai trò Người xem (viewer) không có quyền tạo hoặc chỉnh sửa công việc."
-        )
-
-
-def _verify_can_delete(db: Session, project_id: int, user: User) -> None:
-    """
-    Kiểm tra quyền xóa task.
-    Chỉ chủ dự án (owner) hoặc quản trị viên (admin) mới có quyền xóa task.
-    """
-    role = _check_project_membership(db=db, project_id=project_id, user=user)
-    if role not in ("owner", "admin"):
-        raise ForbiddenException(
-            message="Chỉ chủ dự án (owner) và quản trị viên (admin) mới có quyền xóa công việc."
-        )
-
-
-def _validate_assignee(
+def check_task_permission(
     db: Session,
-    project_id: int,
-    assignee_id: Optional[int],
+    task: Task,
+    current_user: Union[User, int],
+    action_desc: str = "thay đổi trạng thái công việc",
+    allow_viewer: bool = False,
 ) -> None:
-    """Đảm bảo người được giao tồn tại và thuộc dự án."""
-    if assignee_id is None:
+    """
+    Kiểm tra phân quyền thao tác trên công việc:
+    1. Quản trị viên hệ thống (Admin): Có toàn quyền với mọi công việc.
+    2. Chủ sở hữu dự án (Owner): Có toàn quyền với mọi công việc trong dự án của mình.
+    3. Thành viên dự án:
+       - Quản trị viên dự án (Admin): Có quyền sửa/đổi trạng thái công việc.
+       - Thành viên dự án (Member): Có quyền cập nhật trạng thái/tiến độ công việc khi kéo thả.
+       - Người xem (Viewer): Chỉ có quyền đọc (Read-only), KHÔNG được phép thay đổi hay kéo thả.
+         Nếu allow_viewer=True thì Viewer được phép (dùng cho thao tác xem).
+    4. Người dùng không thuộc dự án: Bị từ chối quyền truy cập (403 Forbidden).
+    """
+    if isinstance(current_user, User):
+        user = current_user
+    else:
+        user = db.query(User).filter(User.id == current_user).first()
+        if not user:
+            raise ForbiddenException(message="Không xác định được danh tính người dùng.")
+
+    # 1. Admin hệ thống có toàn quyền
+    if getattr(user, "role", None) in (UserRole.ADMIN, "ADMIN", "admin"):
         return
 
-    assignee = db.query(User).filter(User.id == assignee_id).first()
-    if not assignee:
-        raise NotFoundException(
-            message=f"Không tìm thấy người dùng với id={assignee_id}."
-        )
+    # 2. Kiểm tra dự án chứa task
+    project = db.query(Project).filter(Project.id == task.project_id).first()
+    if not project:
+        raise NotFoundException(message=f"Không tìm thấy dự án với id={task.project_id}.")
 
-    if get_user_project_role(
-        db=db,
-        project_id=project_id,
-        user_id=assignee_id,
-    ) is None:
-        raise BadRequestException(
-            message="Người được giao phải là thành viên của dự án."
-        )
+    # 3. Chủ sở hữu dự án (owner)
+    if project.owner_id == user.id:
+        return
+
+    # 4. Kiểm tra vai trò trong bảng project_members
+    role = get_user_project_role(db=db, project_id=task.project_id, user_id=user.id)
+    if not role:
+        raise ForbiddenException(message="Bạn không thuộc dự án này, không có quyền thao tác với công việc.")
+
+    role_str = str(role.value if hasattr(role, "value") else role).strip().lower()
+
+    if role_str == ProjectMemberRole.VIEWER.value or role_str == "viewer":
+        if not allow_viewer:
+            raise ForbiddenException(
+                message=f"Thành viên có vai trò Người xem (Viewer) không có quyền {action_desc}."
+            )
+
+    # Các vai trò hợp lệ: owner, admin, member
+    return
 
 
-def _validate_due_date(due_date: Optional[date]) -> None:
-    """Không cho phép tạo hoặc cập nhật task có hạn đã qua."""
-    if due_date is not None and due_date < date.today():
-        raise BadRequestException(
-            message="Hạn hoàn thành không được ở trong quá khứ."
-        )
-
-
-# ────────────────────────────────── CRUD ─────────────────────────────────────
-
-def create_task(
+# Tạo công việc mới trong dự án.
+def create_task_service(
     db: Session,
-    project_id: int,
     data: TaskCreate,
-    current_user: User,
+    current_user_id: int,
 ) -> Task:
-    """
-    Tạo công việc mới trong dự án.
-    - 404: Không tìm thấy dự án hoặc không tìm thấy assignee.
-    - 403: Người dùng không thuộc dự án hoặc là viewer.
-    """
-    if data.project_id is not None and data.project_id != project_id:
-        raise BadRequestException(
-            message="project_id trong body phải trùng với project_id trên URL."
-        )
+    # 1. Kiểm tra dự án tồn tại
+    project = db.query(Project).filter(Project.id == data.project_id).first()
+    if not project:
+        raise NotFoundException(message=f"Không tìm thấy dự án với id={data.project_id}.")
 
-    _get_project_or_404(db, project_id)
-    _verify_can_edit(db=db, project_id=project_id, user=current_user)
-
-    _validate_due_date(data.due_date)
-    _validate_assignee(
-        db=db,
-        project_id=project_id,
-        assignee_id=data.assignee_id,
+    # 2. Kiểm tra phân quyền: Người tạo phải thuộc dự án (owner/admin/member) hoặc là Admin hệ thống; chặn Viewer
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    is_system_admin = current_user is not None and getattr(current_user, "role", None) in (
+        UserRole.ADMIN,
+        "ADMIN",
+        "admin",
     )
+    if not is_system_admin and project.owner_id != current_user_id:
+        role = get_user_project_role(db=db, project_id=data.project_id, user_id=current_user_id)
+        if not role:
+            raise ForbiddenException(message="Bạn không phải thành viên của dự án này.")
+        role_str = str(role.value if hasattr(role, "value") else role).strip().lower()
+        if role_str == ProjectMemberRole.VIEWER.value or role_str == "viewer":
+            raise ForbiddenException(
+                message="Thành viên có vai trò Người xem (Viewer) không có quyền tạo công việc mới."
+            )
 
+    # 3. Kiểm tra người được giao (nếu có chỉ định)
+    if data.assignee_id is not None:
+        assignee = db.query(User).filter(User.id == data.assignee_id).first()
+        if not assignee:
+            raise NotFoundException(message=f"Không tìm thấy người dùng với id={data.assignee_id}.")
+        if not assignee.is_active:
+            raise BadRequestException(message="Tài khoản người được giao đã bị vô hiệu hóa.")
+        if not is_user_in_project(db=db, project_id=data.project_id, user_id=data.assignee_id):
+            raise BadRequestException(message="Người được giao việc không phải thành viên của dự án này.")
+
+    # 4. Tạo đối tượng Task mới
     task = Task(
-        title=data.title,
-        description=data.description,
+        title=data.title.strip(),
+        description=data.description.strip() if data.description else None,
         due_date=data.due_date,
         priority=data.priority,
         status=data.status,
         assignee_id=data.assignee_id,
-        project_id=project_id,
+        project_id=data.project_id,
     )
-
     try:
         db.add(task)
         db.commit()
@@ -175,55 +133,89 @@ def create_task(
         db.rollback()
         raise
 
-    return _get_task_or_404(db=db, task_id=task.id, project_id=project_id)
-
-
-def get_tasks(
-    db: Session,
-    project_id: int,
-    current_user: User,
-    page: int = 1,
-    page_size: int = 10,
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
-    assignee_id: Optional[int] = None,
-    search: Optional[str] = None,
-) -> Tuple[List[Task], int]:
-    """
-    Lấy danh sách công việc trong dự án có hỗ trợ lọc, tìm kiếm và phân trang.
-    - 404: Không tìm thấy dự án.
-    - 403: Không phải thành viên dự án.
-    """
-    _get_project_or_404(db, project_id)
-    _check_project_membership(db=db, project_id=project_id, user=current_user)
-
-    if page < 1:
-        page = 1
-    if page_size < 1:
-        page = 10
-
-    query = (
+    # Nạp kèm quan hệ assignee để trả về thông tin đầy đủ
+    return (
         db.query(Task)
         .options(joinedload(Task.assignee))
-        .filter(Task.project_id == project_id)
+        .filter(Task.id == task.id)
+        .first()
     )
 
-    if status:
-        query = query.filter(Task.status == status)
-    if priority:
-        query = query.filter(Task.priority == priority)
-    if assignee_id is not None:
-        query = query.filter(Task.assignee_id == assignee_id)
-    if search and search.strip():
-        kw = search.strip()
+
+# Lấy danh sách công việc có phân trang, lọc và tìm kiếm.
+# Chỉ trả về task thuộc dự án mà current_user là thành viên (hoặc Admin hệ thống xem tất cả).
+def get_tasks_service(
+    db: Session,
+    current_user_id: int,
+    project_id: Optional[int] = None,
+    assignee_id: Optional[int] = None,
+    task_status: Optional[str] = None,
+    priority: Optional[str] = None,
+    due_date_from: Optional[date] = None,
+    due_date_to: Optional[date] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 10,
+) -> Tuple[List[Task], int]:
+    # Kiểm tra nếu user là Admin hệ thống → xem tất cả task
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    is_system_admin = current_user and getattr(current_user, "role", None) in (
+        UserRole.ADMIN, "ADMIN", "admin",
+    )
+
+    query = db.query(Task).options(joinedload(Task.assignee))
+
+    # Nếu có project_id cụ thể: kiểm tra user thuộc dự án đó
+    if project_id is not None:
+        if not is_system_admin and not is_user_in_project(db=db, project_id=project_id, user_id=current_user_id):
+            raise ForbiddenException(message="Bạn không thuộc dự án này, không có quyền xem công việc.")
+        query = query.filter(Task.project_id == project_id)
+    elif not is_system_admin:
+        # Không truyền project_id: chỉ lấy task thuộc các dự án mà user là thành viên
+        from app.models.project_members import ProjectMember
+        member_project_ids = (
+            db.query(ProjectMember.project_id)
+            .filter(ProjectMember.user_id == current_user_id)
+            .subquery()
+        )
+        owner_project_ids = (
+            db.query(Project.id)
+            .filter(Project.owner_id == current_user_id)
+            .subquery()
+        )
         query = query.filter(
-            (Task.title.ilike(f"%{kw}%")) | (Task.description.ilike(f"%{kw}%"))
+            or_(
+                Task.project_id.in_(member_project_ids),
+                Task.project_id.in_(owner_project_ids),
+            )
         )
 
-    total = query.count()
+    if assignee_id is not None:
+        query = query.filter(Task.assignee_id == assignee_id)
+
+    if task_status is not None:
+        query = query.filter(Task.status == task_status.lower())
+
+    if priority is not None:
+        query = query.filter(Task.priority == priority.lower())
+
+    # Lọc theo khoảng hạn hoàn thành (due_date)
+    if due_date_from is not None:
+        query = query.filter(Task.due_date >= due_date_from)
+
+    if due_date_to is not None:
+        query = query.filter(Task.due_date <= due_date_to)
+
+    if search and search.strip():
+        kw = f"%{search.strip()}%"
+        query = query.filter(or_(Task.title.ilike(kw), Task.description.ilike(kw)))
+
+    total = query.with_entities(func.count(Task.id)).scalar() or 0
+
+    offset = (page - 1) * page_size
     items = (
-        query.order_by(Task.created_at.desc(), Task.id.desc())
-        .offset((page - 1) * page_size)
+        query.order_by(Task.due_date.is_(None), Task.due_date.asc(), Task.created_at.desc())
+        .offset(offset)
         .limit(page_size)
         .all()
     )
@@ -231,136 +223,52 @@ def get_tasks(
     return items, total
 
 
-def get_task_statistics(
-    db: Session,
-    project_id: int,
-    current_user: User,
-) -> dict:
-    """Return project-scoped task statistics to project members only."""
-    project = _get_project_or_404(db, project_id)
-    if get_user_project_role(db, project_id, current_user.id) is None:
-        raise ForbiddenException(message="Bạn không phải thành viên của dự án này.")
-
-    tasks_by_status = {status.value: 0 for status in TaskStatus}
-    for task_status, task_count in (
-        db.query(Task.status, func.count(Task.id))
-        .filter(Task.project_id == project_id)
-        .group_by(Task.status)
-        .all()
-    ):
-        status_value = task_status.value if hasattr(task_status, "value") else str(task_status)
-        tasks_by_status[status_value] = task_count
-
-    project_members = {
-        user_id: full_name
-        for user_id, full_name in (
-            db.query(User.id, User.full_name)
-            .join(ProjectMember, ProjectMember.user_id == User.id)
-            .filter(ProjectMember.project_id == project_id)
-            .all()
-        )
-    }
-    owner = db.query(User.id, User.full_name).filter(User.id == project.owner_id).first()
-    if owner:
-        project_members[owner.id] = owner.full_name
-
-    assigned_counts = dict(
-        db.query(Task.assignee_id, func.count(Task.id))
-        .filter(Task.project_id == project_id)
-        .group_by(Task.assignee_id)
-        .all()
-    )
-    unassigned_task_count = assigned_counts.pop(None, 0)
-    tasks_by_member = [
-        {
-            "member_id": member_id,
-            "member_name": full_name,
-            "task_count": assigned_counts.get(member_id, 0),
-        }
-        for member_id, full_name in sorted(
-            project_members.items(), key=lambda member: member[1].casefold()
-        )
-    ]
-
-    today = date.today()
-    due_soon_tasks = (
+# Lấy thông tin chi tiết một công việc theo ID.
+def get_task_by_id_service(db: Session, task_id: int) -> Task:
+    task = (
         db.query(Task)
         .options(joinedload(Task.assignee))
-        .filter(
-            Task.project_id == project_id,
-            Task.due_date.between(today, today + timedelta(days=7)),
-            Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELLED]),
-        )
-        .order_by(Task.due_date.asc(), Task.id.asc())
-        .all()
+        .filter(Task.id == task_id)
+        .first()
     )
-    due_soon = [
-        {
-            "task_id": task.id,
-            "title": task.title,
-            "due_date": task.due_date,
-            "status": task.status,
-            "priority": task.priority,
-            "assignee_id": task.assignee_id,
-            "assignee_name": task.assignee.full_name if task.assignee else "Chưa phân công",
-        }
-        for task in due_soon_tasks
-    ]
-
-    return {
-        "total_tasks": sum(tasks_by_status.values()),
-        "tasks_by_status": tasks_by_status,
-        "tasks_by_member": tasks_by_member,
-        "unassigned_task_count": unassigned_task_count,
-        "due_soon_count": len(due_soon),
-        "due_soon": due_soon,
-    }
+    if not task:
+        raise NotFoundException(message=f"Không tìm thấy công việc với id={task_id}.")
+    return task
 
 
-def get_task_by_id(
+# Cập nhật thông tin công việc.
+def update_task_service(
     db: Session,
-    project_id: int,
-    task_id: int,
-    current_user: User,
-) -> Task:
-    """
-    Xem chi tiết một công việc trong dự án.
-    - 404: Không tìm thấy dự án hoặc không tìm thấy công việc trong dự án.
-    - 403: Không phải thành viên dự án.
-    """
-    _get_project_or_404(db, project_id)
-    _check_project_membership(db=db, project_id=project_id, user=current_user)
-    return _get_task_or_404(db=db, task_id=task_id, project_id=project_id)
-
-
-def update_task(
-    db: Session,
-    project_id: int,
     task_id: int,
     data: TaskUpdate,
-    current_user: User,
+    current_user_id: int,
 ) -> Task:
-    """
-    Cập nhật thông tin công việc trong dự án (PATCH).
-    - 404: Không tìm thấy dự án, công việc hoặc người dùng được giao mới.
-    - 403: Người dùng không thuộc dự án hoặc là viewer.
-    """
-    _get_project_or_404(db, project_id)
-    _verify_can_edit(db=db, project_id=project_id, user=current_user)
-    task = _get_task_or_404(db=db, task_id=task_id, project_id=project_id)
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise NotFoundException(message=f"Không tìm thấy công việc với id={task_id}.")
 
-    update_data = data.model_dump(exclude_unset=True)
+    # Kiểm tra quyền: Phải thuộc dự án chứa task và không phải là viewer
+    check_task_permission(
+        db=db,
+        task=task,
+        current_user=current_user_id,
+        action_desc="chỉnh sửa công việc",
+    )
 
-    if "due_date" in update_data:
-        _validate_due_date(update_data["due_date"])
-    if "assignee_id" in update_data:
-        _validate_assignee(
-            db=db,
-            project_id=project_id,
-            assignee_id=update_data["assignee_id"],
-        )
+    update_dict = data.model_dump(exclude_unset=True)
 
-    for field, value in update_data.items():
+    # Nếu cập nhật người giao việc
+    if "assignee_id" in update_dict and update_dict["assignee_id"] is not None:
+        new_assignee_id = update_dict["assignee_id"]
+        assignee = db.query(User).filter(User.id == new_assignee_id).first()
+        if not assignee:
+            raise NotFoundException(message=f"Không tìm thấy người dùng với id={new_assignee_id}.")
+        if not is_user_in_project(db=db, project_id=task.project_id, user_id=new_assignee_id):
+            raise BadRequestException(message="Người được giao việc không phải thành viên của dự án này.")
+
+    for field, value in update_dict.items():
+        if field == "title" and value is not None:
+            value = value.strip()
         setattr(task, field, value)
 
     try:
@@ -370,23 +278,28 @@ def update_task(
         db.rollback()
         raise
 
-    return _get_task_or_404(db=db, task_id=task.id, project_id=project_id)
+    return (
+        db.query(Task)
+        .options(joinedload(Task.assignee))
+        .filter(Task.id == task.id)
+        .first()
+    )
 
 
-def delete_task(
+# Xóa công việc khỏi dự án.
+def delete_task_service(
     db: Session,
-    project_id: int,
     task_id: int,
-    current_user: User,
+    current_user_id: int,
 ) -> None:
-    """
-    Xóa vĩnh viễn một công việc trong dự án.
-    - 404: Không tìm thấy dự án hoặc công việc.
-    - 403: Không có quyền xóa (chỉ owner và admin dự án mới được xóa).
-    """
-    _get_project_or_404(db, project_id)
-    _verify_can_delete(db=db, project_id=project_id, user=current_user)
-    task = _get_task_or_404(db=db, task_id=task_id, project_id=project_id)
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise NotFoundException(message=f"Không tìm thấy công việc với id={task_id}.")
+
+    # Chỉ chủ dự án mới có quyền xóa task
+    project = db.query(Project).filter(Project.id == task.project_id).first()
+    if not project or project.owner_id != current_user_id:
+        raise ForbiddenException(message="Chỉ chủ dự án mới có quyền xóa công việc.")
 
     try:
         db.delete(task)
@@ -394,3 +307,51 @@ def delete_task(
     except Exception:
         db.rollback()
         raise
+
+
+# Đổi trạng thái công việc (chuyên dụng cho thao tác kéo thả Kanban).
+def update_task_status_service(
+    db: Session,
+    task_id: int,
+    data: TaskStatusUpdate,
+    current_user: Union[User, int],
+) -> Tuple[Task, bool]:
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise NotFoundException(message=f"Không tìm thấy công việc với id={task_id}.")
+
+    # 1. Kiểm tra phân quyền người dùng (chỉ Owner, Admin, Member thuộc dự án mới được đổi trạng thái; Viewer bị từ chối)
+    check_task_permission(
+        db=db,
+        task=task,
+        current_user=current_user,
+        action_desc="thay đổi trạng thái công việc",
+    )
+
+    # 2. Hỗ trợ thao tác kéo thả: Nếu thả lại đúng cột hiện tại (idempotent drag & drop), không cần ghi DB
+    if task.status == data.status:
+        task_with_assignee = (
+            db.query(Task)
+            .options(joinedload(Task.assignee))
+            .filter(Task.id == task.id)
+            .first()
+        )
+        return task_with_assignee or task, False
+
+    # 3. Cập nhật trạng thái mới
+    task.status = data.status
+
+    try:
+        db.commit()
+        db.refresh(task)
+    except Exception:
+        db.rollback()
+        raise
+
+    task_updated = (
+        db.query(Task)
+        .options(joinedload(Task.assignee))
+        .filter(Task.id == task.id)
+        .first()
+    )
+    return task_updated or task, True

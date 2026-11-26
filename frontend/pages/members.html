@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thành viên dự án | Student Project Hub</title>
+  <link rel="icon" href="../assets/images/logo.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .badge-self {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #0369a1;
+      vertical-align: middle;
+    }
+
+    .members-hero-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .project-status-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .project-subnav {
+      margin-bottom: 18px;
+    }
+
+    .role-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .role-breakdown {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .demo-role-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 6px 10px;
+      border: 1px dashed #cbd5e1;
+      border-radius: var(--radius);
+      background: #ffffff;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .badge-admin {
+      background: #ede9fe;
+      color: #6d28d9;
+    }
+
+    .badge-self {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #0369a1;
+      vertical-align: middle;
+    }
+
+    .role-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .role-breakdown {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .demo-role-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 6px 10px;
+      border: 1px dashed #cbd5e1;
+      border-radius: var(--radius);
+      background: #ffffff;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .demo-role-bar.is-visible {
+      display: flex;
+    }
+
+    .permission-notice {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      border-radius: var(--radius);
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-size: 13.5px;
+    }
+
+    .permission-notice.is-visible {
+      display: flex;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .page-header {
+      display: flex;
+    }
+
+    .permission-notice {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      border-radius: var(--radius-lg);
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-size: 13.5px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .permission-notice.is-visible {
+      display: flex;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .project-stats-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .project-stats-bar strong {
+      color: var(--color-text);
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      min-width: 640px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .table .btn-remove-member {
+      white-space: nowrap;
+    }
+
+    .table th,
+    .table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+    }
+
+    .table th {
+      background: #f8fafc;
+      color: var(--color-muted);
+      font-weight: 700;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .status-banner {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .status-banner.is-visible {
+      display: block;
+    }
+
+    .status-banner.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-banner.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .autocomplete-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+      max-width: 420px;
+    }
+
+    .autocomplete-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #dbe4f0;
+      border-radius: 11px;
+      padding: 6px;
+      box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.16), 0 4px 10px -4px rgba(15, 23, 42, 0.08);
+      max-height: 280px;
+      overflow-y: auto;
+      z-index: 120;
+      display: none;
+    }
+
+    .autocomplete-menu.is-open {
+      display: block;
+    }
+
+    .autocomplete-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      transition: background 0.12s ease;
+    }
+
+    .autocomplete-item:hover:not(:disabled),
+    .autocomplete-item.is-active:not(:disabled) {
+      background: #eef4fb;
+    }
+
+    .autocomplete-item:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .autocomplete-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .autocomplete-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .autocomplete-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .autocomplete-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--color-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .autocomplete-email {
+      font-size: 12px;
+      color: var(--color-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .autocomplete-email mark,
+    .autocomplete-name mark {
+      background: #fef08a;
+      color: #0f172a;
+      padding: 0 2px;
+      border-radius: 3px;
+    }
+
+    .autocomplete-state {
+      padding: 14px 10px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .selected-user-chip {
+      margin-top: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #eef4fb;
+      border: 1px solid #bfdbfe;
+      font-size: 12.5px;
+      color: #163b65;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .selected-user-chip.is-visible {
+      display: flex;
+    }
+
+    .selected-user-clear {
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-size: 15px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .selected-user-clear:hover {
+      color: var(--color-danger);
+    }
+
+    @media (max-width: 768px) {
+      .header-inner {
+        height: auto;
+        padding: 10px 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .user-nav {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        width: 100%;
+        justify-content: space-between;
+      }
+      .card {
+        padding: 16px;
+      }
+      .project-stats-bar {
+        align-items: flex-start;
+        width: 100%;
+      }
+      .demo-role-bar {
+        width: 100%;
+      }
+      .demo-role-bar .cselect-wrap {
+        width: 100% !important;
+      }
+      .project-subnav {
+        flex-wrap: wrap;
+      }
+      .autocomplete-wrap {
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
+        flex: 1 1 100%;
+      }
+      #add-member-form .cselect-wrap,
+      #add-member-form #btn-add-member,
+      .toolbar input,
+      .toolbar .cselect-wrap {
+        width: 100% !important;
+      }
+      .toolbar > div {
+        width: 100%;
+      }
+      .modal {
+        padding: 18px;
+      }
+      .modal-footer {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body data-root="../">
+  <header id="app-header"></header>
+
+  <main class="container">
+    <div class="page-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h1 id="project-title" style="margin: 0; font-size: 24px;">Dự án: Student Project Hub</h1>
+          <span class="badge badge-active" id="project-status-badge">Đang làm</span>
+        </div>
+        <p id="project-desc" style="margin: 4px 0 0; color: var(--color-muted); font-size: 14px;">
+          Quản lý danh sách thành viên, thêm thành viên qua API và phân quyền vai trò trong dự án
+        </p>
+
+        <div class="project-status-box" id="project-status-controls">
+          <span style="font-size: 13px; font-weight: 600;">Trạng thái dự án:</span>
+          <span id="project-status-editor" style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <select id="project-status-select" style="width: 170px; padding: 5px 10px; font-size: 13px;">
+              <option value="PLANNING">Lên kế hoạch</option>
+              <option value="ACTIVE" selected>Đang làm</option>
+              <option value="COMPLETED">Đã hoàn thành</option>
+            </select>
+            <button type="button" class="btn btn-small btn-primary" id="btn-update-project-status">
+              Đổi trạng thái
+            </button>
+          </span>
+          <span id="project-status-role-hint" style="font-size: 12px; color: var(--color-muted);">
+            (Chỉ Owner và Admin được đổi)
+          </span>
+        </div>
+
+      <div class="project-stats-bar">
+        <div class="role-summary-row">
+          <span>Người đăng nhập: <strong id="current-user-label">Lê Quang Huy</strong></span>
+          <span>Vai trò của bạn: <span class="badge badge-owner" id="current-user-role-badge">OWNER</span></span>
+          <span>Thành viên: <strong id="total-members-stat">5</strong></span>
+        </div>
+        <div class="role-breakdown" id="role-breakdown-summary">
+          <span>1 OWNER</span>
+          <span>&middot;</span>
+          <span>4 MEMBER</span>
+          <span>&middot;</span>
+          <span>0 VIEWER</span>
+        </div>
+        <div class="demo-role-bar" id="demo-role-bar">
+          <label for="demo-role-switcher" style="font-weight: 600; color: var(--color-text);">Xem thử quyền:</label>
+          <select id="demo-role-switcher" style="width: 150px; padding: 4px 8px; font-size: 12.5px;">
+            <option value="OWNER">OWNER (Chủ dự án)</option>
+            <option value="MEMBER">MEMBER (Thành viên)</option>
+            <option value="VIEWER">VIEWER (Chỉ xem)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <div class="project-subnav">
+      <div class="subnav-pills">
+        <a href="tasks.html" id="subnav-tasks-link" class="subnav-pill">Bảng Kanban Task</a>
+        <a href="members.html" id="subnav-members-link" class="subnav-pill active">Thành viên dự án</a>
+        <a href="projects.html" class="subnav-pill">Tất cả dự án</a>
+      </div>
+    </div>
+
+    <div id="status-banner" class="status-banner"></div>
+
+    <div id="readonly-permission-notice" class="permission-notice" role="status">
+      <div id="readonly-permission-text">
+        Bạn đang xem trang với vai trò <span class="badge badge-member">MEMBER</span>. Chỉ Chủ dự án (OWNER) hoặc Quản trị viên (ADMIN) mới có quyền thêm hoặc xóa thành viên.
+      </div>
+    </div>
+
+    <div class="card" id="add-member-card">
+      <h3 style="font-size: 16px; margin: 0 0 6px;">Thêm thành viên vào dự án</h3>
+      <p style="font-size: 13px; color: var(--color-muted); margin: 0 0 14px;">
+        Nhập email tài khoản sinh viên đã đăng ký trên hệ thống để thêm vào dự án.
+      </p>
+
+      <form id="add-member-form" novalidate>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start;">
+          <div class="autocomplete-wrap" id="user-autocomplete-wrap">
+            <input
+              type="email"
+              id="member-email-input"
+              autocomplete="off"
+              placeholder="Tìm hoặc nhập email sinh viên (VD: sv@ptit.edu.vn)..."
+            >
+            <div class="autocomplete-menu" id="user-suggestions-menu" role="listbox"></div>
+            <div class="selected-user-chip" id="selected-user-chip">
+              <span id="selected-user-text"></span>
+              <button type="button" class="selected-user-clear" id="btn-clear-selected-user" title="Bỏ chọn">&times;</button>
+            </div>
+            <div class="form-error" id="member-email-error"></div>
+          </div>
+
+          <select id="member-role-select" style="width: 180px;">
+            <option value="member">Vai trò: MEMBER</option>
+            <option value="owner">Vai trò: OWNER</option>
+            <option value="viewer">Vai trò: VIEWER</option>
+          </select>
+
+          <button type="submit" class="btn btn-primary" id="btn-add-member">Thêm thành viên</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h3 style="font-size: 16px; margin: 0;">Danh sách thành viên dự án (<span id="member-count-label">5</span>)</h3>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <input
+            type="text"
+            id="search-member-input"
+            placeholder="Tìm theo tên hoặc email..."
+            style="width: 220px;"
+          >
+          <select id="filter-role-select" style="width: 160px;">
+            <option value="ALL">Tất cả vai trò</option>
+            <option value="OWNER">OWNER</option>
+            <option value="MEMBER">MEMBER</option>
+            <option value="VIEWER">VIEWER</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Họ và tên</th>
+              <th>Email</th>
+              <th>Vai trò</th>
+              <th>Ngày tham gia</th>
+              <th id="members-action-th">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="members-tbody">
+            <tr>
+              <td>1</td>
+              <td><strong>Lê Quang Huy</strong></td>
+              <td>huy.lq@ptit.edu.vn</td>
+              <td><span class="badge badge-owner">OWNER</span></td>
+              <td>01/09/2026</td>
+              <td><span style="font-size: 12px; color: var(--color-muted);">Chủ dự án</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="delete-member-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Xác nhận xóa thành viên</h3>
+        <button type="button" class="modal-close" id="btn-close-delete-modal" aria-label="Đóng">&times;</button>
+      </div>
+      <p style="margin: 0; font-size: 14px; color: var(--color-text);">
+        Bạn có chắc chắn muốn xóa thành viên <strong id="delete-member-name"></strong> (<span id="delete-member-email"></span>) khỏi dự án này không?
+      </p>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="btn-cancel-delete">Hủy bỏ</button>
+        <button type="button" class="btn btn-danger-solid" id="btn-confirm-delete">Xác nhận xóa</button>
+      </div>
+    </div>
+  </div>
+
+  <footer id="app-footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/custom-select.js"></script>
+  <script src="../js/pages/members.js"></script>
+</body>
+</html>

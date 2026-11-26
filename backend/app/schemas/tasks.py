@@ -9,7 +9,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ─────────────────────────── Enums ───────────────────────────────
@@ -94,6 +94,22 @@ class TaskCreate(TaskBase):
         ),
     )
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_and_normalize_status(cls, v):
+        if v is None:
+            return TaskStatus.TODO
+        if isinstance(v, str):
+            v_clean = v.strip().lower()
+            valid_statuses = [e.value for e in TaskStatus]
+            if v_clean not in valid_statuses:
+                allowed_str = ", ".join(valid_statuses)
+                raise ValueError(
+                    f"Trạng thái '{v}' không hợp lệ. Các trạng thái được chấp nhận: {allowed_str}."
+                )
+            return TaskStatus(v_clean)
+        return v
+
 
 class TaskUpdate(BaseModel):
     """
@@ -128,6 +144,53 @@ class TaskUpdate(BaseModel):
         ge=1,
     )
 
+    @field_validator("status", mode="before")
+    @classmethod
+    def normalize_status(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            v_clean = v.strip().lower()
+            valid_statuses = [e.value for e in TaskStatus]
+            if v_clean not in valid_statuses:
+                allowed_str = ", ".join(valid_statuses)
+                raise ValueError(
+                    f"Trạng thái '{v}' không hợp lệ. Các trạng thái được chấp nhận: {allowed_str}."
+                )
+            return TaskStatus(v_clean)
+        return v
+
+
+class TaskStatusUpdate(BaseModel):
+    """
+    Payload chuyên dùng để đổi trạng thái công việc (hỗ trợ kéo thả trên Kanban Board).
+    Tự động chuẩn hóa chữ hoa/thường, cắt khoảng trắng và kiểm tra tính hợp lệ của trạng thái.
+    """
+    status: TaskStatus = Field(
+        ...,
+        description=(
+            "Trạng thái mới: "
+            "todo (Cần làm) | in_progress (Đang làm) | done (Hoàn thành) | cancelled (Đã huỷ)"
+        ),
+        examples=["in_progress"],
+    )
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def validate_and_normalize_status(cls, v):
+        if v is None:
+            raise ValueError("Trạng thái công việc không được để trống.")
+        if isinstance(v, str):
+            v_clean = v.strip().lower()
+            valid_statuses = [e.value for e in TaskStatus]
+            if v_clean not in valid_statuses:
+                allowed_str = ", ".join(valid_statuses)
+                raise ValueError(
+                    f"Trạng thái '{v}' không hợp lệ. Các trạng thái được chấp nhận: {allowed_str}."
+                )
+            return TaskStatus(v_clean)
+        return v
+
 
 class AssigneeInfo(BaseModel):
     """Thông tin rút gọn của người được giao task."""
@@ -143,8 +206,8 @@ class TaskResponse(TaskBase):
     id: int = Field(..., description="ID định danh duy nhất của task")
     project_id: int = Field(..., description="ID dự án chứa task")
     status: TaskStatus = Field(..., description="Trạng thái hiện tại")
-    status_label: str = Field(..., description="Nhãn tiếng Việt của trạng thái")
-    priority_label: str = Field(..., description="Nhãn tiếng Việt của độ ưu tiên")
+    status_label: str = Field(default="", description="Nhãn tiếng Việt của trạng thái")
+    priority_label: str = Field(default="", description="Nhãn tiếng Việt của độ ưu tiên")
     assignee: Optional[AssigneeInfo] = Field(
         default=None,
         description="Thông tin người được giao (null nếu chưa giao)",

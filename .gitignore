@@ -21,3 +21,8 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Nested git clones
+team-project-manager/
+backend/team-project-manager/
+
+

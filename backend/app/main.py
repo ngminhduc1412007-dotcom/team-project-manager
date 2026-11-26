@@ -5,14 +5,17 @@ Tài liệu API tự sinh: http://127.0.0.1:8000/docs
 """
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import OperationalError
 
 from app import models  # noqa: F401 - import để SQLAlchemy biết các bảng
 from app.core.config import settings
 from app.core.exception_handlers import register_exception_handlers
-from app.db.migrate import migrate_projects_table
+from app.db.migrate import migrate_projects_table, migrate_users_table
 from app.db.session import Base, engine
 from app.routers import auth, health, projects, tasks, users
 
@@ -22,6 +25,7 @@ async def lifespan(app: FastAPI):
     # Tự tạo các bảng còn thiếu khi server khởi động (bảng đã có thì bỏ qua).
     try:
         Base.metadata.create_all(bind=engine)
+        migrate_users_table()
         migrate_projects_table()
         print(f"[DB] Đã kết nối cơ sở dữ liệu ({settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME})")
     except OperationalError as error:
@@ -51,6 +55,17 @@ app.include_router(tasks.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 
 
-@app.get("/")
-def root():
-    return {"message": f"{settings.APP_NAME} đang chạy. Xem tài liệu API tại /docs"}
+# Phục vụ file upload tĩnh (ảnh đại diện, tài liệu...) tại /uploads
+uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
+# Phục vụ giao diện Frontend tĩnh nếu thư mục frontend tồn tại
+frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
+if frontend_dir.is_dir():
+    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+else:
+    @app.get("/")
+    def root():
+        return {"message": f"{settings.APP_NAME} đang chạy. Xem tài liệu API tại /docs"}
+

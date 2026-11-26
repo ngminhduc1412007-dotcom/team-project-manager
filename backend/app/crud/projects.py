@@ -8,7 +8,7 @@ from app.core.exceptions import (
     NotFoundException,
     UnauthorizedException,
 )
-from app.crud.project_members import get_user_project_role
+from app.crud.project_members import get_user_project_role, is_user_in_project
 from app.models.projects import Project
 from app.models.users import User
 from app.schemas.projects import ProjectCreate, ProjectStatus, ProjectUpdate
@@ -107,9 +107,43 @@ def create_project(db: Session, data: ProjectCreate, owner_id: int) -> Project:
     return _get_project_or_404(db, project.id)
 
 
-def get_project_by_id(db: Session, project_id: int) -> Project:
-    """Lấy chi tiết một dự án, bao gồm owner và members."""
-    return _get_project_or_404(db, project_id)
+def _require_project_view_permission(
+    db: Session,
+    project: Project,
+    current_user: Optional[Union[User, int]] = None,
+) -> None:
+    """Kiểm tra quyền xem chi tiết dự án: chỉ thành viên thuộc dự án hoặc Admin hệ thống mới được xem."""
+    if current_user is None:
+        return
+    if isinstance(current_user, User):
+        user = current_user
+    else:
+        user = db.query(User).filter(User.id == current_user).first()
+    if not user:
+        raise ForbiddenException(message="Không xác định được danh tính người dùng.")
+
+    if getattr(user, "role", None) in (UserRole.ADMIN, "ADMIN", "admin"):
+        return
+
+    if project.owner_id == user.id or is_user_in_project(
+        db=db, project_id=project.id, user_id=user.id
+    ):
+        return
+
+    raise ForbiddenException(
+        message="Bạn không thuộc dự án này, không có quyền xem chi tiết dự án."
+    )
+
+
+def get_project_by_id(
+    db: Session,
+    project_id: int,
+    current_user: Optional[Union[User, int]] = None,
+) -> Project:
+    """Lấy chi tiết một dự án, bao gồm owner và members (chặn người ngoài dự án -> 403)."""
+    project = _get_project_or_404(db, project_id)
+    _require_project_view_permission(db=db, project=project, current_user=current_user)
+    return project
 
 
 def get_projects(
@@ -133,7 +167,7 @@ def get_projects(
     if page < 1:
         page = 1
     if page_size < 1:
-        page = 10
+        page_size = 10
 
     query = db.query(Project).options(
         joinedload(Project.owner), joinedload(Project.members)
@@ -218,6 +252,25 @@ def update_project(
         user=user,
         action_description="chỉnh sửa dự án",
     )
+
+    # Kiểm tra tính hợp lệ của ngày bắt đầu và hạn chót khi kết hợp với dữ liệu hiện tại trong DB
+    if "start_date" in update_data or "deadline" in update_data:
+        effective_start = update_data.get("start_date", project.start_date)
+        effective_deadline = update_data.get("deadline", project.deadline)
+        if effective_start is not None and effective_deadline is not None:
+            start_naive = effective_start.replace(tzinfo=None) if effective_start.tzinfo else effective_start
+            deadline_naive = effective_deadline.replace(tzinfo=None) if effective_deadline.tzinfo else effective_deadline
+            if deadline_naive < start_naive:
+                raise BadRequestException(
+                    message="Hạn chót (deadline) phải lớn hơn hoặc bằng ngày bắt đầu (start_date).",
+                    errors=[
+                        {
+                            "field": "deadline",
+                            "message": "Hạn chót (deadline) phải lớn hơn hoặc bằng ngày bắt đầu (start_date).",
+                            "type": "value_error",
+                        }
+                    ],
+                )
 
     for field, value in update_data.items():
         setattr(project, field, value)

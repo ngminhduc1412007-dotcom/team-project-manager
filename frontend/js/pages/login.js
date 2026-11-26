@@ -55,6 +55,26 @@ if (window.location.hash === "#register") {
   switchToRegister();
 }
 
+// ---------- 2.1. XỬ LÝ TRẠNG THÁI URL (LOGOUT / AUTH REQUIRED / AUTO REDIRECT) ----------
+(function handleInitialAuthState() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isLogout = urlParams.get("logout") === "true";
+  const reason = urlParams.get("reason");
+  const redirectTarget = urlParams.get("redirect");
+
+  if (isLogout) {
+    showToast("Đã đăng xuất thành công khỏi hệ thống!", "info");
+    // Xóa param ?logout=true khỏi URL để tránh báo lại khi người dùng F5
+    const cleanUrl = window.location.pathname + (redirectTarget ? "?redirect=" + redirectTarget : "");
+    history.replaceState(null, null, cleanUrl);
+  } else if (reason === "auth_required") {
+    showToast("Vui lòng đăng nhập để truy cập trang quản lý dự án!", "error");
+  } else if (typeof auth !== "undefined" && auth.isAuthenticated && auth.isAuthenticated()) {
+    // Nếu người dùng đã đăng nhập từ trước và không phải vừa bấm đăng xuất -> chuyển thẳng vào trang dự án
+    auth.redirectIfAuth();
+  }
+})();
+
 // ---------- 3. XÓA BÁO LỖI KHI GÕ PHÍM ----------
 [loginEmailInput, loginPasswordInput, regFullnameInput, regEmailInput, regPasswordInput, regConfirmInput].forEach((input) => {
   input.addEventListener("input", () => {
@@ -114,20 +134,52 @@ loginForm.addEventListener("submit", async (e) => {
   const password = loginPasswordInput.value;
 
   try {
+    let token = null;
+    let user = null;
+
     try {
       const res = await api.post("/auth/login", { email, password });
-      auth.setToken(res.token || "token_demo");
-      auth.setUser(res.user || { email, full_name: email.split("@")[0] });
-    } catch {
-      // Backend chưa chạy thì lưu session demo
-      auth.setToken("token_demo");
-      auth.setUser({ email, full_name: email.split("@")[0] });
+      token = res.data?.access_token || res.access_token || res.data?.token || res.token;
+      user = res.data?.user || res.user;
+    } catch (apiErr) {
+      // Nếu là lỗi phản hồi từ backend (400, 401, 403, 422), hiển thị lỗi đúng thực tế
+      if (apiErr.status && apiErr.status > 0) {
+        throw apiErr;
+      }
+      // Chỉ khi backend hoàn toàn không chạy (status 0), fallback sang tài khoản demo
+      console.warn("Backend API không khả dụng, sử dụng phiên demo.");
     }
 
+    if (!token) {
+      token = "jwt_token_ptit_" + Date.now();
+    }
+    if (!user) {
+      const namePart = email.split("@")[0];
+      user = {
+        id: 1,
+        email: email,
+        full_name: email.startsWith("truongnhom") ? "Trưởng nhóm PTIT" : namePart,
+        role: "STUDENT",
+      };
+    }
+
+    // 1. LƯU TOKEN VÀ USER VÀO LOCALSTORAGE
+    auth.setToken(token);
+    auth.setUser(user);
+
     showToast("Đăng nhập thành công!", "success");
+
+    // 2. Chuyển hướng: nếu có tham số redirect thì chuyển về trang đó, không thì về projects.html
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectTarget = urlParams.get("redirect");
+
     setTimeout(() => {
-      window.location.href = "projects.html";
-    }, 1000);
+      if (redirectTarget) {
+        window.location.href = decodeURIComponent(redirectTarget);
+      } else {
+        window.location.href = "projects.html";
+      }
+    }, 700);
   } catch (err) {
     showToast(err.message, "error");
   } finally {
@@ -139,8 +191,8 @@ loginForm.addEventListener("submit", async (e) => {
 // Điền nhanh tài khoản mẫu
 if (btnQuickFill) {
   btnQuickFill.addEventListener("click", () => {
-    loginEmailInput.value = "truongnhom@ptit.edu.vn";
-    loginPasswordInput.value = "12345678";
+    loginEmailInput.value = "truongnhom1@example.com";
+    loginPasswordInput.value = "password123";
     loginEmailInput.classList.remove("is-invalid");
     loginEmailError.classList.remove("is-visible");
     loginPasswordInput.classList.remove("is-invalid");
@@ -219,16 +271,20 @@ regForm.addEventListener("submit", async (e) => {
     full_name: regFullnameInput.value.trim(),
     email: regEmailInput.value.trim(),
     password: regPasswordInput.value,
+    role: "STUDENT",
   };
 
   try {
     try {
       await api.post("/auth/register", data);
-    } catch {
-      // Backend chưa chạy thì mô phỏng thành công
+    } catch (apiErr) {
+      if (apiErr.status && apiErr.status > 0) {
+        throw apiErr;
+      }
+      console.warn("Backend API không khả dụng, mô phỏng đăng ký demo.");
     }
 
-    showToast("Đăng ký thành công! Hãy đăng nhập.", "success");
+    showToast("Đăng ký tài khoản thành công! Hãy đăng nhập.", "success");
 
     // Điền sẵn email vừa đăng ký vào form đăng nhập và chuyển sang form đăng nhập
     loginEmailInput.value = data.email;
@@ -247,4 +303,3 @@ regForm.addEventListener("submit", async (e) => {
     btnRegister.textContent = "Đăng ký tài khoản";
   }
 });
-

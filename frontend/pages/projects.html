@@ -7,6 +7,16 @@
   <title>Dự án của tôi | Student Project Hub</title>
   <link rel="icon" href="../assets/images/logo.png">
   <link rel="stylesheet" href="../css/style.css">
+  <script>
+    // Chặn trang khi chưa đăng nhập (Auth Guard)
+    (function () {
+      var token = localStorage.getItem("token");
+      if (!token) {
+        var current = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.replace("login.html?redirect=" + current + "&reason=auth_required");
+      }
+    })();
+  </script>
 </head>
 
 <body data-root="../">
@@ -21,30 +31,51 @@
           Quản lý tiến độ đồ án và phân công công việc các bài tập nhóm
         </p>
       </div>
-      <div>
-        <button id="btn-open-modal" class="btn btn-primary">+ Tạo dự án mới</button>
+      <div class="page-header-actions">
+        <button id="btn-toggle-delete-mode" class="btn btn-danger" type="button">
+          <span>Xóa dự án</span>
+        </button>
+        <button id="btn-open-modal" class="btn btn-primary" type="button">+ Tạo dự án mới</button>
+      </div>
+    </div>
+
+    <!-- Thanh thao tác chọn xóa nhiều dự án (Batch Delete Bar) -->
+    <div id="batch-delete-bar" class="batch-delete-bar">
+      <div class="batch-delete-left">
+        <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; font-weight: 700; font-size: 14px; user-select: none; color: #9f1239;">
+          <input type="checkbox" id="checkbox-select-all" style="width: 18px; height: 18px; cursor: pointer; accent-color: #dc2626;">
+          <span>Chọn tất cả trang này</span>
+        </label>
+        <span style="color: #fda4af;">|</span>
+        <span style="font-size: 14px; color: #4c0519; font-weight: 500;">
+          Đã chọn: <strong id="selected-count-text" style="color: #dc2626; font-size: 17px; font-weight: 800;">0</strong> dự án
+        </span>
+      </div>
+      <div class="batch-delete-right">
+        <button type="button" class="btn" id="btn-cancel-delete-mode">Hủy bỏ</button>
+        <button type="button" class="btn btn-danger-solid" id="btn-confirm-delete-selected" disabled>
+          Xóa các dự án đã chọn (<span id="delete-selected-badge">0</span>)
+        </button>
       </div>
     </div>
 
     <!-- Thanh tìm kiếm, lọc, sắp xếp và phân trang -->
-    <div class="card" style="padding: 16px; margin-bottom: 20px;">
+    <div class="card projects-toolbar-card">
       <!-- Hàng 1: Tìm kiếm theo tên & Lọc Dự án của tôi -->
-      <div
-        style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px;">
-        <div class="toolbar-search" style="flex: 1; min-width: 260px;">
-          <input type="search" id="search-input" placeholder="🔍 Tìm theo tên hoặc mô tả đồ án...">
+      <div class="projects-toolbar-row">
+        <div class="toolbar-search">
+          <input type="search" id="search-input" placeholder="Tìm theo tên hoặc mô tả đồ án...">
         </div>
 
         <!-- Toggle lọc dự án -->
         <div class="filter-group" id="my-filter-group">
-          <button type="button" class="filter-btn active" data-my="false">🌐 Tất cả dự án</button>
-          <button type="button" class="filter-btn" data-my="true" id="btn-filter-my">👤 Dự án của tôi</button>
+          <button type="button" class="filter-btn active" data-my="false">Tất cả dự án</button>
+          <button type="button" class="filter-btn" data-my="true" id="btn-filter-my">Dự án của tôi</button>
         </div>
       </div>
 
       <!-- Hàng 2: Lọc trạng thái, Sắp xếp & Chọn số bản ghi mỗi trang -->
-      <div
-        style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--color-border); padding-top: 12px;">
+      <div class="projects-toolbar-row">
         <!-- Lọc trạng thái -->
         <div class="filter-group" id="filter-group">
           <button type="button" class="filter-btn active" data-status="ALL">Tất cả</button>
@@ -54,10 +85,9 @@
         </div>
 
         <!-- Nhóm sắp xếp & kích thước trang -->
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <label for="sort-by" style="font-size: 13px; color: var(--color-muted); white-space: nowrap;">Sắp
-            xếp:</label>
-          <select id="sort-by" style="width: auto; padding: 6px 10px; font-size: 13px;">
+        <div class="projects-sort-group">
+          <label for="sort-by">Sắp xếp:</label>
+          <select id="sort-by" style="width: 145px; padding: 6px 10px; font-size: 13px;">
             <option value="created_at" selected>Ngày tạo</option>
             <option value="name">Tên dự án</option>
             <option value="deadline">Hạn chót</option>
@@ -65,15 +95,13 @@
             <option value="id">Mã dự án</option>
           </select>
 
-          <select id="sort-order" style="width: auto; padding: 6px 10px; font-size: 13px;">
+          <select id="sort-order" style="width: 120px; padding: 6px 10px; font-size: 13px;">
             <option value="desc" selected>Giảm dần</option>
             <option value="asc">Tăng dần</option>
           </select>
 
-          <label for="page-size"
-            style="font-size: 13px; color: var(--color-muted); margin-left: 6px; white-space: nowrap;">Hiển
-            thị:</label>
-          <select id="page-size" style="width: auto; padding: 6px 10px; font-size: 13px;">
+          <label for="page-size">Hiển thị:</label>
+          <select id="page-size" style="width: 112px; padding: 6px 10px; font-size: 13px;">
             <option value="6">6 / trang</option>
             <option value="10" selected>10 / trang</option>
             <option value="20">20 / trang</option>
@@ -87,10 +115,9 @@
 
     <!-- Trạng thái rỗng (Empty State) -->
     <div id="empty-state" class="empty-box" style="display: none;">
-      <div class="empty-icon">📁</div>
       <div class="empty-title" id="empty-title">Chưa có dự án nào</div>
       <div class="empty-desc" id="empty-desc">Không tìm thấy dự án phù hợp với bộ lọc hiện tại.</div>
-      <button id="btn-empty-create" class="btn btn-primary">+ Tạo dự án đầu tiên</button>
+      <button id="btn-empty-create" class="btn btn-primary" type="button">+ Tạo dự án đầu tiên</button>
     </div>
 
     <!-- Thanh phân trang (Pagination) -->
@@ -122,7 +149,7 @@
           <textarea id="project-desc" rows="3" placeholder="Mục tiêu đồ án, công nghệ sử dụng..."></textarea>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-grid-2">
           <div class="form-group">
             <label for="start-date">Ngày bắt đầu</label>
             <input type="date" id="start-date">
@@ -149,6 +176,29 @@
     </div>
   </div>
 
+  <!-- Modal Xác Nhận Xóa Dự Án -->
+  <div class="modal-backdrop" id="delete-modal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 style="color: var(--color-danger); margin: 0;">Xác nhận xóa dự án</h3>
+        <button type="button" class="modal-close" id="btn-close-delete-modal" aria-label="Đóng">&times;</button>
+      </div>
+      <div style="padding: 8px 0;">
+        <p id="delete-modal-question" style="margin: 0 0 10px;">Bạn có chắc chắn muốn xóa các dự án đã chọn không?</p>
+        <div id="delete-modal-project-list"
+          style="max-height: 150px; overflow-y: auto; background: #f8fafc; border: 1px solid var(--color-border); border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 13px;">
+        </div>
+        <p style="color: var(--color-muted); font-size: 13px; margin: 0;">
+          Hành động này không thể hoàn tác. Mọi công việc và dữ liệu liên quan sẽ bị xóa vĩnh viễn khỏi hệ thống.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="btn-cancel-delete-modal">Hủy bỏ</button>
+        <button type="button" class="btn btn-danger-solid" id="btn-execute-delete">Xác nhận xóa</button>
+      </div>
+    </div>
+  </div>
+
   <footer id="app-footer"></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
@@ -156,6 +206,7 @@
   <script src="../js/api.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/layout.js"></script>
+  <script src="../js/custom-select.js"></script>
   <script src="../js/pages/projects.js"></script>
 </body>
 

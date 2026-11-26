@@ -1,4 +1,11 @@
-"""Router quản lý thành viên dự án (Project Members)."""
+"""Router quản lý thành viên dự án (Project Members).
+
+Phân quyền:
+    - **Xem** danh sách thành viên: mọi người dùng đã đăng nhập.
+    - **Thêm** thành viên: chỉ chủ dự án (owner) → vi phạm trả 403.
+    - **Xóa** thành viên: chỉ chủ dự án hoặc Admin hệ thống → vi phạm trả 403.
+    - **Đổi vai trò**: chỉ chủ dự án hoặc Admin hệ thống → vi phạm trả 403.
+"""
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
@@ -6,14 +13,17 @@ from app.core.response import create_response
 from app.crud.project_members import (
     add_project_member_by_email,
     get_project_members,
+    remove_project_member,
+    update_project_member_role,
 )
 from app.db.session import get_db
 from app.models.users import User
-from app.routers.projects import get_current_user
+from app.core.deps import get_current_user
 from app.schemas.common import ResponseModel
 from app.schemas.project_members import (
     AddMemberByEmailRequest,
     ProjectMemberResponse,
+    ProjectMemberUpdate,
 )
 
 router = APIRouter(prefix="/projects", tags=["Project Members"])
@@ -32,6 +42,11 @@ def add_project_member(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """Thêm thành viên mới vào dự án theo email.
+
+    Chỉ chủ dự án mới có quyền; thành viên thường gọi endpoint này sẽ
+    nhận HTTP 403 Forbidden.
+    """
     member = add_project_member_by_email(
         db=db,
         project_id=project_id,
@@ -60,12 +75,117 @@ def list_project_members(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    members = get_project_members(db=db, project_id=project_id)
+    members = get_project_members(db=db, project_id=project_id, current_user=current_user)
     serialized = [ProjectMemberResponse.model_validate(m).model_dump() for m in members]
     return create_response(
         request=request,
         status_code=status.HTTP_200_OK,
         message="Lấy danh sách thành viên dự án thành công.",
         data=serialized,
+    )
+
+
+@router.delete(
+    "/{project_id}/members/{user_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    summary="Xóa thành viên khỏi dự án (chỉ chủ dự án hoặc Admin hệ thống, không cho xóa chủ dự án)",
+    description=(
+        "Xóa một thành viên khỏi dự án.\n"
+        "- Chỉ chủ dự án hoặc Admin hệ thống mới có quyền xóa thành viên (người khác trả 403).\n"
+        "- Không cho phép xóa chủ dự án (trả 400 nếu user_id là chủ dự án).\n"
+        "- Dự án không tồn tại trả 404.\n"
+        "- Thành viên không thuộc dự án trả 404."
+    ),
+)
+def remove_project_member_endpoint(
+    request: Request,
+    project_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Xóa thành viên khỏi dự án.
+
+    Chỉ chủ dự án hoặc Admin hệ thống mới có quyền xóa; thành viên thường
+    gọi endpoint này sẽ nhận HTTP 403 Forbidden. Không cho phép xóa chủ dự án.
+    """
+    result = remove_project_member(
+        db=db,
+        project_id=project_id,
+        user_id=user_id,
+        current_user=current_user,
+    )
+    return create_response(
+        request=request,
+        status_code=status.HTTP_200_OK,
+        message="Xóa thành viên khỏi dự án thành công.",
+        data=result,
+    )
+
+
+@router.patch(
+    "/{project_id}/members/{user_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    summary="Đổi vai trò thành viên trong dự án (chỉ có thể đổi thành owner, member, viewer)",
+    description=(
+        "Cập nhật vai trò mới (owner, member, viewer) cho thành viên trong dự án.\n"
+        "- Vai trò thành viên chỉ có thể là 'owner', 'member', hoặc 'viewer' ('admin' là quyền của admin hệ thống).\n"
+        "- Khi đổi thành 'owner', quyền chủ sở hữu dự án sẽ được chuyển giao cho thành viên này.\n"
+        "- Chỉ chủ dự án hoặc Admin hệ thống mới có quyền đổi vai trò (người khác trả 403).\n"
+        "- Dự án hoặc thành viên không tồn tại trả 404."
+    ),
+)
+def update_project_member_role_endpoint(
+    request: Request,
+    project_id: int,
+    user_id: int,
+    data: ProjectMemberUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Đổi vai trò thành viên trong dự án (owner, member, viewer).
+
+    Chỉ chủ dự án hoặc Admin hệ thống mới có quyền; thành viên thường
+    gọi endpoint này sẽ nhận HTTP 403 Forbidden.
+    """
+    updated_member = update_project_member_role(
+        db=db,
+        project_id=project_id,
+        user_id=user_id,
+        role=data.role,
+        current_user=current_user,
+    )
+    member_data = ProjectMemberResponse.model_validate(updated_member).model_dump()
+    return create_response(
+        request=request,
+        status_code=status.HTTP_200_OK,
+        message="Đổi vai trò thành viên thành công.",
+        data=member_data,
+    )
+
+
+@router.put(
+    "/{project_id}/members/{user_id}",
+    response_model=ResponseModel,
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+def update_project_member_role_put_endpoint(
+    request: Request,
+    project_id: int,
+    user_id: int,
+    data: ProjectMemberUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return update_project_member_role_endpoint(
+        request=request,
+        project_id=project_id,
+        user_id=user_id,
+        data=data,
+        db=db,
+        current_user=current_user,
     )
 

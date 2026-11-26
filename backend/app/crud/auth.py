@@ -1,7 +1,11 @@
 from typing import Any, Dict, Optional
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import (
+    BadRequestException,
+    ForbiddenException,
+    UnauthorizedException,
+)
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -16,7 +20,8 @@ from app.schemas.users import UserResponse
 
 # Tìm người dùng theo địa chỉ email trong cơ sở dữ liệu.
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
-    return db.query(User).filter(User.email == email).first()
+    normalized_email = email.strip().lower()
+    return db.query(User).filter(User.email == normalized_email).first()
 
 
 # Tạo cặp access_token và refresh_token dùng chung cho đăng nhập và làm mới token.
@@ -36,22 +41,22 @@ def _issue_tokens(user: User) -> Dict[str, str]:
 
 # Nghiệp vụ đăng ký: kiểm tra trùng email, băm mật khẩu và lưu người dùng mới.
 def register_user_service(db: Session, register_data: RegisterRequest) -> User:
+    normalized_email = register_data.email.strip().lower()
+
     # 1. Kiểm tra email đã tồn tại hay chưa
-    existing_user = get_user_by_email(db, email=register_data.email)
+    existing_user = get_user_by_email(db, email=normalized_email)
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email này đã được sử dụng. Vui lòng chọn email khác.",
-        )
+        msg = "Email này đã được sử dụng. Vui lòng chọn email khác."
+        raise BadRequestException(message=msg, errors=msg)
 
     # 2. Băm mật khẩu bảo mật bằng bcrypt
     hashed_password = hash_password(register_data.password)
 
     # 3. Tạo đối tượng User mới
     new_user = User(
-        email=register_data.email,
+        email=normalized_email,
         hashed_password=hashed_password,
-        full_name=register_data.full_name,
+        full_name=register_data.full_name.strip(),
         role=register_data.role,
     )
 
@@ -74,18 +79,13 @@ def login_user_service(db: Session, login_data: LoginRequest) -> Dict[str, Any]:
 
     # 2. Kiểm tra sự tồn tại và đối chiếu mật khẩu đã hash
     if not user or not verify_password(login_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email hoặc mật khẩu không chính xác.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        msg = "Email hoặc mật khẩu không chính xác."
+        raise UnauthorizedException(message=msg, errors=msg)
 
     # 3. Kiểm tra trạng thái hoạt động của tài khoản
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Tài khoản đã bị vô hiệu hóa.",
-        )
+        msg = "Tài khoản đã bị vô hiệu hóa."
+        raise ForbiddenException(message=msg, errors=msg)
 
     # 4. Cấp phát JWT access_token và refresh_token
     tokens = _issue_tokens(user)
@@ -101,60 +101,19 @@ def refresh_token_service(db: Session, refresh_token: str) -> Dict[str, Any]:
     try:
         payload = decode_refresh_token(refresh_token)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token không hợp lệ hoặc đã hết hạn.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        msg = "Refresh token không hợp lệ hoặc đã hết hạn."
+        raise UnauthorizedException(message=msg, errors=msg)
 
     # 2. Kiểm tra người dùng còn tồn tại và đang hoạt động hay không
     email = payload.get("email")
     user = get_user_by_email(db, email=email) if email else None
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Không tìm thấy người dùng tương ứng với token.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        msg = "Không tìm thấy người dùng tương ứng với token."
+        raise UnauthorizedException(message=msg, errors=msg)
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Tài khoản đã bị vô hiệu hóa.",
-        )
-
-    # 3. Cấp cặp token mới
-    return _issue_tokens(user)
-
-
-
-# Nghiệp vụ làm mới token: xác thực refresh_token và cấp lại access_token mới.
-def refresh_token_service(db: Session, refresh_token: str) -> Dict[str, Any]:
-    # 1. Giải mã và kiểm tra loại refresh_token
-    try:
-        payload = decode_refresh_token(refresh_token)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token không hợp lệ hoặc đã hết hạn.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # 2. Kiểm tra người dùng còn tồn tại và đang hoạt động hay không
-    email = payload.get("email")
-    user = get_user_by_email(db, email=email) if email else None
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Không tìm thấy người dùng tương ứng với token.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Tài khoản đã bị vô hiệu hóa.",
-        )
+        msg = "Tài khoản đã bị vô hiệu hóa."
+        raise ForbiddenException(message=msg, errors=msg)
 
     # 3. Cấp cặp token mới
     return _issue_tokens(user)

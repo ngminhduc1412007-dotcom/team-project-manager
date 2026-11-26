@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ cá nhân & Đổi mật khẩu | Student Project Hub</title>
+  <link rel="icon" href="../assets/images/logo.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .profile-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+      flex: 1;
+    }
+
+    .profile-page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .profile-page-header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .profile-page-header p {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: var(--color-muted);
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .surface-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .summary-card {
+      position: sticky;
+      top: 88px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .summary-banner {
+      height: 86px;
+      background: linear-gradient(135deg, #163b65 0%, #2563eb 100%);
+    }
+
+    .summary-body {
+      padding: 0 22px 24px;
+      text-align: center;
+    }
+
+    .profile-avatar-wrap {
+      width: 88px;
+      height: 88px;
+      margin: -44px auto 12px;
+      border-radius: 50%;
+      border: 4px solid #ffffff;
+      background: linear-gradient(135deg, #163b65, #1d4ed8);
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .profile-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .summary-name {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    .summary-email {
+      margin: 3px 0 10px;
+      font-size: 13.5px;
+      color: var(--color-muted);
+      word-break: break-all;
+    }
+
+    .summary-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .badge-role {
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+    }
+
+    .badge-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-locked {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .summary-bio {
+      background: #f8fafc;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--color-text-sub);
+      text-align: left;
+      margin-bottom: 16px;
+      min-height: 54px;
+      white-space: pre-line;
+    }
+
+    .summary-meta-list {
+      border-top: 1px solid var(--color-border);
+      padding-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .summary-meta-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--color-muted);
+    }
+
+    .summary-meta-item strong {
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    .forms-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card-section-head {
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .card-section-head h2 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    .card-section-head p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--color-text);
+    }
+
+    .char-counter {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--color-muted);
+    }
+
+    .password-field {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-field input {
+      padding-right: 62px;
+    }
+
+    .btn-toggle-pass {
+      position: absolute;
+      right: 8px;
+      border: none;
+      background: #f1f5f9;
+      color: var(--color-text-sub);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-toggle-pass:hover {
+      background: #e2e8f0;
+      color: var(--color-text);
+    }
+
+    .strength-wrap {
+      margin-top: 8px;
+    }
+
+    .strength-track {
+      height: 5px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .strength-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.2s ease, background 0.2s ease;
+    }
+
+    .strength-text {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .feedback-alert {
+      padding: 11px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .feedback-alert.is-visible {
+      display: block;
+    }
+
+    .feedback-alert.success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .feedback-alert.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .form-footer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    @media (max-width: 860px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .summary-card {
+        position: static;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .profile-container {
+        padding: 16px 14px 32px;
+      }
+      .surface-card {
+        padding: 18px;
+      }
+      .summary-card {
+        padding: 0;
+      }
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .form-footer-actions {
+        flex-wrap: wrap;
+      }
+      .form-footer-actions .btn {
+        flex: 1 1 auto;
+      }
+    }
+  </style>
+</head>
+<body data-root="../">
+  <header id="app-header"></header>
+
+  <main class="profile-container">
+    <div class="profile-page-header">
+      <div>
+        <h1>Hồ sơ cá nhân & Bảo mật</h1>
+        <p>Quản lý thông tin tài khoản, ảnh đại diện và cập nhật mật khẩu an toàn</p>
+      </div>
+      <div>
+        <a href="projects.html" class="btn">Quay lại Dự án của tôi</a>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <aside class="surface-card summary-card">
+        <div class="summary-banner"></div>
+        <div class="summary-body">
+          <div class="profile-avatar-wrap" id="summary-avatar">LH</div>
+          <h2 class="summary-name" id="summary-fullname">Lê Quang Huy</h2>
+          <div class="summary-email" id="summary-email">huy.lq@ptit.edu.vn</div>
+
+          <div class="summary-badges">
+            <span class="badge badge-role" id="summary-role">STUDENT</span>
+            <span class="badge badge-active" id="summary-status">Đang hoạt động</span>
+          </div>
+
+          <div class="summary-bio" id="summary-bio">
+            Sinh viên CNTT PTIT · Tham gia phát triển nền tảng quản lý đồ án nhóm Student Project Hub.
+          </div>
+
+          <div class="summary-meta-list">
+            <div class="summary-meta-item">
+              <span>Mã tài khoản</span>
+              <strong id="summary-id">#1</strong>
+            </div>
+            <div class="summary-meta-item">
+              <span>Ngày tham gia</span>
+              <strong id="summary-created">01/09/2026</strong>
+            </div>
+            <div class="summary-meta-item">
+              <span>Cập nhật gần nhất</span>
+              <strong id="summary-updated">20/11/2026</strong>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="forms-stack">
+        <section class="surface-card">
+          <div class="card-section-head">
+            <h2>Thông tin cá nhân</h2>
+            <p>Cập nhật họ tên, email liên hệ, đường dẫn ảnh đại diện và mô tả giới thiệu bản thân.</p>
+          </div>
+
+          <div id="profile-alert" class="feedback-alert"></div>
+
+          <form id="profile-form" novalidate>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="profile-fullname">
+                  <span>Họ và tên *</span>
+                  <span class="char-counter" id="fullname-counter">0/100</span>
+                </label>
+                <input
+                  type="text"
+                  id="profile-fullname"
+                  maxlength="100"
+                  placeholder="Nhập họ và tên của bạn"
+                >
+                <div class="form-error" id="profile-fullname-error"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="profile-email">
+                  <span>Địa chỉ Email *</span>
+                </label>
+                <input
+                  type="email"
+                  id="profile-email"
+                  maxlength="255"
+                  placeholder="VD: sinhvien@ptit.edu.vn"
+                >
+                <div class="form-error" id="profile-email-error"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="profile-avatar-url">
+                <span>Đường dẫn ảnh đại diện (Avatar URL - tùy chọn)</span>
+              </label>
+              <input
+                type="url"
+                id="profile-avatar-url"
+                maxlength="500"
+                placeholder="https://example.com/avatar.png"
+              >
+              <div class="form-error" id="profile-avatar-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="profile-bio">
+                <span>Giới thiệu bản thân (Bio)</span>
+                <span class="char-counter" id="bio-counter">0/1000</span>
+              </label>
+              <textarea
+                id="profile-bio"
+                rows="3"
+                maxlength="1000"
+                placeholder="Kỹ năng chuyên môn, lớp học phần hoặc vai trò trong nhóm đồ án..."
+              ></textarea>
+              <div class="form-error" id="profile-bio-error"></div>
+            </div>
+
+            <div class="form-footer-actions">
+              <button type="button" class="btn" id="btn-reset-profile">Khôi phục</button>
+              <button type="submit" class="btn btn-primary" id="btn-save-profile">Lưu thay đổi</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="surface-card">
+          <div class="card-section-head">
+            <h2>Đổi mật khẩu</h2>
+            <p>Nhập mật khẩu hiện tại để xác minh, mật khẩu mới cần tối thiểu 6 ký tự và khác mật khẩu cũ.</p>
+          </div>
+
+          <div id="password-alert" class="feedback-alert"></div>
+
+          <form id="password-form" novalidate>
+            <div class="form-group">
+              <label for="old-password"><span>Mật khẩu hiện tại *</span></label>
+              <div class="password-field">
+                <input
+                  type="password"
+                  id="old-password"
+                  autocomplete="current-password"
+                  placeholder="Nhập mật khẩu hiện tại"
+                >
+                <button type="button" class="btn-toggle-pass" data-toggle-for="old-password">Hiện</button>
+              </div>
+              <div class="form-error" id="old-password-error"></div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="new-password"><span>Mật khẩu mới *</span></label>
+                <div class="password-field">
+                  <input
+                    type="password"
+                    id="new-password"
+                    autocomplete="new-password"
+                    placeholder="Tối thiểu 6 ký tự"
+                  >
+                  <button type="button" class="btn-toggle-pass" data-toggle-for="new-password">Hiện</button>
+                </div>
+                <div class="strength-wrap">
+                  <div class="strength-track">
+                    <div class="strength-fill" id="password-strength-fill"></div>
+                  </div>
+                  <div class="strength-text" id="password-strength-text">Độ mạnh mật khẩu: Chưa nhập</div>
+                </div>
+                <div class="form-error" id="new-password-error"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="confirm-password"><span>Xác nhận mật khẩu mới *</span></label>
+                <div class="password-field">
+                  <input
+                    type="password"
+                    id="confirm-password"
+                    autocomplete="new-password"
+                    placeholder="Nhập lại mật khẩu mới"
+                  >
+                  <button type="button" class="btn-toggle-pass" data-toggle-for="confirm-password">Hiện</button>
+                </div>
+                <div class="form-error" id="confirm-password-error"></div>
+              </div>
+            </div>
+
+            <div class="form-footer-actions">
+              <button type="reset" class="btn" id="btn-reset-password">Xóa ô nhập</button>
+              <button type="submit" class="btn btn-primary" id="btn-change-password">Cập nhật mật khẩu</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer id="app-footer"></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/layout.js"></script>
+  <script src="../js/pages/profile.js"></script>
+</body>
+</html>

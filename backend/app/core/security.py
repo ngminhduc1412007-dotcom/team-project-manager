@@ -12,6 +12,25 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 
 
+# Kiểm tra độ mạnh của mật khẩu mới; trả về thông báo lỗi nếu mật khẩu yếu, None nếu đạt chuẩn.
+def get_password_strength_error(password: object) -> Optional[str]:
+    if not isinstance(password, str) or not password.strip():
+        return "Mật khẩu mới không được để trống hoặc chỉ chứa khoảng trắng."
+    if len(password) > 100:
+        return "Mật khẩu mới không được vượt quá 100 ký tự."
+
+    is_strong = (
+        len(password) >= 8
+        and any(c.isupper() for c in password)
+        and any(c.islower() for c in password)
+        and any(c.isdigit() for c in password)
+        and any(not c.isalnum() and not c.isspace() for c in password)
+    )
+    if not is_strong:
+        return "Mật khẩu mới quá yếu vui lòng chọn mật khẩu mạnh hơn!"
+    return None
+
+
 # Băm mật khẩu bằng bcrypt trước khi lưu vào cơ sở dữ liệu.
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
